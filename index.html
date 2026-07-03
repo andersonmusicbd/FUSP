@@ -3,16 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Aplicativos FUSP</title>
+    <title>Portal de Ferramentas | FUSP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #008771; /* Verde FUSP */
+            --secondary-color: #f0f9f6;
+            --text-color: #2d3436;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .logo-area {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-color);
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0, 135, 113, 0.2);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: #636e72;
+            margin-top: 10px;
+            font-weight: 300;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+        .card i {
+            font-size: 30px;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: var(--secondary-color);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: #636e72;
+            line-height: 1.5;
+        }
+
+        .card .btn-go {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 40px;
+            font-size: 0.85rem;
+            color: #b2bec3;
+        }
+
+        /* Estilo para Mobile */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Meus Aplicativos FUSP</h1>
-    <ul>
-        <li><a href="Converter reais para texto.html">Converter reais para texto</a></li>
-        <li><a href="Extrair informações do extrato.html">Extrair informações do extrato</a></li>
-        <li><a href="Juntar extratos cc e inv.html">Juntar extratos cc e inv</a></li>
-        <li><a href="Juntar pdfs de rendimentos.html">Juntar pdfs de rendimentos</a></li>
-        <li><a href="Ver o quanto foi lançado na pc atual.html">Ver o quanto foi lançado na pc atual</a></li>
-    </ul>
+
+    <header>
+        <div class="logo-area">F</div>
+        <h1>Portal de Aplicativos</h1>
+        <p class="subtitle">Ferramentas de Automação e Extratos</p>
+    </header>
+
+    <div class="container">
+        
+        <a href="Converter reais para texto.html" class="card">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+            <h3>Conversor de Reais</h3>
+            <p>Transforme valores numéricos em texto formatado para documentos.</p>
+            <div class="btn-go">Abrir Ferramenta <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="Extrair informações do extrato.html" class="card">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <h3>Extrator de Dados</h3>
+            <p>Analise e extraia informações relevantes de extratos bancários em HTML.</p>
+            <div class="btn-go">Abrir Ferramenta <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="Juntar extratos cc e inv.html" class="card">
+            <i class="fa-solid fa-object-group"></i>
+            <h3>Unificador de Contas</h3>
+            <p>Combine extratos de Conta Corrente e Investimentos em um único relatório.</p>
+            <div class="btn-go">Abrir Ferramenta <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="Juntar pdfs de rendimentos.html" class="card">
+            <i class="fa-solid fa-file-pdf"></i>
+            <h3>Mesclar Rendimentos</h3>
+            <p>Organize e junte seus arquivos de rendimento em um documento único.</p>
+            <div class="btn-go">Abrir Ferramenta <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="Ver o quanto foi lançado na pc atual.html" class="card">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <h3>Consulta PC Atual</h3>
+            <p>Verifique o status e os valores lançados na prestação de contas atual.</p>
+            <div class="btn-go">Abrir Ferramenta <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+    </div>
+
+    <footer>
+        &copy; 2024 FUSP | Painel Interno de Controle
+    </footer>
+
 </body>
 </html>
