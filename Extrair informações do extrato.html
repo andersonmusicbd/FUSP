@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)https://www.lncc.br/~borges/php/testar.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrator de Extratos em Tabela</title>
+    <script src="./Extrair informações do extrato_files/pdf.min.js.baixados"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 22px;
+            margin: 0 0 8px 0;
+        }
+        p.desc {
+            color: #64748b;
+            font-size: 14px;
+            margin: 0 0 25px 0;
+        }
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            background: #f8fafc;
+            padding: 35px 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0fdf4;
+        }
+        .upload-area p {
+            margin: 0;
+            color: #334155;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        #fileInput {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #2563eb;
+            font-weight: 500;
+            display: none;
+            text-align: center;
+        }
+        .box-resultado {
+            margin-top: 30px;
+            display: none;
+        }
+        .topo-resultado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .btn-copiar {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .btn-copiar:hover {
+            background: #16a34a;
+        }
+        /* Estilos da Tabela */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #ffffff;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        tr:hover {
+            background-color: #f8fafc;
+        }
+        .badge-reaj {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .badge-juros {
+            background-color: #dcfce7;
+            color: #15803d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .valor-celula {
+            font-family: monospace;
+            font-size: 15px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>&#128203; Extrator de Valores em Tabela</h1>
+    <p class="desc">Selecione o PDF do extrato do banco. O sistema vai separar automaticamente os lançamentos de <b>REAJ.MON. BC</b> e <b>JUROS</b> em colunas organizadas.</p>
+
+    <div class="upload-area">
+        <p>&#128194; Clique aqui para selecionar o PDF do Extrato</p>
+        <input type="file" id="fileInput" accept=".pdf">
+    </div>
+
+    <div id="status" style="display: none;">Separando e organizando dados...</div>
+
+    <div id="boxResultado" class="box-resultado" style="display: block;">
+        <div class="topo-resultado">
+            <span style="font-weight: bold; font-size: 15px; color: #475569;">Resultados Encontrados:</span>
+            <button class="btn-copiar" onclick="copiarTextoTabela()" style="background: rgb(34, 197, 94);">&#128203; Copiar Dados (para Excel)</button>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>O que é</th>
+                    <th style="text-align: right;">Valor</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela"><tr>
+                    <td><span class="badge-reaj">REAJ.MON. BC</span></td>
+                    <td style="text-align: right;" class="valor-celula">71,69</td>
+                </tr><tr>
+                    <td><span class="badge-juros">JUROS</span></td>
+                    <td style="text-align: right;" class="valor-celula">366,15</td>
+                </tr><tr>
+                    <td><span class="badge-reaj">REAJ.MON. BC</span></td>
+                    <td style="text-align: right;" class="valor-celula">184,68</td>
+                </tr><tr>
+                    <td><span class="badge-juros">JUROS</span></td>
+                    <td style="text-align: right;" class="valor-celula">567,09</td>
+                </tr></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    let dadosParaCopiar = ""; // Guarda o texto puro formatado para copiar e colar no Excel
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        mostrarStatus("Separando e organizando dados...");
+
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const typedarray = new Uint8Array(ev.target.result);
+            
+            pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                let totalPaginas = pdf.numPages;
+                let promessasPaginas = [];
+                
+                for (let i = 1; i <= totalPaginas; i++) {
+                    let p = pdf.getPage(i).then(function(page) {
+                        return page.getTextContent().then(function(content) {
+                            // Conecta os pedaços usando um identificador de espaço limpo
+                            return content.items.map(item => item.str).join(' ');
+                        });
+                    });
+                    promessasPaginas.push(p);
+                }
+
+                Promise.all(promessasPaginas).then(function(textosDasPaginas) {
+                    montarTabelaExtrato(textosDasPaginas.join(' '));
+                });
+
+            }).catch(function(err) {
+                mostrarStatus("Erro ao abrir o PDF. Verifique seu arquivo.");
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function montarTabelaExtrato(textoCompleto) {
+        const corpoTabela = document.getElementById('corpoTabela');
+        corpoTabela.innerHTML = ""; // Limpa a tabela anterior
+        
+        let linhasEncontradas = [];
+        let textoCopiarAcumulado = "";
+
+        // Regex para capturar valores em formato de moeda nacional (Ex: 129,61 ou 42,57)
+        const regexDinheiro = /\d+(?:\.\d{3})*,\d{2}/;
+
+        // Quebra o texto por espaços em blocos menores para analisar a sequência corrida
+        const blocos = textoCompleto.split(/\s+/);
+
+        for (let i = 0; i < blocos.length; i++) {
+            let bloco = blocos[i].toUpperCase();
+
+            // Identificadores de Lançamento desejados
+            if (bloco.includes("REAJ.MON.") || bloco.includes("JUROS")) {
+                let tipoLancamento = bloco.includes("REAJ.MON.") ? "REAJ.MON. BC" : "JUROS";
+                let valorIdentificado = "";
+
+                // Varre os próximos blocos à frente para capturar o valor numérico desse lançamento
+                for (let j = i + 1; j < Math.min(i + 12, blocos.length); j++) {
+                    let proximo = blocos[j];
+                    
+                    // Se bater de frente com outro termo ou resgate antes de achar o número, cancela
+                    if (proximo.toUpperCase().includes("RESG") || proximo.toUpperCase().includes("SALDO")) {
+                        break;
+                    }
+
+                    let matchValor = proximo.match(regexDinheiro);
+                    if (matchValor) {
+                        valorIdentificado = matchValor[0];
+                        i = j; // Avança o rastreador para poupar reprocessamento
+                        break;
+                    }
+                }
+
+                // Se coletou o tipo e o valor com sucesso, joga na lista
+                if (valorIdentificado) {
+                    linhasEncontradas.push({
+                        tipo: tipoLancamento,
+                        valor: valorIdentificado
+                    });
+                }
+            }
+        }
+
+        // Gera o HTML da tabela
+        if (linhasEncontradas.length > 0) {
+            linhasEncontradas.forEach(item => {
+                let classeBadge = item.tipo === "REAJ.MON. BC" ? "badge-reaj" : "badge-juros";
+                
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="${classeBadge}">${item.tipo}</span></td>
+                    <td style="text-align: right;" class="valor-celula">${item.valor}</td>
+                `;
+                corpoTabela.appendChild(tr);
+
+                // Prepara a string de cópia (separada por TAB para colar direto nas colunas do Excel)
+                textoCopiarAcumulado += `${item.tipo}\t${item.valor}\n`;
+            });
+
+            dadosParaCopiar = textoCopiarAcumulado;
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('boxResultado').style.display = 'block';
+        } else {
+            mostrarStatus("&#9888;&#65039; Não foi possível estruturar os dados. Certifique-se de que o PDF contém dados de Juros/Reajuste legíveis.");
+        }
+    }
+
+    function mostrarStatus(mensagem) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = messaging = mensagem;
+        statusDiv.style.display = 'block';
+        document.getElementById('boxResultado').style.display = 'none';
+    }
+
+    function copiarTextoTabela() {
+        if (!dadosParaCopiar) return;
+        
+        navigator.clipboard.writeText(dadosParaCopiar);
+        
+        const btn = document.querySelector('.btn-copiar');
+        btn.innerText = "&#9989; Copiado para o Excel!";
+        btn.style.background = "#2563eb";
+        
+        setTimeout(() => {
+            btn.innerText = "&#128203; Copiar Dados (para Excel)";
+            btn.style.background = "#22c55e";
+        }, 1500);
+    }
+</script>
+
+
+</body></html>
