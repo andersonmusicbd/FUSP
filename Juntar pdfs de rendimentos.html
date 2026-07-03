@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador e Agrupador de Documentos por Projeto</title>
+    <!-- Incluindo JSZip para criar o ZIP e PDF-Lib para juntar os PDFs em um único arquivo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        .description {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .config-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .config-box label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        .config-box input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            color: #2d3748;
+        }
+        .config-box .hint {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 6px;
+        }
+        .file-upload-zone {
+            border: 2px dashed #bdc3c7;
+            padding: 30px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .file-upload-zone:hover {
+            border-color: #3498db;
+            background: #f0f7fc;
+        }
+        #fileInput {
+            display: none;
+        }
+        .icon {
+            font-size: 40px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        .actions-bar {
+            margin: 20px 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        .btn-zip {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-zip:hover {
+            background-color: #219a52;
+        }
+        .btn-zip:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            color: #e67e22;
+            margin: 10px 0;
+        }
+        .project-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+        .project-header {
+            background: #34495e;
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .project-header .badge {
+            background: #e74c3c;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .project-header .badge.has-extrato {
+            background: #3498db;
+        }
+        .project-header .badge.complete {
+            background: #2ecc71;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .file-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            gap: 15px;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-status {
+            font-weight: bold;
+            width: 24px;
+            text-align: center;
+        }
+        .status-found { color: #2ecc71; }
+        .status-missing { color: #95a5a6; }
+        .file-name-expected {
+            font-weight: 600;
+            color: #4a5568;
+            width: 220px;
+        }
+        .file-name-actual {
+            color: #718096;
+            font-style: italic;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .btn-upload-single {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .btn-upload-single:hover {
+            background-color: #2980b9;
+        }
+        .single-file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Agrupador de PDFs por Projeto (União Customizada)</h1>
+    
+    <div class="description">
+        <strong>Fluxo Automatizado de Junção:</strong> Este sistema lê os PDFs informados, agrupa-os por projeto e une as páginas dos PDFs de cada projeto na ordem exata configurada. Defina abaixo o modelo de nome que deseja para os arquivos finais gerados.
+    </div>
+
+    <!-- Campo adicionado para personalizar o nome dos PDFs unificados -->
+    <div class="config-box">
+        <label for="namingPattern">Modelo do Nome do Arquivo PDF Final:</label>
+        <input type="text" id="namingPattern" value="Rendimentos [PROJETO]" placeholder="Exemplo: Rendimentos [PROJETO] Final">
+        <div class="hint">Use a tag <strong>[PROJETO]</strong> onde você quer que o número correspondente do projeto seja inserido automaticamente. (Ex: "Rendimentos [PROJETO]" vai gerar "Rendimentos 420407.pdf")</div>
+    </div>
+
+    <div class="file-upload-zone" onclick="document.getElementById('fileInput').click()">
+        <div class="icon">📋</div>
+        <p><strong>Arraste ou clique aqui</strong> para carregar o lote principal de arquivos em PDF</p>
+        <span style="font-size: 12px; color: #95a5a6;">(Adicione ou substitua arquivos específicos direto nas listas abaixo se necessário)</span>
+        <input type="file" id="fileInput" multiple accept=".pdf" onchange="processFiles(this.files)">
+    </div>
+
+    <div class="actions-bar">
+        <button id="downloadZipBtn" class="btn-zip" disabled onclick="downloadUnifiedZip()">
+            📄 Juntar PDFs e Baixar (.ZIP)
+        </button>
+    </div>
+
+    <div id="loadingStatus" class="loading">Processando, renomeando e unindo páginas dos arquivos PDF... Aguarde um instante.</div>
+
+    <div id="results"></div>
+</div>
+
+<script>
+    const ORDER_RULES = [
+        { key: 'comprovante', label: 'Comprovante' },
+        { key: 'guia', label: 'Guia' },
+        { key: 'relação', label: 'Relação' },
+        { key: 'cc', label: 'Extrato CC (Banco do Brasil cc)' },
+        { key: 'inv', label: 'Extrato Inv (Banco do Brasil inv)' }
+    ];
+
+    let globalProjects = {};
+
+    function extractProjectNumber(filename) {
+        const match = filename.match(/\d{4,8}/);
+        return match ? match[0] : null;
+    }
+
+    function determineTypeIndex(filename) {
+        const lowerName = filename.toLowerCase();
+        for (let i = 0; i < ORDER_RULES.length; i++) {
+            if (lowerName.includes(ORDER_RULES[i].key)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function processFiles(files) {
+        if (files.length === 0) return;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const projNum = extractProjectNumber(file.name);
+            
+            if (!projNum) continue;
+
+            const typeIndex = determineTypeIndex(file.name);
+            if (typeIndex === -1) continue;
+
+            if (!globalProjects[projNum]) {
+                globalProjects[projNum] = Array(ORDER_RULES.length).fill(null);
+            }
+
+            globalProjects[projNum][typeIndex] = file;
+        }
+
+        renderProjects();
+    }
+
+    function addSingleFile(projId, typeIndex, file) {
+        if (!file) return;
+        
+        if (!globalProjects[projId]) {
+            globalProjects[projId] = Array(ORDER_RULES.length).fill(null);
+        }
+        
+        globalProjects[projId][typeIndex] = file;
+        renderProjects();
+    }
+
+    function renderProjects() {
+        const resultsDiv = document.getElementById('results');
+        const downloadBtn = document.getElementById('downloadZipBtn');
+        resultsDiv.innerHTML = ''; 
+
+        const sortedProjectIds = Object.keys(globalProjects).sort();
+
+        if (sortedProjectIds.length === 0) {
+            downloadBtn.disabled = true;
+            return;
+        }
+
+        downloadBtn.disabled = false;
+
+        sortedProjectIds.forEach(projId => {
+            const fileArray = globalProjects[projId];
+            const foundCount = fileArray.filter(f => f !== null).length;
+            
+            const hasComprovante = fileArray[0] !== null;
+            const hasGuia = fileArray[1] !== null;
+            const hasRelacao = fileArray[2] !== null;
+            const hasExtratos = fileArray[3] !== null || fileArray[4] !== null;
+
+            let badgeClass = '';
+            let statusText = '';
+
+            if (foundCount === ORDER_RULES.length) {
+                badgeClass = 'complete';
+                statusText = 'Completo (5/5)';
+            } else if (hasExtratos && !hasComprovante && !hasGuia && !hasRelacao) {
+                badgeClass = 'has-extrato';
+                statusText = 'Apenas Extratos';
+            } else {
+                badgeClass = '';
+                statusText = `${foundCount}/${ORDER_RULES.length} Docs`;
+            }
+
+            const projectCard = document.createElement('div');
+            projectCard.className = 'project-card';
+
+            const header = document.createElement('div');
+            header.className = 'project-header';
+            header.innerHTML = `
+                <span>Projeto Nº: ${projId}</span>
+                <span class="badge ${badgeClass}">${statusText}</span>
+            `;
+            projectCard.appendChild(header);
+
+            const fileList = document.createElement('ul');
+            fileList.className = 'file-list';
+
+            ORDER_RULES.forEach((rule, index) => {
+                const fileItem = document.createElement('li');
+                fileItem.className = 'file-item';
+                
+                const fileObject = fileArray[index];
+                
+                if (fileObject) {
+                    fileItem.innerHTML = `
+                        <span class="file-status status-found">✓</span>
+                        <span class="file-name-expected">${index + 1}. ${rule.label}</span>
+                        <span class="file-name-actual" title="${fileObject.name}">${fileObject.name}</span>
+                        <button class="btn-upload-single" onclick="document.getElementById('input-${projId}-${index}').click()">Substituir</button>
+                    `;
+                } else {
+                    const isOptionalDoc = index < 3;
+                    fileItem.innerHTML = `
+                        <span class="file-status status-missing" style="${isOptionalDoc ? 'color: #95a5a6;' : 'color: #cbd5e0;'}">✗</span>
+                        <span class="file-name-expected" style="color: #cbd5e0;">${index + 1}. ${rule.label}</span>
+                        <span class="file-name-actual" style="color: #95a5a6; font-size: 13px;">Ausente</span>
+                        <button class="btn-upload-single" style="background-color: #e67e22;" onclick="document.getElementById('input-${projId}-${index}').click()">+ Adicionar</button>
+                    `;
+                }
+
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.className = 'single-file-input';
+                hiddenInput.id = `input-${projId}-${index}`;
+                hiddenInput.accept = '.pdf';
+                hiddenInput.onchange = (e) => addSingleFile(projId, index, e.target.files[0]);
+                
+                fileItem.appendChild(hiddenInput);
+                fileList.appendChild(fileItem);
+            });
+
+            projectCard.appendChild(fileList);
+            resultsDiv.appendChild(projectCard);
+        });
+    }
+
+    async function mergePdfFiles(fileObjectsArray) {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        
+        for (const fileObject of fileObjectsArray) {
+            if (fileObject !== null) {
+                const fileBytes = await fileObject.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(fileBytes);
+                const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+                copiedPages.forEach((page) => mergedPdf.addPage(page));
+            }
+        }
+        
+        const mergedPdfBytes = await mergedPdf.save();
+        return mergedPdfBytes;
+    }
+
+    async function downloadUnifiedZip() {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const namingInput = document.getElementById('namingPattern');
+        
+        let namePattern = namingInput.value.trim();
+        if (!namePattern) {
+            namePattern = "Rendimentos [PROJETO]";
+        }
+
+        loadingStatus.style.display = 'block';
+
+        const zip = new JSZip();
+        const sortedProjectIds = Object.keys(globalProjects).sort();
+        
+        let projectsProcessed = 0;
+
+        for (const projId of sortedProjectIds) {
+            const fileArray = globalProjects[projId];
+            const hasFiles = fileArray.some(f => f !== null);
+            
+            if (hasFiles) {
+                try {
+                    const mergedPdfBytes = await mergePdfFiles(fileArray);
+                    
+                    // Substitui a tag [PROJETO] pelo número real do projeto ativo no loop
+                    let finalFileName = namePattern.replace(/\[PROJETO\]/gi, projId);
+                    
+                    // Remove caracteres proibidos comuns para nomes de arquivos
+                    finalFileName = finalFileName.replace(/[\\/:*?"<>|]/g, "_");
+                    
+                    // Garante a extensão .pdf
+                    if (!finalFileName.toLowerCase().endsWith(".pdf")) {
+                        finalFileName += ".pdf";
+                    }
+                    
+                    zip.file(finalFileName, mergedPdfBytes);
+                    projectsProcessed++;
+                } catch (error) {
+                    console.error(`Erro ao fundir PDFs do projeto ${projId}:`, error);
+                    alert(`Ocorreu um erro ao processar os PDFs do projeto ${projId}.`);
+                }
+            }
+        }
+
+        if (projectsProcessed === 0) {
+            alert('Não há arquivos válidos para gerar o download.');
+            loadingStatus.style.display = 'none';
+            return;
+        }
+
+        zip.generateAsync({ type: 'blob' }).then(function (content) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `Projetos_PDF_Customizados.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            loadingStatus.style.display = 'none';
+        });
+    }
+</script>
+
+</body>
+</html>
