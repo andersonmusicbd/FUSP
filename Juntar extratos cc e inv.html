@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)https://www.lncc.br/~borges/php/testar.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combinador de Extratos BB</title>
+    <script src="./Juntar extratos cc e inv_files/pdf-lib.min.js.baixados"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 24px;
+            margin: 0 0 8px 0;
+        }
+        p.desc {
+            color: #64748b;
+            font-size: 14px;
+            margin: 0 0 25px 0;
+            line-height: 1.5;
+        }
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            background: #f8fafc;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-area p {
+            margin: 0;
+            color: #1e40af;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        #fileInput {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #2563eb;
+            font-weight: 500;
+            display: none;
+            background: #e0f2fe;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .lista-projetos {
+            margin-top: 25px;
+            display: none;
+        }
+        .lista-projetos h3 {
+            font-size: 16px;
+            color: #334155;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .item-projeto {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .nome-projeto {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .arquivos-par {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .btn-baixar {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-baixar:hover {
+            background: #16a34a;
+        }
+        .btn-baixar-todos {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            width: 100%;
+            margin-top: 15px;
+            display: none;
+        }
+        .btn-baixar-todos:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>&#128450;&#65039; Combinador de Extratos BB (CC + INV)</h1>
+    <p class="desc">Selecione todos os arquivos de uma vez. O sistema vai extrair o número de identificação final (ex: <b>420424</b>), agrupar os pares colocando a Conta Corrente primeiro e gerar o PDF final.</p>
+
+    <div class="upload-area">
+        <p>&#128194; Arraste ou clique para selecionar TODOS os PDFs do Banco do Brasil</p>
+        <input type="file" id="fileInput" accept=".pdf" multiple="">
+    </div>
+
+    <div id="status" style="display: none;">Baixando todos os arquivos combinados... Verifique os downloads do seu navegador.</div>
+
+    <div id="listaProjetosSection" class="lista-projetos" style="display: block;">
+        <h3>Pares de Extratos Identificados:</h3>
+        <div id="containerItens"><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420402</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420402.pdf <br> 2º (Verso): Banco do Brasil inv 420402.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420402&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420403</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420403.pdf <br> 2º (Verso): Banco do Brasil inv 420403.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420403&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420404</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420404.pdf <br> 2º (Verso): Banco do Brasil inv 420404.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420404&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420405</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420405.pdf <br> 2º (Verso): Banco do Brasil inv 420405.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420405&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420407</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420407.pdf <br> 2º (Verso): Banco do Brasil inv 420407.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420407&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420408</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420408.pdf <br> 2º (Verso): Banco do Brasil inv 420408.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420408&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420410</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420410.pdf <br> 2º (Verso): Banco do Brasil inv 420410.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420410&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420411</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420411.pdf <br> 2º (Verso): Banco do Brasil inv 420411.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420411&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420412</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420412.pdf <br> 2º (Verso): Banco do Brasil inv 420412.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420412&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420413</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420413.pdf <br> 2º (Verso): Banco do Brasil inv 420413.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420413&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420414</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420414.pdf <br> 2º (Verso): Banco do Brasil inv 420414.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420414&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420415</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420415.pdf <br> 2º (Verso): Banco do Brasil inv 420415.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420415&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420416</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420416.pdf <br> 2º (Verso): Banco do Brasil inv 420416.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420416&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420417</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420417.pdf <br> 2º (Verso): Banco do Brasil inv 420417.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420417&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420418</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420418.pdf <br> 2º (Verso): Banco do Brasil inv 420418.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420418&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420419</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420419.pdf <br> 2º (Verso): Banco do Brasil inv 420419.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420419&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420420</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420420.pdf <br> 2º (Verso): Banco do Brasil inv 420420.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420420&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420421</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420421.pdf <br> 2º (Verso): Banco do Brasil inv 420421.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420421&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420422</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420422.pdf <br> 2º (Verso): Banco do Brasil inv 420422.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420422&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420423</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420423.pdf <br> 2º (Verso): Banco do Brasil inv 420423.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420423&#39;)">Juntar e Baixar</button>
+            </div><div class="item-projeto">
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: 420424</div>
+                    <div class="arquivos-par">1º (Frente): Banco do Brasil cc 420424.pdf <br> 2º (Verso): Banco do Brasil inv 420424.pdf</div>
+                </div>
+                <button class="btn-baixar" onclick="processarEBaixarUmPar(&#39;420424&#39;)">Juntar e Baixar</button>
+            </div></div>
+        <button id="btnBaixarTodos" class="btn-baixar-todos" onclick="baixarTodosOsPares()" style="display: block;">&#128229; Baixar Todos os PDFs Combinados</button>
+    </div>
+</div>
+
+<script>
+    let mapProjetos = {};
+
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+        const files = e.target.files;
+        if (files.length === 0) return;
+
+        mostrarStatus(`Lendo ${files.length} arquivos... Cruzando códigos de conta...`);
+        mapProjetos = {}; 
+
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            let nomeOriginal = file.name;
+            
+            // Remove a extensão .pdf para analisar só o texto
+            let nomeSemExtensao = nomeOriginal.replace(/\.pdf$/i, '');
+            let nomeMinusculo = nomeSemExtensao.toLowerCase();
+
+            // Extrai apenas os números do nome do arquivo para servir como o ID da Conta/Projeto
+            let numerosNoNome = nomeMinusculo.match(/\d+/);
+            let IDProjeto = numerosNoNome ? numerosNoNome[0] : nomeSemExtensao.replace(/banco do brasil|cc|inv|\s+/gi, '');
+
+            if (!IDProjeto) IDProjeto = "Sem_Codigo_" + i;
+
+            if (!mapProjetos[IDProjeto]) {
+                mapProjetos[IDProjeto] = { cc: null, inv: null };
+            }
+
+            // Descobre se o arquivo atual é a Conta Corrente ou Investimento
+            if (nomeMinusculo.includes('cc') || nomeMinusculo.includes('conta')) {
+                mapProjetos[IDProjeto].cc = file;
+            } else if (nomeMinusculo.includes('inv') || nomeMinusculo.includes('aplic') || nomeMinusculo.includes('invest')) {
+                mapProjetos[IDProjeto].inv = file;
+            } else {
+                // Fallback de segurança por ordem de chegada se não contiver a tag explicitamente
+                if (!mapProjetos[IDProjeto].cc) mapProjetos[IDProjeto].cc = file;
+                else mapProjetos[IDProjeto].inv = file;
+            }
+        }
+
+        renderizarListaProjetos();
+    });
+
+    function renderizarListaProjetos() {
+        const container = document.getElementById('containerItens');
+        container.innerHTML = "";
+        let temProjetos = false;
+
+        for (let id in mapProjetos) {
+            let par = mapProjetos[id];
+            if (!par.cc && !par.inv) continue;
+            temProjetos = true;
+
+            let itemDiv = document.createElement('div');
+            itemDiv.className = "item-projeto";
+
+            let nomeCC = par.cc ? par.cc.name : "&#10060; Faltando arquivo CC";
+            let nomeINV = par.inv ? par.inv.name : "&#10060; Faltando arquivo INV";
+
+            let botaoDesabilitado = (!par.cc || !par.inv) ? 'disabled style="background:#cbd5e1; cursor:not-allowed;"' : '';
+
+            itemDiv.innerHTML = `
+                <div>
+                    <div class="nome-projeto">&#128273; Conta / ID: ${id}</div>
+                    <div class="arquivos-par">1º (Frente): ${nomeCC} <br> 2º (Verso): ${nomeINV}</div>
+                </div>
+                <button class="btn-baixar" ${botaoDesabilitado} onclick="processarEBaixarUmPar('${id}')">Juntar e Baixar</button>
+            `;
+            container.appendChild(itemDiv);
+        }
+
+        document.getElementById('status').style.display = 'none';
+        document.getElementById('listaProjetosSection').style.display = 'block';
+        if (temProjetos) {
+            document.getElementById('btnBaixarTodos').style.display = 'block';
+        }
+    }
+
+    async function mesclarPDFs(fileCC, fileINV) {
+        const { PDFDocument } = PDFLib;
+        const pdfCombinado = await PDFDocument.create();
+
+        // 1. Processa CC
+        const arrayCC = await fileCC.arrayBuffer();
+        const docCC = await PDFDocument.load(arrayCC);
+        const paginasCC = await pdfCombinado.copyPages(docCC, docCC.getPageIndices());
+        paginasCC.forEach(pag => pdfCombinado.addPage(pag));
+
+        // 2. Processa INV
+        const arrayINV = await fileINV.arrayBuffer();
+        const docINV = await PDFDocument.load(arrayINV);
+        const paginasINV = await pdfCombinado.copyPages(docINV, docINV.getPageIndices());
+        paginasINV.forEach(pag => pdfCombinado.addPage(pag));
+
+        const pdfBytes = await pdfCombinado.save();
+        return pdfBytes;
+    }
+
+    async function processarEBaixarUmPar(id) {
+        let par = mapProjetos[id];
+        if (!par.cc || !par.inv) return;
+
+        try {
+            let bytes = await mesclarPDFs(par.cc, par.inv);
+            dispararDownload(bytes, `Extrato_Combinado_Conta_${id}.pdf`);
+        } catch (error) {
+            alert(`Erro ao juntar os arquivos da conta ${id}.`);
+            console.error(error);
+        }
+    }
+
+    async function baixarTodosOsPares() {
+        mostrarStatus("Baixando todos os arquivos combinados... Verifique os downloads do seu navegador.");
+        
+        for (let id in mapProjetos) {
+            let par = mapProjetos[id];
+            if (par.cc && par.inv) {
+                await processarEBaixarUmPar(id);
+                // Pausa para evitar gargalo e bloqueio do navegador
+                await new Promise(resolve => setTimeout(resolve, 400));
+            }
+        }
+        document.getElementById('status').style.display = 'none';
+    }
+
+    function dispararDownload(bytes, nomeArquivo) {
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = nomeArquivo;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function mostrarStatus(msg) {
+        const s = document.getElementById('status');
+        s.innerText = msg;
+        s.style.display = 'block';
+    }
+</script>
+
+
+</body></html>
