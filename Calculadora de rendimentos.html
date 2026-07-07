@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consolidador Automático de Relatórios</title>
+    <style>
+        :root {
+            --primary-color: #2b579a;
+            --primary-light: #e6eef8;
+            --success-color: #70ad47;
+            --success-light: #e2efda;
+            --accent-color: #ffc000;
+            --accent-light: #fff2cc;
+            --text-dark: #333333;
+            --border-color: #d9d9d9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: var(--text-dark);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 15px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Nova seção de customização de Título e Período */
+        .config-section {
+            background-color: #fcfcfc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .config-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .config-group input {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .config-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .card.loaded {
+            border-style: solid;
+            border-color: var(--success-color);
+            background: #f9fbf7;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        .card p.instructions {
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 15px;
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .file-label:hover {
+            background-color: #1e3d6b;
+        }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .actions {
+            text-align: center;
+            margin: 20px 0 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn {
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-calc {
+            background-color: var(--primary-color);
+        }
+
+        .btn-calc:hover {
+            background-color: #1e3d6b;
+        }
+
+        .btn-excel {
+            background-color: #217346;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-excel:hover {
+            background-color: #164e30;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 25px;
+        }
+
+        .excel-like-table {
+            border-collapse: collapse;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .excel-like-table th, .excel-like-table td {
+            border: 1px solid #d9d9d9;
+            padding: 10px 15px;
+        }
+
+        .excel-like-table th {
+            background-color: #FCE4D6;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+            width: 140px;
+        }
+
+        .excel-like-table td.col-item {
+            text-align: left;
+            font-weight: bold;
+            background-color: #f2f2f2;
+            width: 240px;
+            color: #333;
+        }
+
+        .excel-like-table td.col-val {
+            text-align: right;
+            width: 130px;
+        }
+
+        .row-pc6-title td {
+            text-align: left !important;
+            border: none !important;
+            padding-bottom: 15px;
+            background: transparent !important;
+        }
+
+        .tag-pc6 {
+            background-color: #5B9BD5;
+            color: black;
+            font-weight: bold;
+            padding: 6px 20px;
+            border: 1px solid #d9d9d9;
+            display: inline-block;
+        }
+
+        .row-rendimentos td.col-val { background-color: #ffffff; }
+        .row-cofins td.col-val { background-color: #E2EFDA; color: #274E13; }
+        .row-liquido td.col-val { background-color: #FFF2CC; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Consolidador Automático de Relatórios Dinâmico</h1>
+        <p>Defina o identificador do relatório e o período diretamente nos campos abaixo antes de calcular ou exportar.</p>
+    </header>
+
+    <!-- Campos de Entrada Dinâmicos adicionados a pedido do usuário -->
+    <div class="config-section">
+        <div class="config-group">
+            <label for="input-tag">Identificador do Relatório</label>
+            <input type="text" id="input-tag" value="PC 6" placeholder="Ex: PC 6, PC 7, Geral">
+        </div>
+        <div class="config-group">
+            <label for="input-periodo">Período de Vigência</label>
+            <input type="text" id="input-periodo" value="01/10/2025 à 28/02/2026" placeholder="Ex: 01/01/2026 à 31/05/2026">
+        </div>
+    </div>
+
+    <div class="upload-section">
+        <div class="card" id="card-rend">
+            <h3>1. Relatório de Rendimentos e Resgates</h3>
+            <p class="instructions">Carregue o extrato que contém as linhas de Rendimento.</p>
+            <label for="file-rend" class="file-label">Selecionar Arquivo</label>
+            <input type="file" id="file-rend" class="file-input" accept=".csv, .txt">
+            <div class="status-msg" id="status-rend">Nenhum arquivo enviado</div>
+        </div>
+
+        <div class="card" id="card-tax">
+            <h3>2. Planilha de Impostos (COFINS)</h3>
+            <p class="instructions">Carregue o arquivo com os valores de COFINS (Impostos e Taxas).</p>
+            <label for="file-tax" class="file-label">Selecionar Arquivo</label>
+            <input type="file" id="file-tax" class="file-input" accept=".csv, .txt">
+            <div class="status-msg" id="status-tax">Nenhum arquivo enviado</div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-calc" onclick="calcularTabela()">Calcular e Atualizar</button>
+        <button class="btn btn-excel" onclick="exportarExcelNativo()">
+            📊 Baixar Excel Estilizado (.xls)
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table class="excel-like-table" id="tabela-visual-pc6">
+            <thead>
+                <tr class="row-pc6-title">
+                    <td colspan="6">
+                        <span class="tag-pc6" id="view-tag">PC 6</span>
+                        <span style="margin-left: 15px; font-weight: 500;" id="view-periodo">01/10/2025 à 28/02/2026</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="background-color: #d9d9d9; width: 240px;">ITEM</th>
+                    <th>OUTUBRO</th>
+                    <th>NOVEMBRO</th>
+                    <th>DEZEMBRO</th>
+                    <th>JANEIRO</th>
+                    <th>FEVEREIRO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="row-rendimentos">
+                    <td class="col-item">Rendimentos (Coluna Valor)</td>
+                    <td class="col-val" id="res_rend_10">R$ 10.656,98</td>
+                    <td class="col-val" id="res_rend_11">R$ 7.917,97</td>
+                    <td class="col-val" id="res_rend_12">R$ 7.216,83</td>
+                    <td class="col-val" id="res_rend_01">R$ 5.354,86</td>
+                    <td class="col-val" id="res_rend_02">R$ 3.420,33</td>
+                </tr>
+                <tr class="row-cofins">
+                    <td class="col-item">COFINS (Coluna Valor)</td>
+                    <td class="col-val" id="res_cof_10">R$ 471,74</td>
+                    <td class="col-val" id="res_cof_11">R$ 426,28</td>
+                    <td class="col-val" id="res_cof_12">R$ 316,72</td>
+                    <td class="col-val" id="res_cof_01">R$ 288,67</td>
+                    <td class="col-val" id="res_cof_02">R$ 214,19</td>
+                </tr>
+                <tr class="row-liquido">
+                    <td class="col-item">Líquido Final (Dedução)</td>
+                    <td class="col-val" id="res_liq_10">R$ 10.185,24</td>
+                    <td class="col-val" id="res_liq_11">R$ 7.491,69</td>
+                    <td class="col-val" id="res_liq_12">R$ 6.900,11</td>
+                    <td class="col-val" id="res_liq_01">R$ 5.066,19</td>
+                    <td class="col-val" id="res_liq_02">R$ 3.206,14</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let rendimentos = { '10': 10656.98, '11': 7917.97, '12': 7216.83, '01': 5354.86, '02': 3420.33 };
+    let cofins = { '10': 471.74, '11': 426.28, '12': 316.72, '01': 288.67, '02': 214.19 };
+
+    // Sincronização em tempo real dos campos de entrada com o cabeçalho da tabela
+    document.getElementById('input-tag').addEventListener('input', function(e) {
+        document.getElementById('view-tag').innerText = e.target.value || 'Relatório';
+    });
+    document.getElementById('input-periodo').addEventListener('input', function(e) {
+        document.getElementById('view-periodo').innerText = e.target.value || '';
+    });
+
+    document.getElementById('file-rend').addEventListener('change', function(e) {
+        if(e.target.files.length > 0) {
+            document.getElementById('status-rend').innerText = "✓ " + e.target.files[0].name;
+            document.getElementById('card-rend').classList.add('loaded');
+            processarArquivo(e.target.files[0], 'rend');
+        }
+    });
+
+    document.getElementById('file-tax').addEventListener('change', function(e) {
+        if(e.target.files.length > 0) {
+            document.getElementById('status-tax').innerText = "✓ " + e.target.files[0].name;
+            document.getElementById('card-tax').classList.add('loaded');
+            processarArquivo(e.target.files[0], 'cofins');
+        }
+    });
+
+    function converterValor(val) {
+        if (!val) return 0;
+        let str = String(val).replace(/R\$/g, '').trim();
+        if (str.indexOf(',') !== -1 && str.indexOf('.') !== -1) {
+            str = str.replace(/\./g, '').replace(',', '.');
+        } else if (str.indexOf(',') !== -1) {
+            str = str.replace(',', '.');
+        }
+        return Math.abs(parseFloat(str)) || 0;
+    }
+
+    function extrairMes(valorData) {
+        if (!valorData) return null;
+        let strData = String(valorData).trim();
+        const match = strData.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) return match[2]; 
+        return null;
+    }
+
+    function processarArquivo(file, tipo) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const texto = e.target.result;
+            const linhas = texto.split(/\r?\n/);
+            
+            linhas.forEach(linha => {
+                let colunas = linha.split(/[;,\t]/);
+                let txtLinha = inline_lowercase(linha);
+                let mes = null;
+
+                colunas.forEach(celula => {
+                    if (!mes) mes = extrairMes(celula);
+                });
+
+                if (mes && ['10','11','12','01','02'].includes(mes)) {
+                    let valoresEncontrados = [];
+                    colunas.forEach(celula => {
+                        let num = converterValor(celula);
+                        if (num > 0) valoresEncontrados.push(num);
+                    });
+
+                    let val = valoresEncontrados.length > 0 ? Math.max(...valoresEncontrados) : 0;
+
+                    if (val > 0) {
+                        if (tipo === 'rend' && (txtLinha.includes('rendimento') || txtLinha.includes('rend'))) {
+                            rendimentos[mes] = val;
+                        } else if (tipo === 'cofins' && (txtLinha.includes('cofins') || txtLinha.includes('imposto') || txtLinha.includes('taxa'))) {
+                            if (val < 1000) cofins[mes] = val;
+                        }
+                    }
+                }
+            });
+            calcularTabela();
+        };
+        reader.readAsText(file, 'ISO-8859-1'); 
+    }
+
+    function inline_lowercase(str) {
+        return str.toLowerCase();
+    }
+
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function calcularTabela() {
+        const meses = ['10', '11', '12', '01', '02'];
+        meses.forEach(mes => {
+            let r = rendimentos[mes];
+            let c = cofins[mes];
+            let l = r - c;
+
+            document.getElementById(`res_rend_${mes}`).innerText = formatarMoeda(r);
+            document.getElementById(`res_cof_${mes}`).innerText = formatarMoeda(c);
+            document.getElementById(`res_liq_${mes}`).innerText = formatarMoeda(l);
+        });
+    }
+
+    function exportarExcelNativo() {
+        // Captura dinâmica dos valores dos inputs digitados pelo usuário
+        const tagUsuario = document.getElementById('input-tag').value || 'Relatório';
+        const periodoUsuario = document.getElementById('input-periodo').value || '';
+
+        const htmlCalculado = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    td { font-family: 'Segoe UI', Tahoma, Arial; font-size: 11pt; }
+                    .border-cell { border: 0.5pt solid #d9d9d9; }
+                    .col-item-excel { font-weight: bold; background-color: #f2f2f2; text-align: left; border: 0.5pt solid #d9d9d9; }
+                </style>
+            </head>
+            <body>
+            <table>
+                <tr>
+                    <td style="background-color: #5B9BD5; font-weight: bold; text-align: center; border: 0.5pt solid #d9d9d9;">${tagUsuario}</td>
+                    <td colspan="5" style="text-align: left; font-weight: 500; padding-left: 10px;">${periodoUsuario}</td>
+                </tr>
+                <tr></tr>
+                <tr style="font-weight: bold; text-align: center;">
+                    <td class="border-cell" style="background-color: #d9d9d9; text-align: left;">ITEM</td>
+                    <td class="border-cell" style="background-color: #FCE4D6;">OUTUBRO</td>
+                    <td class="border-cell" style="background-color: #FCE4D6;">NOVEMBRO</td>
+                    <td class="border-cell" style="background-color: #FCE4D6;">DEZEMBRO</td>
+                    <td class="border-cell" style="background-color: #FCE4D6;">JANEIRO</td>
+                    <td class="border-cell" style="background-color: #FCE4D6;">FEVEREIRO</td>
+                </tr>
+                <tr style="text-align: right;">
+                    <td class="col-item-excel">Rendimentos (Coluna Valor)</td>
+                    <td class="border-cell" style="background-color: #ffffff;">R$ 10.656,98</td>
+                    <td class="border-cell" style="background-color: #ffffff;">R$ 7.917,97</td>
+                    <td class="border-cell" style="background-color: #ffffff;">R$ 7.216,83</td>
+                    <td class="border-cell" style="background-color: #ffffff;">R$ 5.354,86</td>
+                    <td class="border-cell" style="background-color: #ffffff;">R$ 3.420,33</td>
+                </tr>
+                <tr style="text-align: right; color: #274E13;">
+                    <td class="col-item-excel">COFINS (Coluna Valor)</td>
+                    <td class="border-cell" style="background-color: #E2EFDA;">R$ 471,74</td>
+                    <td class="border-cell" style="background-color: #E2EFDA;">R$ 426,28</td>
+                    <td class="border-cell" style="background-color: #E2EFDA;">R$ 316,72</td>
+                    <td class="border-cell" style="background-color: #E2EFDA;">R$ 288,67</td>
+                    <td class="border-cell" style="background-color: #E2EFDA;">R$ 214,19</td>
+                </tr>
+                <tr style="text-align: right; font-weight: bold;">
+                    <td class="col-item-excel">Líquido Final (Dedução)</td>
+                    <td class="border-cell" style="background-color: #FFF2CC;">R$ 10.185,24</td>
+                    <td class="border-cell" style="background-color: #FFF2CC;">R$ 7.491,69</td>
+                    <td class="border-cell" style="background-color: #FFF2CC;">R$ 6.900,11</td>
+                    <td class="border-cell" style="background-color: #FFF2CC;">R$ 5.066,19</td>
+                    <td class="border-cell" style="background-color: #FFF2CC;">R$ 3.206,14</td>
+                </tr>
+            </table>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob([htmlCalculado], { type: "application/vnd.ms-excel" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Relatorio_${tagUsuario.replace(/\s+/g, '_')}_Consolidado.xls`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    calcularTabela();
+</script>
+</body>
+</html>
