@@ -228,14 +228,14 @@
         return { category: 'Obras e Instalações', reason: 'Termo de Obras' };
       }
 
-      // 6. MATERIAL PERMANENTE E EQUIPAMENTOS
-      const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
+      // 6. EQUIPAMENTO E MATERIAL PERMANENTE
+      const permanenteKeywords = ['permanente', 'MP', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
       if (permanenteKeywords.some(kw => text.includes(kw))) {
         return { category: 'Equipamento e Material Permanente', reason: 'Termo de Material Permanente' };
       }
 
       // 7. MATERIAL DE CONSUMO
-      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo'];
+      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo','MC'];
       if (consumoKeywords.some(kw => text.includes(kw))) {
         return { category: 'Material de Consumo', reason: 'Termo de Material de Consumo' };
       }
@@ -247,7 +247,7 @@
       }
 
       // 9. EQUIPE / PESSOAL
-      const teamKeywords = ['doutorando', 'doutoranda', 'ic1', 'ic2', 'ic', 'av', 'pd1', 'pd2', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
+      const teamKeywords = ['doutorando', 'doutoranda', 'DO', 'ic', 'ic', 'av', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
       if (teamKeywords.some(kw => text.includes(kw))) {
         return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe' };
       }
