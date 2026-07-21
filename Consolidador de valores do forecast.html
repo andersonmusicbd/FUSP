@@ -185,6 +185,16 @@
       return '';
     }
 
+    // Funções auxiliares para checar termos e siglas
+    function containsWord(text, word) {
+      const regex = new RegExp(`\\b${word}\\b`, 'i');
+      return regex.test(text);
+    }
+
+    function containsAny(text, keywords) {
+      return keywords.some(kw => containsWord(text, kw) || text.toLowerCase().includes(kw.toLowerCase()));
+    }
+
     function classifyRow(itemDescription) {
       if (!itemDescription) return { category: 'IGNORAR', reason: 'Linha Vazia' };
       
@@ -197,7 +207,7 @@
       const blacklistKeywords = [
         'total', 'subtotal', 'soma', 'saldo', 'parcela', 'próxima parcela', 
         'proxima parcela', 'sugerida', 'acumulado', 'resumo', 'saldo final', 
-        'saldo anterior', 'diferença', 'diferenca', 'Proxima parcela sugerida'
+        'saldo anterior', 'diferença', 'diferenca'
       ];
 
       if (blacklistKeywords.some(kw => text.includes(kw))) {
@@ -206,53 +216,59 @@
 
       // 2. PASSAGENS
       const passagensKeywords = ['passagem', 'passagens', 'passagens aéreas', 'passagem aérea', 'bilhete aéreo', 'voo'];
-      if (passagensKeywords.some(kw => text.includes(kw))) {
+      if (containsAny(str, passagensKeywords)) {
         return { category: 'Passagens', reason: 'Termo de Passagens' };
       }
 
       // 3. DIÁRIAS E HOSPEDAGEM
-      const diariasKeywords = ['diária', 'diarias', 'diária', 'hospedagem', 'hotel', 'transporte', 'deslocamento', 'viagem', 'locomoção', 'uber', 'táxi', 'taxi'];
-      if (diariasKeywords.some(kw => text.includes(kw))) {
+      const diariasKeywords = ['diária', 'diarias', 'hospedagem', 'hotel', 'transporte', 'deslocamento', 'viagem', 'locomoção', 'uber', 'táxi', 'taxi'];
+      if (containsAny(str, diariasKeywords)) {
         return { category: 'Diárias', reason: 'Termo de Diárias' };
       }
 
       // 4. PROTÓTIPO
       const protoKeywords = ['protótipo', 'prototipo', 'lote piloto', 'planta piloto', 'mockup', 'bancada experimental'];
-      if (protoKeywords.some(kw => text.includes(kw))) {
+      if (containsAny(str, protoKeywords)) {
         return { category: 'Protótipo', reason: 'Termo de Protótipo' };
       }
 
       // 5. OBRAS E INSTALAÇÕES
       const obraKeywords = ['obra', 'obras', 'instalação', 'instalacoes', 'instalações', 'reforma', 'construção', 'infraestrutura'];
-      if (obraKeywords.some(kw => text.includes(kw))) {
+      if (containsAny(str, obraKeywords)) {
         return { category: 'Obras e Instalações', reason: 'Termo de Obras' };
       }
 
-      // 6. EQUIPAMENTO E MATERIAL PERMANENTE
-      const permanenteKeywords = ['permanente', 'MP', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
-      if (permanenteKeywords.some(kw => text.includes(kw))) {
-        return { category: 'Equipamento e Material Permanente', reason: 'Termo de Material Permanente' };
+      // 6. EQUIPAMENTO E MATERIAL PERMANENTE (inclui MP)
+      const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença', 'mp'];
+      if (permanenteKeywords.some(kw => containsWord(str, kw))) {
+        return { category: 'Equipamento e Material Permanente', reason: 'Termo ou Sigla de Material Permanente (MP)' };
       }
 
-      // 7. MATERIAL DE CONSUMO
-      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo','MC'];
-      if (consumoKeywords.some(kw => text.includes(kw))) {
-        return { category: 'Material de Consumo', reason: 'Termo de Material de Consumo' };
+      // 7. MATERIAL DE CONSUMO (inclui MC)
+      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo', 'mc'];
+      if (consumoKeywords.some(kw => containsWord(str, kw))) {
+        return { category: 'Material de Consumo', reason: 'Termo ou Sigla de Material de Consumo (MC)' };
       }
 
       // 8. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
-      const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'serviço de terceiros', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
-      if (terceirosKeywords.some(kw => text.includes(kw))) {
+      const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'serviços', 'serviço de terceiros', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
+      if (terceirosKeywords.some(kw => containsWord(str, kw))) {
         return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Termo de Serviços/Outras Despesas' };
       }
 
-      // 9. EQUIPE / PESSOAL
-      const teamKeywords = ['doutorando', 'doutoranda', 'DO', 'DO1', 'DO2', 'DO3', 'ic', 'ic', 'av', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
-      if (teamKeywords.some(kw => text.includes(kw))) {
-        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe' };
+      // 9. EQUIPE / PESSOAL (inclui DO, DO1, DO2, DO3, IC, PD, ME, etc.)
+      const teamKeywords = [
+        'doutorando', 'doutoranda', 'do', 'do1', 'do2', 'do3',
+        'ic', 'ic1', 'ic2', 'av', 'pd', 'pd1', 'pd2', 'msc', 'dr',
+        'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor',
+        'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa',
+        'me', 'me1', 'me2'
+      ];
+      if (teamKeywords.some(kw => containsWord(str, kw))) {
+        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe (ex: DO, DO1, IC, PD)' };
       }
 
-      // Caso não encaixe em nada reconhecível, IGNORE em vez de forçar 'Equipe'
+      // Caso não encaixe em nada reconhecível, IGNORE em vez de forçar uma categoria
       return { category: 'IGNORAR', reason: 'Não corresponde a nenhuma Rúbrica' };
     }
 
