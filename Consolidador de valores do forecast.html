@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consolidador Inteligente de Forecast por Rúbrica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS (XLSX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-6">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Cabeçalho -->
+    <header class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Consolidador Inteligente de Forecast</h1>
+        <p class="text-slate-500 text-sm mt-1">
+          Identificação e consolidação mensal de Rúbricas
+        </p>
+      </div>
+    </header>
+
+    <!-- Área de Upload -->
+    <div id="drop-zone" class="border-2 border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 transition-colors rounded-xl p-8 text-center cursor-pointer">
+      <input type="file" id="file-input" accept=".xlsx, .xls" class="hidden">
+      <div class="space-y-2">
+        <svg class="mx-auto h-12 w-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-base font-medium text-slate-700">Arraste e solte sua planilha Excel aqui ou <span class="text-indigo-600 font-semibold underline">clique para selecionar</span></p>
+        <p class="text-xs text-slate-400">Suporta arquivos .XLSX e .XLS</p>
+      </div>
+    </div>
+
+    <!-- Painel de Resultados -->
+    <div id="result-panel" class="hidden space-y-4">
+      <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Resumo Consolidado por Rúbrica</h2>
+          <p id="file-name" class="text-xs text-slate-500"></p>
+        </div>
+        <button id="download-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Baixar Resumo (Excel)
+        </button>
+      </div>
+
+      <!-- Tabela Dinâmica -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <table id="summary-table" class="w-full text-sm text-left border-collapse">
+          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+            <tr id="table-header">
+              <th class="p-3 border-r border-slate-200">Rúbrica</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-200">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detalhamento / Inspeção -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+        <h3 class="text-md font-bold text-slate-800">Detalhamento da Classificação de Linhas</h3>
+        <p class="text-xs text-slate-500">Confira abaixo como cada linha da sua planilha foi reconhecida:</p>
+        <div class="max-h-60 overflow-y-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0">
+              <tr>
+                <th class="p-2 border-b">Descrição Original da Linha</th>
+                <th class="p-2 border-b">Classificação Atribuída</th>
+                <th class="p-2 border-b text-right">Soma nos Meses</th>
+              </tr>
+            </thead>
+            <tbody id="inspection-body" class="divide-y divide-slate-100">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const resultPanel = document.getElementById('result-panel');
+    const fileNameDisplay = document.getElementById('file-name');
+    const tableHeader = document.getElementById('table-header');
+    const tableBody = document.getElementById('table-body');
+    const inspectionBody = document.getElementById('inspection-body');
+    const downloadBtn = document.getElementById('download-btn');
+
+    const ALL_RUBRICAS = [
+      'Equipe',
+      'Diárias',
+      'Passagens',
+      'Material de Consumo',
+      'Equipamento e Material Permanente',
+      'Serviços de Terceiros / Outras Despesas',
+      'Protótipo',
+      'Obras e Instalações'
+    ];
+
+    let processedDataForExport = [];
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-indigo-500', 'bg-indigo-100/50');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-100/50');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-indigo-500', 'bg-indigo-100/50');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      fileNameDisplay.textContent = `Arquivo carregado: ${file.name}`;
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: false });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        const jsonSheet = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        processForecastData(jsonSheet);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function parseBrazilianNumber(val) {
+      if (val === null || val === undefined) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      
+      let cleanVal = val.toString().replace(/[\u00A0\r\n]/g, ' ').trim();
+      cleanVal = cleanVal.replace(/R\$\s?/gi, '').replace(/\s+/g, '');
+
+      if (!cleanVal) return 0;
+
+      if (cleanVal.includes(',') && cleanVal.includes('.')) {
+        cleanVal = cleanVal.replace(/\./g, '').replace(',', '.');
+      } else if (cleanVal.includes(',')) {
+        cleanVal = cleanVal.replace(',', '.');
+      }
+
+      const parsed = parseFloat(cleanVal);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function formatCellToMonth(cellVal) {
+      if (!cellVal) return '';
+
+      if (cellVal instanceof Date) {
+        const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        return `${months[cellVal.getMonth()]}/${cellVal.getFullYear().toString().substr(-2)}`;
+      }
+
+      const str = cellVal.toString().trim();
+
+      if (/^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez|\d{1,2})[\/\-\s_](\d{2,4})/i.test(str) ||
+          /^\d{4}[\/\-\s_]\d{1,2}/.test(str) ||
+          /^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)/i.test(str)) {
+        return str;
+      }
+
+      return '';
+    }
+
+    function classifyRow(itemDescription) {
+      if (!itemDescription) return { category: 'IGNORAR', reason: 'Linha Vazia' };
+      
+      const str = itemDescription.toString().trim();
+      const text = str.toLowerCase();
+
+      if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
+
+      if (/^(total|subtotal|soma|total geral|resumo|acumulado)\b/i.test(text) || /^total\s/i.test(text)) {
+        return { category: 'IGNORAR', reason: 'Linha de Total/Subtotal' };
+      }
+
+      // 1. PASSAGENS
+      const passagensKeywords = ['passagem', 'passagens', 'passagens aéreas', 'passagem aérea', 'bilhete aéreo', 'voo'];
+      if (passagensKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Passagens', reason: 'Termo de Passagens' };
+      }
+
+      // 2. DIÁRIAS
+      const diariasKeywords = ['diária', 'diarias', 'diária', 'hospedagem', 'hotel', 'transporte', 'deslocamento', 'viagem', 'locomoção', 'uber', 'táxi', 'taxi'];
+      if (diariasKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Diárias', reason: 'Termo de Diárias' };
+      }
+
+      // 3. PROTÓTIPO
+      const protoKeywords = ['protótipo', 'prototipo', 'lote piloto', 'planta piloto', 'mockup', 'bancada experimental'];
+      if (protoKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Protótipo', reason: 'Termo de Protótipo' };
+      }
+
+      // 4. OBRAS E INSTALAÇÕES
+      const obraKeywords = ['obra', 'obras', 'instalação', 'instalacoes', 'instalações', 'reforma', 'construção', 'infraestrutura'];
+      if (obraKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Obras e Instalações', reason: 'Termo de Obras' };
+      }
+
+      // 5. MATERIAL PERMANENTE E EQUIPAMENTOS
+      const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
+      if (permanenteKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Equipamento e Material Permanente', reason: 'Termo de Material Permanente' };
+      }
+
+      // 6. MATERIAL DE CONSUMO
+      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo'];
+      if (consumoKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Material de Consumo', reason: 'Termo de Material de Consumo' };
+      }
+
+      // 7. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
+      const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'serviço de terceiros', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
+      if (terceirosKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Termo de Serviços/Outras Despesas' };
+      }
+
+      // 8. EQUIPE
+      const teamKeywords = ['doutorando', 'doutoranda', 'ic1', 'ic2', 'ic', 'av', 'pd1', 'pd2', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
+      if (teamKeywords.some(kw => text.includes(kw))) {
+        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe' };
+      }
+
+      return { category: 'Equipe', reason: 'Classificado por Padrão como Equipe' };
+    }
+
+    function processForecastData(rows) {
+      if (rows.length === 0) return;
+
+      let headerRowIndex = -1;
+      let monthsHeaders = [];
+
+      // Procura a linha de cabeçalho onde estão as colunas dos meses
+      for (let i = 0; i < Math.min(rows.length, 25); i++) {
+        const row = rows[i];
+        if (!row) continue;
+
+        const monthIndices = [];
+        row.forEach((cell, idx) => {
+          const formattedMonth = formatCellToMonth(cell);
+          if (formattedMonth) {
+            monthIndices.push({ idx, label: formattedMonth });
+          }
+        });
+
+        if (monthIndices.length >= 2) {
+          headerRowIndex = i;
+          monthsHeaders = monthIndices;
+          break;
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        alert("Não foi possível identificar a coluna dos meses na planilha.");
+        return;
+      }
+
+      const totals = {};
+      ALL_RUBRICAS.forEach(cat => {
+        totals[cat] = {};
+        monthsHeaders.forEach(m => totals[cat][m.label] = 0);
+      });
+
+      const inspectionLogs = [];
+
+      for (let i = headerRowIndex + 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        // Pega a descrição da coluna (antes da primeira coluna de mês)
+        let itemDescription = '';
+        for (let colIdx = 0; colIdx < monthsHeaders[0].idx; colIdx++) {
+          const cellVal = row[colIdx] ? row[colIdx].toString().trim() : '';
+          // Ignora se for palavra de totalização secundária na descrição
+          if (cellVal !== '') {
+            itemDescription = cellVal;
+            break;
+          }
+        }
+
+        const classification = classifyRow(itemDescription);
+        let monthlySumForThisRow = 0;
+
+        // AQUI ESTÁ A CORREÇÃO CRUCIAL:
+        // Percorre EXCLUSIVAMENTE os índices das colunas de meses encontrados
+        if (classification.category !== 'IGNORAR' && totals[classification.category]) {
+          monthsHeaders.forEach(m => {
+            const rawVal = row[m.idx];
+            const numVal = parseBrazilianNumber(rawVal);
+            
+            totals[classification.category][m.label] += numVal;
+            monthlySumForThisRow += numVal;
+          });
+        }
+
+        if (itemDescription || monthlySumForThisRow > 0) {
+          inspectionLogs.push({
+            desc: itemDescription || '(Linha sem título)',
+            category: classification.category,
+            reason: classification.reason,
+            sum: monthlySumForThisRow
+          });
+        }
+      }
+
+      renderResults(monthsHeaders.map(m => m.label), totals, inspectionLogs);
+    }
+
+    function renderResults(months, totals, inspectionLogs) {
+      tableHeader.innerHTML = `<th class="p-3 border-r border-slate-200">Rúbrica</th>`;
+      tableBody.innerHTML = '';
+      inspectionBody.innerHTML = '';
+
+      months.forEach(month => {
+        const th = document.createElement('th');
+        th.className = 'p-3 text-right border-r border-slate-200';
+        th.textContent = month;
+        tableHeader.appendChild(th);
+      });
+
+      const thTotal = document.createElement('th');
+      thTotal.className = 'p-3 text-right bg-slate-200';
+      thTotal.textContent = 'Total Rúbrica';
+      tableHeader.appendChild(thTotal);
+
+      processedDataForExport = [];
+
+      ALL_RUBRICAS.forEach(cat => {
+        const rowSum = months.reduce((acc, m) => acc + totals[cat][m], 0);
+
+        if (rowSum === 0) return;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+
+        let rowHTML = `<td class="p-3 font-semibold text-slate-700 border-r border-slate-200">${cat}</td>`;
+        let exportRow = { 'Rúbrica': cat };
+
+        months.forEach(m => {
+          const val = totals[cat][m];
+          rowHTML += `<td class="p-3 text-right border-r border-slate-200">${formatCurrency(val)}</td>`;
+          exportRow[m] = val;
+        });
+
+        rowHTML += `<td class="p-3 text-right font-bold bg-slate-50 border-slate-200">${formatCurrency(rowSum)}</td>`;
+        exportRow['Total Geral'] = rowSum;
+
+        tr.innerHTML = rowHTML;
+        tableBody.appendChild(tr);
+
+        processedDataForExport.push(exportRow);
+      });
+
+      inspectionLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        let badgeColor = 'bg-slate-100 text-slate-600';
+        if (log.category === 'Equipe') badgeColor = 'bg-indigo-100 text-indigo-700 font-medium';
+        if (log.category === 'Passagens') badgeColor = 'bg-blue-100 text-blue-700 font-medium';
+        if (log.category === 'Diárias') badgeColor = 'bg-sky-100 text-sky-700 font-medium';
+        if (log.category === 'Material de Consumo') badgeColor = 'bg-amber-100 text-amber-700 font-medium';
+        if (log.category === 'Equipamento e Material Permanente') badgeColor = 'bg-purple-100 text-purple-700 font-medium';
+        if (log.category === 'Protótipo') badgeColor = 'bg-emerald-100 text-emerald-700 font-medium';
+        if (log.category === 'Obras e Instalações') badgeColor = 'bg-rose-100 text-rose-700 font-medium';
+        if (log.category === 'IGNORAR') badgeColor = 'bg-gray-100 text-gray-400';
+
+        tr.innerHTML = `
+          <td class="p-2 border-b">${log.desc}</td>
+          <td class="p-2 border-b"><span class="px-2 py-0.5 rounded text-[11px] ${badgeColor}">${log.category}</span></td>
+          <td class="p-2 border-b text-right text-slate-500">${log.sum > 0 ? formatCurrency(log.sum) : log.reason}</td>
+        `;
+        inspectionBody.appendChild(tr);
+      });
+
+      resultPanel.classList.remove('hidden');
+    }
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (!processedDataForExport.length) return;
+
+      const worksheet = XLSX.utils.json_to_sheet(processedDataForExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Resumo Rúbricas");
+
+      XLSX.writeFile(workbook, "Forecast_Consolidado_Rubricas.xlsx");
+    });
+  </script>
+</body>
+</html>
