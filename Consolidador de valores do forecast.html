@@ -185,25 +185,14 @@
       return '';
     }
 
-    // Funções auxiliares para checar termos e siglas
-    function containsWord(text, word) {
-      const regex = new RegExp(`\\b${word}\\b`, 'i');
-      return regex.test(text);
-    }
-
-    function containsAny(text, keywords) {
-      return keywords.some(kw => containsWord(text, kw) || text.toLowerCase().includes(kw.toLowerCase()));
-    }
-
     function classifyRow(itemDescription) {
       if (!itemDescription) return { category: 'IGNORAR', reason: 'Linha Vazia' };
       
-      const str = itemDescription.toString().trim();
-      const text = str.toLowerCase();
+      const text = itemDescription.toString().trim().toLowerCase();
 
       if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas, etc.)
+      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas)
       const blacklistKeywords = [
         'total', 'subtotal', 'soma', 'saldo', 'parcela', 'próxima parcela', 
         'proxima parcela', 'sugerida', 'acumulado', 'resumo', 'saldo final', 
@@ -214,61 +203,57 @@
         return { category: 'IGNORAR', reason: 'Linha de Totais/Saldos/Parcelas' };
       }
 
-      // 2. PASSAGENS
+      // 2. EQUIPAMENTO E MATERIAL PERMANENTE (MP, MP1..MP6)
+      const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
+      const mpRegex = /(?:^|[^a-z0-9])mp[1-6]?(?:$|[^a-z0-9])/i;
+      if (permanenteKeywords.some(kw => text.includes(kw)) || mpRegex.test(text)) {
+        return { category: 'Equipamento e Material Permanente', reason: 'Termo ou Sigla MP (1 a 6)' };
+      }
+
+      // 3. MATERIAL DE CONSUMO (MC, MC1..MC6)
+      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo'];
+      const mcRegex = /(?:^|[^a-z0-9])mc[1-6]?(?:$|[^a-z0-9])/i;
+      if (consumoKeywords.some(kw => text.includes(kw)) || mcRegex.test(text)) {
+        return { category: 'Material de Consumo', reason: 'Termo ou Sigla MC (1 a 6)' };
+      }
+
+      // 4. EQUIPE / PESSOAL (DO, DO1..DO6, D1..D6, IC, IC1..IC6, PD, PD1..PD6, ME, ME1..ME6, MSC, DR, AV)
+      const teamKeywords = ['doutorando', 'doutoranda', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa'];
+      const teamCodesRegex = /(?:^|[^a-z0-9])(do[1-6]?|d[1-6]|ic[1-6]?|pd[1-6]?|me[1-6]?|msc|dr|av)(?:$|[^a-z0-9])/i;
+      if (teamKeywords.some(kw => text.includes(kw)) || teamCodesRegex.test(text)) {
+        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe (DO/D/IC/PD/ME de 1 a 6)' };
+      }
+
+      // 5. PASSAGENS
       const passagensKeywords = ['passagem', 'passagens', 'passagens aéreas', 'passagem aérea', 'bilhete aéreo', 'voo'];
-      if (containsAny(str, passagensKeywords)) {
+      if (passagensKeywords.some(kw => text.includes(kw))) {
         return { category: 'Passagens', reason: 'Termo de Passagens' };
       }
 
-      // 3. DIÁRIAS E HOSPEDAGEM
+      // 6. DIÁRIAS E HOSPEDAGEM
       const diariasKeywords = ['diária', 'diarias', 'hospedagem', 'hotel', 'transporte', 'deslocamento', 'viagem', 'locomoção', 'uber', 'táxi', 'taxi'];
-      if (containsAny(str, diariasKeywords)) {
+      if (diariasKeywords.some(kw => text.includes(kw))) {
         return { category: 'Diárias', reason: 'Termo de Diárias' };
       }
 
-      // 4. PROTÓTIPO
+      // 7. PROTÓTIPO
       const protoKeywords = ['protótipo', 'prototipo', 'lote piloto', 'planta piloto', 'mockup', 'bancada experimental'];
-      if (containsAny(str, protoKeywords)) {
+      if (protoKeywords.some(kw => text.includes(kw))) {
         return { category: 'Protótipo', reason: 'Termo de Protótipo' };
       }
 
-      // 5. OBRAS E INSTALAÇÕES
+      // 8. OBRAS E INSTALAÇÕES
       const obraKeywords = ['obra', 'obras', 'instalação', 'instalacoes', 'instalações', 'reforma', 'construção', 'infraestrutura'];
-      if (containsAny(str, obraKeywords)) {
+      if (obraKeywords.some(kw => text.includes(kw))) {
         return { category: 'Obras e Instalações', reason: 'Termo de Obras' };
       }
 
-      // 6. EQUIPAMENTO E MATERIAL PERMANENTE (inclui MP)
-      const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença', 'mp'];
-      if (permanenteKeywords.some(kw => containsWord(str, kw))) {
-        return { category: 'Equipamento e Material Permanente', reason: 'Termo ou Sigla de Material Permanente (MP)' };
-      }
-
-      // 7. MATERIAL DE CONSUMO (inclui MC)
-      const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo', 'mc'];
-      if (consumoKeywords.some(kw => containsWord(str, kw))) {
-        return { category: 'Material de Consumo', reason: 'Termo ou Sigla de Material de Consumo (MC)' };
-      }
-
-      // 8. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
-      const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'serviços', 'serviço de terceiros', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
-      if (terceirosKeywords.some(kw => containsWord(str, kw))) {
+      // 9. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
+      const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'servicos', 'serviços', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
+      if (terceirosKeywords.some(kw => text.includes(kw))) {
         return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Termo de Serviços/Outras Despesas' };
       }
 
-      // 9. EQUIPE / PESSOAL (inclui DO, DO1, DO2, DO3, IC, PD, ME, etc.)
-      const teamKeywords = [
-        'doutorando', 'doutoranda', 'do', 'do1', 'do2', 'do3',
-        'ic', 'ic1', 'ic2', 'av', 'pd', 'pd1', 'pd2', 'msc', 'dr',
-        'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor',
-        'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa',
-        'me', 'me1', 'me2'
-      ];
-      if (teamKeywords.some(kw => containsWord(str, kw))) {
-        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe (ex: DO, DO1, IC, PD)' };
-      }
-
-      // Caso não encaixe em nada reconhecível, IGNORE em vez de forçar uma categoria
       return { category: 'IGNORAR', reason: 'Não corresponde a nenhuma Rúbrica' };
     }
 
@@ -326,7 +311,6 @@
         const classification = classifyRow(itemDescription);
         let monthlySumForThisRow = 0;
 
-        // Apenas soma se for uma Rúbrica válida (não IGNORAR)
         if (classification.category !== 'IGNORAR' && totals[classification.category]) {
           monthsHeaders.forEach(m => {
             const rawVal = row[m.idx];
