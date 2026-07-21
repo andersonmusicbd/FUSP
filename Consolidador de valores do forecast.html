@@ -247,7 +247,7 @@
       }
 
       // 9. EQUIPE / PESSOAL
-      const teamKeywords = ['doutorando', 'doutoranda', 'DO', 'ic', 'ic', 'av', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
+      const teamKeywords = ['doutorando', 'doutoranda', 'DO', 'DO1', 'DO2', 'DO3', 'ic', 'ic', 'av', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
       if (teamKeywords.some(kw => text.includes(kw))) {
         return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe' };
       }
