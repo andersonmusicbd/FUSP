@@ -19,7 +19,7 @@
       <div>
         <h1 class="text-2xl font-bold text-slate-900">Consolidador Inteligente de Forecast</h1>
         <p class="text-slate-500 text-sm mt-1">
-          Identificação e consolidação mensal de Rúbricas
+          Identificação e consolidação mensal de Rúbricas (Filtro Rígido)
         </p>
       </div>
     </header>
@@ -193,59 +193,67 @@
 
       if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      if (/^(total|subtotal|soma|total geral|resumo|acumulado)\b/i.test(text) || /^total\s/i.test(text)) {
-        return { category: 'IGNORAR', reason: 'Linha de Total/Subtotal' };
+      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas, etc.)
+      const blacklistKeywords = [
+        'total', 'subtotal', 'soma', 'saldo', 'parcela', 'próxima parcela', 
+        'proxima parcela', 'sugerida', 'acumulado', 'resumo', 'saldo final', 
+        'saldo anterior', 'diferença', 'diferenca'
+      ];
+
+      if (blacklistKeywords.some(kw => text.includes(kw))) {
+        return { category: 'IGNORAR', reason: 'Linha de Totais/Saldos/Parcelas' };
       }
 
-      // 1. PASSAGENS
+      // 2. PASSAGENS
       const passagensKeywords = ['passagem', 'passagens', 'passagens aéreas', 'passagem aérea', 'bilhete aéreo', 'voo'];
       if (passagensKeywords.some(kw => text.includes(kw))) {
         return { category: 'Passagens', reason: 'Termo de Passagens' };
       }
 
-      // 2. DIÁRIAS
+      // 3. DIÁRIAS E HOSPEDAGEM
       const diariasKeywords = ['diária', 'diarias', 'diária', 'hospedagem', 'hotel', 'transporte', 'deslocamento', 'viagem', 'locomoção', 'uber', 'táxi', 'taxi'];
       if (diariasKeywords.some(kw => text.includes(kw))) {
         return { category: 'Diárias', reason: 'Termo de Diárias' };
       }
 
-      // 3. PROTÓTIPO
+      // 4. PROTÓTIPO
       const protoKeywords = ['protótipo', 'prototipo', 'lote piloto', 'planta piloto', 'mockup', 'bancada experimental'];
       if (protoKeywords.some(kw => text.includes(kw))) {
         return { category: 'Protótipo', reason: 'Termo de Protótipo' };
       }
 
-      // 4. OBRAS E INSTALAÇÕES
+      // 5. OBRAS E INSTALAÇÕES
       const obraKeywords = ['obra', 'obras', 'instalação', 'instalacoes', 'instalações', 'reforma', 'construção', 'infraestrutura'];
       if (obraKeywords.some(kw => text.includes(kw))) {
         return { category: 'Obras e Instalações', reason: 'Termo de Obras' };
       }
 
-      // 5. MATERIAL PERMANENTE E EQUIPAMENTOS
+      // 6. MATERIAL PERMANENTE E EQUIPAMENTOS
       const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
       if (permanenteKeywords.some(kw => text.includes(kw))) {
         return { category: 'Equipamento e Material Permanente', reason: 'Termo de Material Permanente' };
       }
 
-      // 6. MATERIAL DE CONSUMO
+      // 7. MATERIAL DE CONSUMO
       const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo'];
       if (consumoKeywords.some(kw => text.includes(kw))) {
         return { category: 'Material de Consumo', reason: 'Termo de Material de Consumo' };
       }
 
-      // 7. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
+      // 8. SERVIÇOS DE TERCEIROS / OUTRAS DESPESAS
       const terceirosKeywords = ['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço', 'serviço de terceiros', 'treinamento', 'evento', 'inscrição', 'frete', 'outras despesas', 'diversos', 'manutenção', 'aluguel'];
       if (terceirosKeywords.some(kw => text.includes(kw))) {
         return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Termo de Serviços/Outras Despesas' };
       }
 
-      // 8. EQUIPE
+      // 9. EQUIPE / PESSOAL
       const teamKeywords = ['doutorando', 'doutoranda', 'ic1', 'ic2', 'ic', 'av', 'pd1', 'pd2', 'pd', 'msc', 'dr', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'me1', 'me2', 'me'];
       if (teamKeywords.some(kw => text.includes(kw))) {
         return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe' };
       }
 
-      return { category: 'Equipe', reason: 'Classificado por Padrão como Equipe' };
+      // Caso não encaixe em nada reconhecível, IGNORE em vez de forçar 'Equipe'
+      return { category: 'IGNORAR', reason: 'Não corresponde a nenhuma Rúbrica' };
     }
 
     function processForecastData(rows) {
@@ -254,7 +262,6 @@
       let headerRowIndex = -1;
       let monthsHeaders = [];
 
-      // Procura a linha de cabeçalho onde estão as colunas dos meses
       for (let i = 0; i < Math.min(rows.length, 25); i++) {
         const row = rows[i];
         if (!row) continue;
@@ -291,11 +298,9 @@
         const row = rows[i];
         if (!row || row.length === 0) continue;
 
-        // Pega a descrição da coluna (antes da primeira coluna de mês)
         let itemDescription = '';
         for (let colIdx = 0; colIdx < monthsHeaders[0].idx; colIdx++) {
           const cellVal = row[colIdx] ? row[colIdx].toString().trim() : '';
-          // Ignora se for palavra de totalização secundária na descrição
           if (cellVal !== '') {
             itemDescription = cellVal;
             break;
@@ -305,8 +310,7 @@
         const classification = classifyRow(itemDescription);
         let monthlySumForThisRow = 0;
 
-        // AQUI ESTÁ A CORREÇÃO CRUCIAL:
-        // Percorre EXCLUSIVAMENTE os índices das colunas de meses encontrados
+        // Apenas soma se for uma Rúbrica válida (não IGNORAR)
         if (classification.category !== 'IGNORAR' && totals[classification.category]) {
           monthsHeaders.forEach(m => {
             const rawVal = row[m.idx];
