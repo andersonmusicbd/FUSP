@@ -19,7 +19,7 @@
       <div>
         <h1 class="text-2xl font-bold text-slate-900">Consolidador Inteligente de Forecast</h1>
         <p class="text-slate-500 text-sm mt-1">
-          Identificação e consolidação mensal de Rúbricas (Filtro Rígido)
+          Identificação e consolidação mensal de Rúbricas (Ajustado)
         </p>
       </div>
     </header>
@@ -192,10 +192,8 @@
 
       if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      // 1. FILTRO APENAS PARA BLOCOS EXTERNOS ESPECÍFICOS
+      // 1. FILTRO APENAS PARA BLOCOS RESUMIDOS / EXTERNOS (Removido 'a definir')
       const blacklistKeywords = [
-        'a definir',
-        'material de consumo a definir',
         'saldo final', 
         'saldo anterior', 
         'saldo pós',
@@ -210,25 +208,27 @@
         return { category: 'IGNORAR', reason: 'Resumo / Bloco Fora da Grade' };
       }
 
-      // 2. EQUIPAMENTO E MATERIAL PERMANENTE (MP, MP1..MP6)
+      // 2. EQUIPE / PESSOAL (DO, DO1..DO6, D1..D6, IC, IC1..IC6, PD, PD1..PD6, ME, ME1..ME6, PC, PC1..PC6, MSC, DR, AV)
+      const teamKeywords = ['doutorando', 'doutoranda', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa'];
+      // Suporta siglas mesmo acompanhadas de traço ou hífen, ex: "PC1 - Sandro", "IC1 - - a definir"
+      const teamCodesRegex = /(?:^|[\s\-_])(do[1-6]?|d[1-6]|ic[1-6]?|pd[1-6]?|me[1-6]?|pc[1-6]?|msc|dr|av)(?:$|[\s\-_]|\b)/i;
+      
+      if (teamKeywords.some(kw => text.includes(kw)) || teamCodesRegex.test(text)) {
+        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe (DO/D/IC/PD/ME/PC)' };
+      }
+
+      // 3. EQUIPAMENTO E MATERIAL PERMANENTE (MP, MP1..MP6)
       const permanenteKeywords = ['permanente', 'mat. permanente', 'mat permanente', 'equipamento', 'equipamentos', 'notebook', 'computador', 'servidor', 'máquina', 'maquina', 'imobilizado', 'software', 'licença'];
-      const mpRegex = /(?:^|[^a-z0-9])mp[1-6]?(?:$|[^a-z0-9])/i;
+      const mpRegex = /(?:^|[\s\-_])mp[1-6]?(?:$|[\s\-_]|\b)/i;
       if (permanenteKeywords.some(kw => text.includes(kw)) || mpRegex.test(text)) {
         return { category: 'Equipamento e Material Permanente', reason: 'Termo ou Sigla MP (1 a 6)' };
       }
 
-      // 3. MATERIAL DE CONSUMO (MC, MC1..MC6)
+      // 4. MATERIAL DE CONSUMO (MC, MC1..MC6)
       const consumoKeywords = ['material de consumo', 'mat. consumo', 'mat consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'vidraria', 'papelaria', 'consumo'];
-      const mcRegex = /(?:^|[^a-z0-9])mc[1-6]?(?:$|[^a-z0-9])/i;
+      const mcRegex = /(?:^|[\s\-_])mc[1-6]?(?:$|[\s\-_]|\b)/i;
       if (consumoKeywords.some(kw => text.includes(kw)) || mcRegex.test(text)) {
         return { category: 'Material de Consumo', reason: 'Termo ou Sigla MC (1 a 6)' };
-      }
-
-      // 4. EQUIPE / PESSOAL (DO, DO1..DO6, D1..D6, IC, IC1..IC6, PD, PD1..PD6, ME, ME1..ME6, PC, PC1..PC6, MSC, DR, AV)
-      const teamKeywords = ['doutorando', 'doutoranda', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa'];
-      const teamCodesRegex = /(?:^|[^a-z0-9])(do[1-6]?|d[1-6]|ic[1-6]?|pd[1-6]?|me[1-6]?|pc[1-6]?|msc|dr|av)(?:$|[^a-z0-9])/i;
-      if (teamKeywords.some(kw => text.includes(kw)) || teamCodesRegex.test(text)) {
-        return { category: 'Equipe', reason: 'Cargo ou Sigla de Equipe (DO/D/IC/PD/ME/PC de 1 a 6)' };
       }
 
       // 5. PASSAGENS
