@@ -192,16 +192,22 @@
 
       if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas, Rendimentos, Disponível)
+      // 1. FILTRO APENAS PARA BLOCOS EXTERNOS ESPECÍFICOS (SEM EXCLUIR "TOTAL")
       const blacklistKeywords = [
-        'total', 'subtotal', 'soma', 'saldo', 'parcela', 'próxima parcela', 
-        'proxima parcela', 'sugerida', 'acumulado', 'resumo', 'saldo final', 
-        'saldo anterior', 'diferença', 'diferenca', 'rendimento', 'disponível', 
-        'disponivel', 'total recebido', 'total previsto', 'gasto'
+        'a definir',
+        'material de consumo a definir',
+        'saldo final', 
+        'saldo anterior', 
+        'saldo pós',
+        'rendimento financeiro', 
+        'disponível p/ extensão', 
+        'disponivel p/ extensao',
+        'total recebido', 
+        'total previsto'
       ];
 
       if (blacklistKeywords.some(kw => text.includes(kw))) {
-        return { category: 'IGNORAR', reason: 'Linha de Totais/Saldos/Resumos Externos' };
+        return { category: 'IGNORAR', reason: 'Resumo / Bloco Fora da Grade' };
       }
 
       // 2. EQUIPAMENTO E MATERIAL PERMANENTE (MP, MP1..MP6)
@@ -264,7 +270,7 @@
       let headerRowIndex = -1;
       let monthsHeaders = [];
 
-      // 1. Identifica a linha do cabeçalho dos meses
+      // Mapeia o cabeçalho exato dos meses
       for (let i = 0; i < Math.min(rows.length, 25); i++) {
         const row = rows[i];
         if (!row) continue;
@@ -297,7 +303,7 @@
 
       const inspectionLogs = [];
 
-      // 2. Percorre APENAS as linhas que estão na grade da tabela principal
+      // Percorre as linhas do documento
       for (let i = headerRowIndex + 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
@@ -309,14 +315,6 @@
             itemDescription = cellVal;
             break;
           }
-        }
-
-        const textDesc = itemDescription.toLowerCase();
-
-        // SE ENCONTRAR A LINHA "TOTAL" DA TABELA, INTERROMPE O PROCESSAMENTO
-        // Isso garante que nada que venha abaixo ou fora da grade seja lido
-        if (textDesc === 'total' || textDesc.startsWith('total ')) {
-          break; 
         }
 
         const classification = classifyRow(itemDescription);
