@@ -89,6 +89,15 @@
                             <select id="pc-header" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
                         </div>
                     </div>
+
+                    <!-- Novo Campo: Intervalo Personalizado de Células (PC) -->
+                    <div class="bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <label class="block text-indigo-900 font-semibold text-xs mb-1 flex items-center gap-1">
+                            <i data-lucide="grid" class="w-3.5 h-3.5 text-indigo-600"></i> Intervalo Específico de Células (Opcional):
+                        </label>
+                        <input type="text" id="pc-cell-range" placeholder="Ex: A11:D50 (Deixe em branco para ler tudo)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase font-mono text-slate-700">
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-slate-600 text-xs font-semibold mb-1">Coluna Favorecido (Membro):</label>
@@ -138,10 +147,18 @@
                         </div>
                     </div>
 
-                    <!-- Intervalo de Linhas PF -->
+                    <!-- Novo Campo: Intervalo Personalizado de Células (PF) -->
+                    <div class="bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-100">
+                        <label class="block text-emerald-900 font-semibold text-xs mb-1 flex items-center gap-1">
+                            <i data-lucide="grid" class="w-3.5 h-3.5 text-emerald-600"></i> Intervalo Específico de Células (Opcional):
+                        </label>
+                        <input type="text" id="pf-cell-range" placeholder="Ex: A11:D71 (Deixe em branco para ler tudo)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none uppercase font-mono text-slate-700">
+                    </div>
+
+                    <!-- Intervalo de Linhas PF Exclusivo -->
                     <div class="bg-amber-50/80 p-3 rounded-lg border border-amber-200 space-y-1.5">
                         <label class="block text-amber-900 font-bold text-xs flex items-center gap-1">
-                            <i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-600"></i> Intervalo de Linhas da Equipe (PF):
+                            <i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-600"></i> Intervalo Numérico de Linhas (PF):
                         </label>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -274,11 +291,13 @@
 
         const pcSheetSelect = document.getElementById('pc-sheet');
         const pcHeaderSelect = document.getElementById('pc-header');
+        const pcCellRangeInput = document.getElementById('pc-cell-range');
         const pcColMembroSelect = document.getElementById('pc-col-membro');
         const pcColItemSelect = document.getElementById('pc-col-item');
 
         const pfSheetSelect = document.getElementById('pf-sheet');
         const pfHeaderSelect = document.getElementById('pf-header');
+        const pfCellRangeInput = document.getElementById('pf-cell-range');
         const pfRowStartInput = document.getElementById('pf-row-start');
         const pfRowEndInput = document.getElementById('pf-row-end');
         const pfColItemSelect = document.getElementById('pf-col-item');
@@ -297,11 +316,13 @@
 
         pcSheetSelect.addEventListener('change', () => loadSheetData('PC'));
         pcHeaderSelect.addEventListener('change', () => setupColumns('PC'));
+        pcCellRangeInput.addEventListener('input', () => loadSheetData('PC'));
         pcColMembroSelect.addEventListener('change', processAndRender);
         pcColItemSelect.addEventListener('change', processAndRender);
 
         pfSheetSelect.addEventListener('change', () => loadSheetData('PF'));
         pfHeaderSelect.addEventListener('change', () => setupColumns('PF'));
+        pfCellRangeInput.addEventListener('input', () => loadSheetData('PF'));
         pfRowStartInput.addEventListener('input', () => setupColumns('PF'));
         pfRowEndInput.addEventListener('input', () => setupColumns('PF'));
         pfColItemSelect.addEventListener('change', processAndRender);
@@ -344,14 +365,13 @@
             const select = (type === 'PC') ? pcSheetSelect : pfSheetSelect;
             select.innerHTML = '';
 
-            wb.SheetNames.forEach((name, index) => {
+            wb.SheetNames.forEach((name) => {
                 const opt = document.createElement('option');
                 opt.value = name;
                 opt.textContent = name;
                 select.appendChild(opt);
             });
 
-            // Tenta pré-selecionar abas comuns caso existam
             if (type === 'PC') {
                 const idx = wb.SheetNames.findIndex(n => n.toLowerCase().includes('equipe executora'));
                 if (idx !== -1) select.selectedIndex = idx;
@@ -367,12 +387,28 @@
             if (type === 'PC') {
                 const sheetName = pcSheetSelect.value;
                 const worksheet = workbookPC.Sheets[sheetName];
-                rawMatrixPC = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                const rangeVal = pcCellRangeInput.value.trim();
+                const opts = { header: 1, defval: '' };
+                if (rangeVal) opts.range = rangeVal;
+                
+                try {
+                    rawMatrixPC = XLSX.utils.sheet_to_json(worksheet, opts);
+                } catch (err) {
+                    rawMatrixPC = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                }
                 populateHeaders('PC', rawMatrixPC);
             } else {
                 const sheetName = pfSheetSelect.value;
                 const worksheet = workbookPF.Sheets[sheetName];
-                rawMatrixPF = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                const rangeVal = pfCellRangeInput.value.trim();
+                const opts = { header: 1, defval: '' };
+                if (rangeVal) opts.range = rangeVal;
+
+                try {
+                    rawMatrixPF = XLSX.utils.sheet_to_json(worksheet, opts);
+                } catch (err) {
+                    rawMatrixPF = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                }
                 populateHeaders('PF', rawMatrixPF);
             }
         }
@@ -389,11 +425,10 @@
                 select.appendChild(opt);
             });
 
-            // Pré-seleções inteligentes
             if (type === 'PC') {
-                select.value = Math.min(4, matrix.length - 1);
+                select.value = Math.min(4, Math.max(0, matrix.length - 1));
             } else {
-                select.value = Math.min(9, matrix.length - 1);
+                select.value = Math.min(9, Math.max(0, matrix.length - 1));
             }
 
             setupColumns(type);
