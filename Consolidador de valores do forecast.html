@@ -192,15 +192,16 @@
 
       if (!text || text.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas)
+      // 1. FILTRO DE EXCLUSÃO RÍGIDO (Totais, Saldos, Parcelas, Rendimentos, Disponível)
       const blacklistKeywords = [
         'total', 'subtotal', 'soma', 'saldo', 'parcela', 'próxima parcela', 
         'proxima parcela', 'sugerida', 'acumulado', 'resumo', 'saldo final', 
-        'saldo anterior', 'diferença', 'diferenca'
+        'saldo anterior', 'diferença', 'diferenca', 'rendimento', 'disponível', 
+        'disponivel', 'total recebido', 'total previsto', 'gasto'
       ];
 
       if (blacklistKeywords.some(kw => text.includes(kw))) {
-        return { category: 'IGNORAR', reason: 'Linha de Totais/Saldos/Parcelas' };
+        return { category: 'IGNORAR', reason: 'Linha de Totais/Saldos/Resumos Externos' };
       }
 
       // 2. EQUIPAMENTO E MATERIAL PERMANENTE (MP, MP1..MP6)
@@ -263,6 +264,7 @@
       let headerRowIndex = -1;
       let monthsHeaders = [];
 
+      // 1. Identifica a linha do cabeçalho dos meses
       for (let i = 0; i < Math.min(rows.length, 25); i++) {
         const row = rows[i];
         if (!row) continue;
@@ -295,6 +297,7 @@
 
       const inspectionLogs = [];
 
+      // 2. Percorre APENAS as linhas que estão na grade da tabela principal
       for (let i = headerRowIndex + 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
@@ -306,6 +309,14 @@
             itemDescription = cellVal;
             break;
           }
+        }
+
+        const textDesc = itemDescription.toLowerCase();
+
+        // SE ENCONTRAR A LINHA "TOTAL" DA TABELA, INTERROMPE O PROCESSAMENTO
+        // Isso garante que nada que venha abaixo ou fora da grade seja lido
+        if (textDesc === 'total' || textDesc.startsWith('total ')) {
+          break; 
         }
 
         const classification = classifyRow(itemDescription);
