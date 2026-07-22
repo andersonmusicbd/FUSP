@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identificador de Itens - PC & PF</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md py-6 px-4 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i data-lucide="layers" class="w-7 h-7"></i>
+                    Identificador de Itens PC / PF
+                </h1>
+                <p class="text-indigo-200 text-sm mt-1">
+                    Cruzamento flexível de dados entre Prestação de Contas (PC) e Plano Financeiro (PF)
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto w-full flex-1 p-4 sm:p-8 space-y-6">
+
+        <!-- Upload Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Card PC -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                            <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800">1. Planilha PC</h2>
+                            <p class="text-xs text-slate-500">Prestação de Contas</p>
+                        </div>
+                    </div>
+                    <span id="badge-pc" class="px-2.5 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">Aguardando arquivo</span>
+                </div>
+
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors bg-slate-50/50 cursor-pointer relative" id="drop-pc">
+                    <input type="file" id="file-pc" accept=".xlsx, .xls, .csv" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-slate-400 mb-2"></i>
+                    <p class="text-sm font-medium text-slate-700">Clique para selecionar ou arraste a planilha PC</p>
+                    <p class="text-xs text-slate-400 mt-1">Suporta .XLSX, .XLS, .CSV</p>
+                    <p id="filename-pc" class="text-xs font-semibold text-indigo-600 mt-2 truncate"></p>
+                </div>
+
+                <!-- Configurações PC -->
+                <div id="config-pc" class="hidden space-y-3 pt-2 border-t border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Aba (Guia):</label>
+                            <select id="pc-sheet" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Linha do Cabeçalho:</label>
+                            <select id="pc-header" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Coluna Favorecido (Membro):</label>
+                            <select id="pc-col-membro" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Coluna Nº do Ítem:</label>
+                            <select id="pc-col-item" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card PF -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <i data-lucide="file-check" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-slate-800">2. Planilha PF</h2>
+                            <p class="text-xs text-slate-500">Plano Financeiro</p>
+                        </div>
+                    </div>
+                    <span id="badge-pf" class="px-2.5 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">Aguardando arquivo</span>
+                </div>
+
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-emerald-400 transition-colors bg-slate-50/50 cursor-pointer relative" id="drop-pf">
+                    <input type="file" id="file-pf" accept=".xlsx, .xls, .csv" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-slate-400 mb-2"></i>
+                    <p class="text-sm font-medium text-slate-700">Clique para selecionar ou arraste a planilha PF</p>
+                    <p class="text-xs text-slate-400 mt-1">Suporta .XLSX, .XLS, .CSV</p>
+                    <p id="filename-pf" class="text-xs font-semibold text-emerald-600 mt-2 truncate"></p>
+                </div>
+
+                <!-- Configurações PF -->
+                <div id="config-pf" class="hidden space-y-3 pt-2 border-t border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Aba (Guia):</label>
+                            <select id="pf-sheet" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Linha do Cabeçalho:</label>
+                            <select id="pf-header" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                        </div>
+                    </div>
+
+                    <!-- Intervalo de Linhas PF -->
+                    <div class="bg-amber-50/80 p-3 rounded-lg border border-amber-200 space-y-1.5">
+                        <label class="block text-amber-900 font-bold text-xs flex items-center gap-1">
+                            <i data-lucide="sliders" class="w-3.5 h-3.5 text-amber-600"></i> Intervalo de Linhas da Equipe (PF):
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-600 text-[11px] mb-0.5 font-medium">Linha Inicial:</label>
+                                <input type="number" id="pf-row-start" min="1" placeholder="Início" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold text-slate-800 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-slate-600 text-[11px] mb-0.5 font-medium">Linha Final:</label>
+                                <input type="number" id="pf-row-end" min="1" placeholder="Fim" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none font-semibold text-slate-800 shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Coluna Nº Item (PF):</label>
+                            <select id="pf-col-item" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-600 text-xs font-semibold mb-1">Coluna Descrição (PF):</label>
+                            <select id="pf-col-desc" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de Busca e Filtros -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="relative w-full md:w-96">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </div>
+                <input type="text" id="search-input" placeholder="Buscar por favorecido, nº do item ou descrição..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <label for="filter-membro" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Filtrar por Favorecido:</label>
+                <select id="filter-membro" class="w-full md:w-64 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-700">
+                    <option value="">-- Todos os Membros --</option>
+                </select>
+                <button id="btn-export" title="Exportar resultado para Excel" class="hidden flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                    <i data-lucide="download" class="w-4 h-4"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Resumo de Estatísticas -->
+        <div id="stats-bar" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-xs text-slate-500">Itens na PC</span>
+                <span id="stat-pc-count" class="text-lg font-bold text-slate-800">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-xs text-slate-500">Itens na PF (Filtrados)</span>
+                <span id="stat-pf-count" class="text-lg font-bold text-slate-800">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-xs text-slate-500">Itens Correspondentes</span>
+                <span id="stat-matched-count" class="text-lg font-bold text-indigo-600">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-xs text-slate-500">Membros Encontrados</span>
+                <span id="stat-membros-count" class="text-lg font-bold text-emerald-600">0</span>
+            </div>
+        </div>
+
+        <!-- Tabela de Resultados -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                    <i data-lucide="table" class="w-4 h-4 text-indigo-600"></i>
+                    Resultados do Cruzamento de Dados
+                </h3>
+                <span id="result-count" class="text-xs font-medium text-slate-500">Mostrando 0 registro(s)</span>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar max-h-[60vh]">
+                <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0 border-b border-slate-200 z-10">
+                        <tr>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Favorecido (Membro)</th>
+                            <th class="py-3 px-4">Nº Item (PC)</th>
+                            <th class="py-3 px-4">Nº Item (PF)</th>
+                            <th class="py-3 px-4">Descrição do Item (PF)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-100 text-slate-600">
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400">
+                                <i data-lucide="file-search" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                                <p class="text-sm font-medium">Faça o upload das planilhas PC e PF para visualizar o resultado.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 px-8 text-center text-xs text-slate-400">
+        Ferramenta de Cruzamento de Dados PC & PF &copy; 2026 - Executado localmente no navegador.
+    </footer>
+
+    <!-- Script Principal -->
+    <script>
+        lucide.createIcons();
+
+        let workbookPC = null;
+        let workbookPF = null;
+        let rawMatrixPC = [];
+        let rawMatrixPF = [];
+        let dataPC = [];
+        let dataPF = [];
+
+        // Elementos DOM
+        const filePcInput = document.getElementById('file-pc');
+        const filePfInput = document.getElementById('file-pf');
+        const badgePc = document.getElementById('badge-pc');
+        const badgePf = document.getElementById('badge-pf');
+        const filenamePc = document.getElementById('filename-pc');
+        const filenamePf = document.getElementById('filename-pf');
+
+        const configPc = document.getElementById('config-pc');
+        const configPf = document.getElementById('config-pf');
+
+        const pcSheetSelect = document.getElementById('pc-sheet');
+        const pcHeaderSelect = document.getElementById('pc-header');
+        const pcColMembroSelect = document.getElementById('pc-col-membro');
+        const pcColItemSelect = document.getElementById('pc-col-item');
+
+        const pfSheetSelect = document.getElementById('pf-sheet');
+        const pfHeaderSelect = document.getElementById('pf-header');
+        const pfRowStartInput = document.getElementById('pf-row-start');
+        const pfRowEndInput = document.getElementById('pf-row-end');
+        const pfColItemSelect = document.getElementById('pf-col-item');
+        const pfColDescSelect = document.getElementById('pf-col-desc');
+
+        const searchInput = document.getElementById('search-input');
+        const filterMembro = document.getElementById('filter-membro');
+        const tableBody = document.getElementById('table-body');
+        const resultCount = document.getElementById('result-count');
+        const btnExport = document.getElementById('btn-export');
+        const statsBar = document.getElementById('stats-bar');
+
+        // Eventos
+        filePcInput.addEventListener('change', (e) => handleFileUpload(e, 'PC'));
+        filePfInput.addEventListener('change', (e) => handleFileUpload(e, 'PF'));
+
+        pcSheetSelect.addEventListener('change', () => loadSheetData('PC'));
+        pcHeaderSelect.addEventListener('change', () => setupColumns('PC'));
+        pcColMembroSelect.addEventListener('change', processAndRender);
+        pcColItemSelect.addEventListener('change', processAndRender);
+
+        pfSheetSelect.addEventListener('change', () => loadSheetData('PF'));
+        pfHeaderSelect.addEventListener('change', () => setupColumns('PF'));
+        pfRowStartInput.addEventListener('input', () => setupColumns('PF'));
+        pfRowEndInput.addEventListener('input', () => setupColumns('PF'));
+        pfColItemSelect.addEventListener('change', processAndRender);
+        pfColDescSelect.addEventListener('change', processAndRender);
+
+        searchInput.addEventListener('input', processAndRender);
+        filterMembro.addEventListener('change', processAndRender);
+        btnExport.addEventListener('click', exportToExcel);
+
+        function handleFileUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                if (type === 'PC') {
+                    workbookPC = workbook;
+                    filenamePc.textContent = file.name;
+                    badgePc.textContent = `${workbook.SheetNames.length} aba(s)`;
+                    badgePc.className = "px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-medium";
+                    configPc.classList.remove('hidden');
+                    populateSheets('PC');
+                } else {
+                    workbookPF = workbook;
+                    filenamePf.textContent = file.name;
+                    badgePf.textContent = `${workbook.SheetNames.length} aba(s)`;
+                    badgePf.className = "px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-medium";
+                    configPf.classList.remove('hidden');
+                    populateSheets('PF');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function populateSheets(type) {
+            const wb = (type === 'PC') ? workbookPC : workbookPF;
+            const select = (type === 'PC') ? pcSheetSelect : pfSheetSelect;
+            select.innerHTML = '';
+
+            wb.SheetNames.forEach((name, index) => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+
+            // Tenta pré-selecionar abas comuns caso existam
+            if (type === 'PC') {
+                const idx = wb.SheetNames.findIndex(n => n.toLowerCase().includes('equipe executora'));
+                if (idx !== -1) select.selectedIndex = idx;
+            } else {
+                const idx = wb.SheetNames.findIndex(n => n.toLowerCase().includes('rel. de itens original'));
+                if (idx !== -1) select.selectedIndex = idx;
+            }
+
+            loadSheetData(type);
+        }
+
+        function loadSheetData(type) {
+            if (type === 'PC') {
+                const sheetName = pcSheetSelect.value;
+                const worksheet = workbookPC.Sheets[sheetName];
+                rawMatrixPC = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                populateHeaders('PC', rawMatrixPC);
+            } else {
+                const sheetName = pfSheetSelect.value;
+                const worksheet = workbookPF.Sheets[sheetName];
+                rawMatrixPF = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                populateHeaders('PF', rawMatrixPF);
+            }
+        }
+
+        function populateHeaders(type, matrix) {
+            const select = (type === 'PC') ? pcHeaderSelect : pfHeaderSelect;
+            select.innerHTML = '';
+
+            matrix.slice(0, 30).forEach((row, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                const sampleText = row.filter(cell => String(cell).trim()).slice(0, 3).join(' | ');
+                opt.textContent = `Linha ${i + 1}: ${sampleText.substring(0, 45) || '(vazia)'}`;
+                select.appendChild(opt);
+            });
+
+            // Pré-seleções inteligentes
+            if (type === 'PC') {
+                select.value = Math.min(4, matrix.length - 1);
+            } else {
+                select.value = Math.min(9, matrix.length - 1);
+            }
+
+            setupColumns(type);
+        }
+
+        function setupColumns(type) {
+            if (type === 'PC') {
+                const hIndex = parseInt(pcHeaderSelect.value) || 0;
+                const headers = extractHeaders(rawMatrixPC, hIndex);
+                
+                populateSelect(pcColMembroSelect, headers, ['favorecido', 'membro', 'nome']);
+                populateSelect(pcColItemSelect, headers, ['nº do ítem', 'item', 'ítem']);
+
+                dataPC = extractRowsData(rawMatrixPC, hIndex, headers);
+                updateMembroFilter();
+            } else {
+                const hIndex = parseInt(pfHeaderSelect.value) || 0;
+                const headers = extractHeaders(rawMatrixPF, hIndex);
+
+                populateSelect(pfColItemSelect, headers, ['nº', 'item', 'código']);
+                populateSelect(pfColDescSelect, headers, ['descrição', 'descri', 'especificação']);
+
+                const startRow = pfRowStartInput.value ? (parseInt(pfRowStartInput.value) - 1) : null;
+                const endRow = pfRowEndInput.value ? (parseInt(pfRowEndInput.value) - 1) : null;
+
+                dataPF = extractRowsData(rawMatrixPF, hIndex, headers, startRow, endRow);
+            }
+            processAndRender();
+        }
+
+        function extractHeaders(matrix, headerIndex) {
+            const row = matrix[headerIndex] || [];
+            let maxCols = 0;
+            matrix.slice(headerIndex).forEach(r => maxCols = Math.max(maxCols, r.length));
+
+            const headers = [];
+            for (let c = 0; c < maxCols; c++) {
+                let name = row[c] !== undefined ? String(row[c]).trim() : '';
+                if (!name) name = `Coluna ${c + 1}`;
+                headers.push({ index: c, name: name });
+            }
+            return headers;
+        }
+
+        function populateSelect(selectElem, headers, keywords) {
+            selectElem.innerHTML = '';
+            headers.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h.name;
+                opt.textContent = h.name;
+                selectElem.appendChild(opt);
+            });
+
+            const matched = headers.find(h => keywords.some(kw => h.name.toLowerCase().includes(kw)));
+            if (matched) selectElem.value = matched.name;
+        }
+
+        function extractRowsData(matrix, headerIndex, headers, startRow = null, endRow = null) {
+            const rows = [];
+            const fromIndex = (startRow !== null && startRow > headerIndex) ? startRow : (headerIndex + 1);
+            const toIndex = (endRow !== null && endRow < matrix.length) ? endRow : (matrix.length - 1);
+
+            for (let r = fromIndex; r <= toIndex; r++) {
+                const rowCells = matrix[r];
+                if (!rowCells || rowCells.every(cell => String(cell).trim() === '')) continue;
+                
+                let obj = {};
+                headers.forEach(h => {
+                    const val = rowCells[h.index];
+                    obj[h.name] = val !== undefined ? String(val).trim() : '';
+                });
+                rows.push(obj);
+            }
+            return rows;
+        }
+
+        function updateMembroFilter() {
+            if (dataPC.length === 0) return;
+            const pcMembroKey = pcColMembroSelect.value;
+
+            const membros = new Set();
+            dataPC.forEach(row => {
+                const val = row[pcMembroKey];
+                if (val && val !== 'N/A') membros.add(val);
+            });
+
+            const sortedMembros = Array.from(membros).sort();
+            filterMembro.innerHTML = '<option value="">-- Todos os Membros --</option>';
+            sortedMembros.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                filterMembro.appendChild(opt);
+            });
+        }
+
+        function normalizeItemNum(val) {
+            if (val === undefined || val === null) return '';
+            let str = String(val).trim().toLowerCase();
+            str = str.replace(/\.0$/, '');
+            str = str.replace(/^0+/, '');
+            str = str.replace(/[^a-z0-9.]/g, '');
+            return str;
+        }
+
+        function processAndRender() {
+            if (dataPC.length === 0 && dataPF.length === 0) return;
+
+            const pcMembroKey = pcColMembroSelect.value;
+            const pcItemKey = pcColItemSelect.value;
+            const pfItemKey = pfColItemSelect.value;
+            const pfDescKey = pfColDescSelect.value;
+
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const selectedMembro = filterMembro.value;
+
+            const pfMap = new Map();
+            dataPF.forEach(row => {
+                const rawNum = row[pfItemKey];
+                const key = normalizeItemNum(rawNum);
+                if (key) {
+                    if (!pfMap.has(key)) pfMap.set(key, []);
+                    pfMap.get(key).push(row);
+                }
+            });
+
+            let results = [];
+            let matchedCount = 0;
+
+            dataPC.forEach(pcRow => {
+                const favorecido = pcRow[pcMembroKey] || 'N/A';
+                const pcItemNum = pcRow[pcItemKey] || '';
+                const normPcItem = normalizeItemNum(pcItemNum);
+
+                if (selectedMembro && favorecido !== selectedMembro) return;
+
+                const pfMatches = normPcItem ? (pfMap.get(normPcItem) || []) : [];
+
+                if (pfMatches.length > 0) {
+                    pfMatches.forEach(pfRow => {
+                        matchedCount++;
+                        const pfItemValue = pfRow[pfItemKey] || pcItemNum;
+                        const pfDescValue = pfRow[pfDescKey] || '-';
+
+                        results.push({
+                            status: 'Encontrado',
+                            favorecido: favorecido,
+                            pcItem: pcItemNum,
+                            pfItem: pfItemValue,
+                            pfDesc: pfDescValue
+                        });
+                    });
+                } else {
+                    results.push({
+                        status: 'Não Encontrado na PF',
+                        favorecido: favorecido,
+                        pcItem: pcItemNum || '-',
+                        pfItem: '-',
+                        pfDesc: 'Nenhum item correspondente nas configurações atuais'
+                    });
+                }
+            });
+
+            if (searchTerm) {
+                results = results.filter(r => 
+                    r.favorecido.toLowerCase().includes(searchTerm) ||
+                    r.pcItem.toLowerCase().includes(searchTerm) ||
+                    r.pfItem.toLowerCase().includes(searchTerm) ||
+                    r.pfDesc.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            statsBar.classList.remove('hidden');
+            document.getElementById('stat-pc-count').textContent = dataPC.length;
+            document.getElementById('stat-pf-count').textContent = dataPF.length;
+            document.getElementById('stat-matched-count').textContent = matchedCount;
+            document.getElementById('stat-membros-count').textContent = Math.max(0, filterMembro.options.length - 1);
+
+            btnExport.classList.remove('hidden');
+            resultCount.textContent = `Mostrando ${results.length} registro(s)`;
+
+            renderTable(results);
+        }
+
+        function renderTable(results) {
+            if (results.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400">
+                            Nenhum registro encontrado para os filtros selecionados.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            results.forEach(r => {
+                const statusBadge = r.status === 'Encontrado'
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Encontrado</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Não na PF</span>`;
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap">${statusBadge}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${r.favorecido}</td>
+                        <td class="py-3 px-4 font-mono text-indigo-700 font-medium">${r.pcItem || '-'}</td>
+                        <td class="py-3 px-4 font-mono text-emerald-700 font-semibold">${r.pfItem || '-'}</td>
+                        <td class="py-3 px-4 text-xs leading-relaxed font-medium text-slate-700">${r.pfDesc}</td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function exportToExcel() {
+            const pcMembroKey = pcColMembroSelect.value;
+            const pcItemKey = pcColItemSelect.value;
+            const pfItemKey = pfColItemSelect.value;
+            const pfDescKey = pfColDescSelect.value;
+
+            const pfMap = new Map();
+            dataPF.forEach(row => {
+                const key = normalizeItemNum(row[pfItemKey]);
+                if (key) {
+                    if (!pfMap.has(key)) pfMap.set(key, []);
+                    pfMap.get(key).push(row);
+                }
+            });
+
+            const exportData = [];
+            dataPC.forEach(pcRow => {
+                const favorecido = pcRow[pcMembroKey] || '';
+                const pcItemNum = pcRow[pcItemKey] || '';
+                const normPcItem = normalizeItemNum(pcItemNum);
+
+                const pfMatches = normPcItem ? (pfMap.get(normPcItem) || []) : [];
+
+                if (pfMatches.length > 0) {
+                    pfMatches.forEach(pfRow => {
+                        exportData.push({
+                            'Favorecido (PC)': favorecido,
+                            'Nº Item (PC)': pcItemNum,
+                            'Status Cruzamento': 'Encontrado',
+                            'Nº Item (PF)': pfRow[pfItemKey] || pcItemNum,
+                            'Descrição (PF)': pfRow[pfDescKey] || ''
+                        });
+                    });
+                } else {
+                    exportData.push({
+                        'Favorecido (PC)': favorecido,
+                        'Nº Item (PC)': pcItemNum,
+                        'Status Cruzamento': 'Não Encontrado na PF',
+                        'Nº Item (PF)': '-',
+                        'Descrição (PF)': 'Nenhum item correspondente'
+                    });
+                }
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Resultado Cruzamento");
+            XLSX.writeFile(wb, "Cruzamento_PC_PF.xlsx");
+        }
+    </script>
+</body>
+</html>
