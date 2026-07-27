@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atestador de Notas Fiscais (Preview e Edição Direta)</title>
+  <title>Atestador de Notas Fiscais (Tela Cheia e Conclusão)</title>
   
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -35,7 +35,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1250px;
       margin: 0 auto;
     }
 
@@ -105,28 +105,39 @@
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 10px 20px;
-      font-size: 14px;
+      padding: 8px 14px;
+      font-size: 13px;
       font-weight: 600;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn:hover { background-color: var(--primary-hover); }
     .btn-success { background-color: #16a34a; }
     .btn-success:hover { background-color: #15803d; }
+    .btn-secondary { background-color: #64748b; }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; }
+    .btn-outline:hover { background-color: #f1f5f9; }
 
-    /* Lista de PDFs com Preview Integrado */
+    /* Card da Nota Fiscal */
     .pdf-card {
       background: white;
-      border: 1px solid var(--border-color);
+      border: 2px solid var(--border-color);
       border-radius: 8px;
       padding: 15px;
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      transition: all 0.3s ease;
+    }
+
+    /* Estilo para nota concluída */
+    .pdf-card.completed {
+      border-color: #22c55e;
+      background-color: #f0fdf4;
     }
 
     .pdf-card-header {
@@ -155,15 +166,24 @@
       border: 1px solid #e2e8f0;
     }
 
+    .zoom-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 6px 6px 0 0;
+    }
+
     .preview-container {
       flex: 1;
       background: #525659;
-      padding: 15px;
-      border-radius: 8px;
+      border-radius: 0 0 8px 8px;
       display: flex;
       justify-content: center;
       overflow: auto;
       max-height: 600px;
+      padding: 15px;
     }
 
     .canvas-wrapper {
@@ -181,14 +201,54 @@
       user-select: none;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
+
+    /* Modal Tela Cheia */
+    .modal-fullscreen {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: #323639;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .badge-done {
+      background-color: #22c55e;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="header">
-      <h1>📑 Carimbador de Atestos (Com Preview e Edição Direta)</h1>
-      <p>Ajuste a data identificada e arraste o carimbo diretamente na tela de cada nota fiscal enviada.</p>
+      <h1>📑 Carimbador de Atestos</h1>
+      <p>Ajuste dados, altere datas, veja em tela cheia e marque como concluído antes de baixar.</p>
     </div>
 
     <!-- 1. Configurações Globais -->
@@ -243,6 +303,15 @@
     <div id="pdf-cards-container"></div>
   </div>
 
+  <!-- Modal para Tela Cheia -->
+  <div id="fullscreen-modal" class="modal-fullscreen">
+    <div class="modal-header">
+      <h3 id="modal-title" style="margin:0;">Visualização Completa</h3>
+      <button class="btn btn-secondary" onclick="closeFullscreen()">✕ Fechar Tela Cheia</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+
   <script>
     let signatureImgElement = null;
     let loadedFiles = [];
@@ -280,9 +349,11 @@
           file: file,
           name: file.name,
           date: extractedDate,
-          wPct: 0.28,  // Largura padrão
-          xPct: 0.65,  // Posição X padrão (direita)
-          yPct: 0.65   // Posição Y padrão (inferior livre)
+          scale: 0.85,
+          wPct: 0.28,
+          xPct: 0.65,
+          yPct: 0.65,
+          completed: false
         };
 
         loadedFiles.push(fileObj);
@@ -327,12 +398,22 @@
         const item = loadedFiles[index];
 
         const card = document.createElement('div');
-        card.className = 'pdf-card';
+        card.className = `pdf-card ${item.completed ? 'completed' : ''}`;
+        card.id = `card-${item.id}`;
         card.innerHTML = `
           <div class="pdf-card-header">
-            <strong>📄 ${item.name}</strong>
-            <button class="btn btn-success" style="padding: 6px 12px; font-size: 12px;" onclick="downloadSinglePDF(${index})">💾 Baixar Atestada</button>
+            <div>
+              <strong>📄 ${item.name}</strong>
+              <span id="badge-${item.id}">${item.completed ? '<span class="badge-done">✅ Concluído</span>' : ''}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn ${item.completed ? 'btn-outline' : 'btn-success'}" id="btn-done-${item.id}" onclick="toggleCompleted(${index})">
+                ${item.completed ? '↩ Reabrir' : '✅ Marcar como Concluído'}
+              </button>
+              <button class="btn btn-secondary" onclick="downloadSinglePDF(${index})">💾 Baixar</button>
+            </div>
           </div>
+
           <div class="pdf-card-body">
             <div class="pdf-controls">
               <div>
@@ -346,18 +427,30 @@
                 <input type="number" value="${Math.round(item.wPct * 100)}" min="15" max="50" oninput="updateItemWidth(${index}, this.value)">
               </div>
               <div>
-                <label>📍 Dica de Posicionamento:</label>
+                <label>📍 Posicionamento:</label>
                 <p style="font-size: 11px; color: #475569; margin: 4px 0 0 0;">
-                  Clique e arraste o retângulo do carimbo diretamente sobre a folha para ajustar o local exato.
+                  Arraste a caixa do carimbo na folha para ajustar a posição.
                 </p>
               </div>
             </div>
 
-            <div class="preview-container">
-              <div class="canvas-wrapper" id="wrapper-${item.id}">
-                <canvas id="canvas-${item.id}"></canvas>
-                <div class="drag-stamp" id="stamp-${item.id}">
-                  <img id="stamp-img-${item.id}" style="width:100%; height:100%; object-fit:contain;">
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <div class="zoom-toolbar">
+                <span style="font-size: 12px; font-weight: 600;">🔍 Zoom:</span>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button class="btn btn-secondary" style="padding: 2px 8px;" onclick="changeZoom(${index}, -0.15)">➖ Reduzir</button>
+                  <span id="zoom-text-${item.id}" style="font-size: 12px; font-weight: bold;">${Math.round(item.scale * 100)}%</span>
+                  <button class="btn btn-secondary" style="padding: 2px 8px;" onclick="changeZoom(${index}, 0.15)">➕ Ampliar</button>
+                  <button class="btn btn-outline" style="padding: 2px 8px;" onclick="openFullscreen(${index})">⛶ Tela Cheia</button>
+                </div>
+              </div>
+
+              <div class="preview-container">
+                <div class="canvas-wrapper" id="wrapper-${item.id}">
+                  <canvas id="canvas-${item.id}"></canvas>
+                  <div class="drag-stamp" id="stamp-${item.id}">
+                    <img id="stamp-img-${item.id}" style="width:100%; height:100%; object-fit:contain;">
+                  </div>
                 </div>
               </div>
             </div>
@@ -365,8 +458,6 @@
         `;
 
         container.appendChild(card);
-
-        // Renderiza o PDF e o carimbo interativo
         await renderPDFPreview(item);
       }
     }
@@ -376,25 +467,25 @@
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const page = await pdf.getPage(1);
 
-      const viewport = page.getViewport({ scale: 1.0 });
+      const viewport = page.getViewport({ scale: item.scale });
       const canvas = document.getElementById(`canvas-${item.id}`);
+      if (!canvas) return;
+
       const ctx = canvas.getContext('2d');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-      // Gera e insere a imagem do carimbo
       const stampImgBase64 = await generateStampImage(item.date);
       const stampImgEl = document.getElementById(`stamp-img-${item.id}`);
-      stampImgEl.src = stampImgBase64;
+      if (stampImgEl) stampImgEl.src = stampImgBase64;
 
-      // Configura o wrapper e elemento arrastável
       const wrapper = document.getElementById(`wrapper-${item.id}`);
-      const dragStamp = document.getElementById(`stamp-${item.id}`);
-
-      wrapper.style.width = viewport.width + 'px';
-      wrapper.style.height = viewport.height + 'px';
+      if (wrapper) {
+        wrapper.style.width = viewport.width + 'px';
+        wrapper.style.height = viewport.height + 'px';
+      }
 
       updateStampElementStyle(item, viewport.width, viewport.height);
       setupDragEvents(item, viewport.width, viewport.height);
@@ -402,6 +493,8 @@
 
     function updateStampElementStyle(item, pdfWidth, pdfHeight) {
       const dragStamp = document.getElementById(`stamp-${item.id}`);
+      if (!dragStamp) return;
+
       const stampW = pdfWidth * item.wPct;
       const stampH = stampW * (550 / 500);
 
@@ -414,6 +507,8 @@
 
     function setupDragEvents(item, pdfWidth, pdfHeight) {
       const dragStamp = document.getElementById(`stamp-${item.id}`);
+      if (!dragStamp) return;
+
       let isDragging = false;
       let startX, startY, initialLeft, initialTop;
 
@@ -449,10 +544,59 @@
       }
     }
 
+    function toggleCompleted(index) {
+      const item = loadedFiles[index];
+      item.completed = !item.completed;
+
+      const card = document.getElementById(`card-${item.id}`);
+      const badge = document.getElementById(`badge-${item.id}`);
+      const btn = document.getElementById(`btn-done-${item.id}`);
+
+      if (item.completed) {
+        card.classList.add('completed');
+        badge.innerHTML = '<span class="badge-done">✅ Concluído</span>';
+        btn.textContent = '↩ Reabrir';
+        btn.className = 'btn btn-outline';
+      } else {
+        card.classList.remove('completed');
+        badge.innerHTML = '';
+        btn.textContent = '✅ Marcar como Concluído';
+        btn.className = 'btn btn-success';
+      }
+    }
+
+    async function changeZoom(index, delta) {
+      const item = loadedFiles[index];
+      item.scale = Math.max(0.4, Math.min(2.5, item.scale + delta));
+
+      document.getElementById(`zoom-text-${item.id}`).textContent = `${Math.round(item.scale * 100)}%`;
+      await renderPDFPreview(item);
+    }
+
+    function openFullscreen(index) {
+      const item = loadedFiles[index];
+      const modal = document.getElementById('fullscreen-modal');
+      const modalBody = document.getElementById('modal-body');
+      document.getElementById('modal-title').textContent = `Visualização: ${item.name}`;
+
+      const wrapper = document.getElementById(`wrapper-${item.id}`);
+      modalBody.appendChild(wrapper);
+      modal.style.display = 'flex';
+    }
+
+    function closeFullscreen() {
+      const modal = document.getElementById('fullscreen-modal');
+      modal.style.display = 'none';
+
+      // Re-renderiza para devolver o wrapper ao card de origem
+      renderCards();
+    }
+
     async function updateItemDate(index, newDate) {
       loadedFiles[index].date = newDate;
       const stampImgBase64 = await generateStampImage(newDate);
-      document.getElementById(`stamp-img-${loadedFiles[index].id}`).src = stampImgBase64;
+      const imgEl = document.getElementById(`stamp-img-${loadedFiles[index].id}`);
+      if (imgEl) imgEl.src = stampImgBase64;
     }
 
     function updateItemWidth(index, newWidthPct) {
@@ -460,7 +604,7 @@
       item.wPct = parseFloat(newWidthPct) / 100;
 
       const canvas = document.getElementById(`canvas-${item.id}`);
-      updateStampElementStyle(item, canvas.width, canvas.height);
+      if (canvas) updateStampElementStyle(item, canvas.width, canvas.height);
     }
 
     async function updateAllStamps() {
