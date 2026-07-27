@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consolidado de Pagamentos</title>
+  <!-- Biblioteca SheetJS para leitura de arquivos Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-color: #1f2937;
+      --border-color: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+      color: #111827;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Área de Upload */
+    .drop-zone {
+      border: 2px dashed var(--primary);
+      border-radius: 8px;
+      padding: 25px;
+      text-align: center;
+      background-color: #eff6ff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .drop-zone:hover {
+      background-color: #dbeafe;
+    }
+
+    .drop-zone p {
+      color: #1e40af;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn-clear {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      background-color: #dc2626;
+    }
+
+    .btn-export {
+      background-color: #16a34a;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-export:hover {
+      background-color: #15803d;
+    }
+
+    /* Tabela Tela */
+    .table-container {
+      overflow-x: auto;
+      background: #fff;
+      border: 2px solid #000;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #d9d9d9;
+      color: #000;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .header-projeto {
+      background-color: #ffffff;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 10px;
+      border-bottom: 2px solid #000;
+      text-align: left;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .currency-symbol {
+      float: left;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Consolidado de Pagamentos por Bolsista</h1>
+
+    <!-- Upload e Ações -->
+    <div class="card">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <p>📄 Clique aqui ou arraste sua planilha (.xlsx, .xls, .csv)</p>
+        <span style="font-size:0.85rem; color:#6b7280;">Selecione o arquivo para processar os pagamentos</span>
+        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" onchange="processarArquivo(this.files[0])" />
+      </div>
+
+      <div class="actions">
+        <button class="btn-export" onclick="exportarExcel()">📊 Baixar Excel</button>
+        <button class="btn-clear" onclick="limparTudo()">Limpar Tabela</button>
+      </div>
+    </div>
+
+    <!-- Tabela Relatório -->
+    <div class="table-container">
+      <table id="tabelaConsolidada">
+        <thead>
+          <tr id="linhaProjeto" style="display: none;">
+            <th colspan="5" class="header-projeto" id="celulaProjeto">PROJETO: </th>
+          </tr>
+          <tr>
+            <th style="width: 35%;">BOLSISTA</th>
+            <th style="width: 10%; text-align: center;">QTD / OCORR.</th>
+            <th style="width: 25%; text-align: center;">PERÍODO DE REFERÊNCIA</th>
+            <th style="width: 18%; text-align: center;">DATA DE PAGAMENTO</th>
+            <th style="width: 12%; text-align: right;">VALOR POR MÊS</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabela">
+          <tr>
+            <td colspan="5" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let pagamentos = [];
+    let numeroProjeto = "";
+
+    const dropZone = document.getElementById('dropZone');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+      dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length) processarArquivo(files[0]);
+    });
+
+    function processarArquivo(file) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        const matriz = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+        if (matriz.length === 0) {
+          alert("A planilha está vazia!");
+          return;
+        }
+
+        processarDadosMatriz(matriz);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function extrairApenasNome(textoHistorico) {
+      if (!textoHistorico) return "";
+
+      let texto = String(textoHistorico).trim();
+
+      if (texto.includes("-")) {
+        texto = texto.split("-")[0];
+      } else if (texto.includes(":")) {
+        texto = texto.split(":")[0];
+      }
+
+      texto = texto.replace(/CPF.*$/i, "").replace(/BOLSA.*$/i, "").trim();
+
+      return texto.toUpperCase().replace(/\s+/g, " ");
+    }
+
+    function extrairPeriodoReferencia(textoHistorico) {
+      if (!textoHistorico) return "";
+
+      const texto = String(textoHistorico);
+      const regex = /ref\.?\s*(?:a|:)?\s*(\d{2}\/\d{4})/i;
+      const match = texto.match(regex);
+
+      if (match && match[1]) {
+        return match[1];
+      }
+
+      return "";
+    }
+
+    function buscarNumeroProjeto(matriz) {
+      for (let i = 0; i < matriz.length; i++) {
+        for (let j = 0; j < matriz[i].length; j++) {
+          const valor = String(matriz[i][j]).trim();
+          const match = valor.match(/P\d+/i);
+          if (match) {
+            return match[0].toUpperCase();
+          }
+        }
+      }
+      return "";
+    }
+
+    function isRegistroInvalido(nome) {
+      if (!nome) return true;
+
+      const n = nome.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+      if (n === "HISTORICO" || n === "BOLSISTA" || n === "NOME" || n === "DIFERENCA") return true;
+
+      if (n.startsWith("TOTAL") || n.includes("TOTAL PAGO") || n.includes("TOTAL DEVOLVIDO")) return true;
+
+      if (/^P\d+/i.test(n)) return true; 
+      if (n.includes("C/C") || n.includes("IMPOSTO") || n.includes("DARF") || n.includes("RETENCAO")) return true;
+
+      return false;
+    }
+
+    function processarDadosMatriz(matriz) {
+      pagamentos = [];
+      numeroProjeto = buscarNumeroProjeto(matriz);
+
+      matriz.forEach(linha => {
+        let dRaw = linha[0];
+        let bolsistaRaw = linha[3] ? String(linha[3]) : "";
+        let vRaw = linha[4];
+
+        let bolsistaLimpo = extrairApenasNome(bolsistaRaw);
+        let refExtraida = extrairPeriodoReferencia(bolsistaRaw);
+
+        if (isRegistroInvalido(bolsistaLimpo)) {
+          return;
+        }
+
+        let valorNum = 0;
+        if (typeof vRaw === 'number') {
+          valorNum = vRaw;
+        } else if (vRaw) {
+          valorNum = parseFloat(String(vRaw).replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+        }
+
+        let dataObj = null;
+        if (dRaw instanceof Date) {
+          dataObj = dRaw;
+        } else if (dRaw) {
+          const dStr = String(dRaw).trim();
+          if (dStr.includes('/')) {
+            const partes = dStr.split('/');
+            if (partes.length === 3) {
+              dataObj = new Date(partes[2], partes[1] - 1, partes[0]);
+            }
+          } else {
+            dataObj = new Date(dStr);
+          }
+        }
+
+        const dataValida = (dataObj && !isNaN(dataObj.getTime())) ? dataObj : null;
+
+        if (!refExtraida && dataValida) {
+          const mes = String(dataValida.getMonth() + 1).padStart(2, '0');
+          const ano = dataValida.getFullYear();
+          refExtraida = `${mes}/${ano}`;
+        }
+
+        pagamentos.push({
+          bolsista: bolsistaLimpo,
+          referencia: refExtraida,
+          valor: valorNum,
+          dataPagamento: dataValida
+        });
+      });
+
+      renderizarTabelaConsolidada();
+    }
+
+    function formatarData(data) {
+      if (!data) return 'N/A';
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
+      const ano = data.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatarValorMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatarIntervaloReferencia(referenciasSet) {
+      const arrayRefs = Array.from(referenciasSet).filter(Boolean);
+      if (arrayRefs.length === 0) return "";
+
+      const datasFormatadas = arrayRefs.map(ref => {
+        const [mes, ano] = ref.split('/').map(Number);
+        return { mes, ano };
+      }).sort((a, b) => (a.ano - b.ano) || (a.mes - b.mes));
+
+      const primeira = datasFormatadas[0];
+      const ultima = datasFormatadas[datasFormatadas.length - 1];
+
+      const dataInicio = new Date(primeira.ano, primeira.mes - 1, 1);
+      const dataFim = new Date(ultima.ano, ultima.mes, 0);
+
+      return `${formatarData(dataInicio)} a ${formatarData(dataFim)}`;
+    }
+
+    function obterListaConsolidada() {
+      const grupos = {};
+
+      pagamentos.forEach(p => {
+        const chave = `${p.bolsista}_${p.valor}`;
+
+        if (!grupos[chave]) {
+          grupos[chave] = {
+            bolsista: p.bolsista,
+            referenciasSet: new Set(),
+            valor: p.valor,
+            quantidade: 0,
+            datasPagamento: []
+          };
+        }
+
+        grupos[chave].quantidade += 1;
+        if (p.referencia) {
+          grupos[chave].referenciasSet.add(p.referencia);
+        }
+        if (p.dataPagamento) {
+          grupos[chave].datasPagamento.push(p.dataPagamento);
+        }
+      });
+
+      return Object.values(grupos).map(g => {
+        return {
+          bolsista: g.bolsista,
+          quantidade: g.quantidade,
+          referenciaTexto: formatarIntervaloReferencia(g.referenciasSet),
+          valor: g.valor,
+          datasPagamento: g.datasPagamento
+        };
+      }).sort((a, b) => a.bolsista.localeCompare(b.bolsista));
+    }
+
+    function renderizarTabelaConsolidada() {
+      const corpoTabela = document.getElementById('corpoTabela');
+      const linhaProjeto = document.getElementById('linhaProjeto');
+      const celulaProjeto = document.getElementById('celulaProjeto');
+
+      corpoTabela.innerHTML = '';
+
+      if (numeroProjeto) {
+        celulaProjeto.textContent = `PROJETO: ${numeroProjeto}`;
+        linhaProjeto.style.display = '';
+      } else {
+        linhaProjeto.style.display = 'none';
+      }
+
+      if (pagamentos.length === 0) {
+        corpoTabela.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhum registro encontrado no arquivo.</td></tr>`;
+        return;
+      }
+
+      const listaConsolidada = obterListaConsolidada();
+
+      listaConsolidada.forEach(item => {
+        item.datasPagamento.sort((a, b) => a - b);
+
+        let dataPagamentoTexto = "N/A";
+        if (item.datasPagamento.length > 0) {
+          const menorData = formatarData(item.datasPagamento[0]);
+          const maiorData = formatarData(item.datasPagamento[item.datasPagamento.length - 1]);
+          dataPagamentoTexto = menorData === maiorData ? menorData : `${menorData} a ${maiorData}`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.bolsista}</td>
+          <td class="text-center">${item.quantidade}</td>
+          <td class="text-center">${item.referenciaTexto || ''}</td>
+          <td class="text-center">${dataPagamentoTexto}</td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.valor)}
+          </td>
+        `;
+        corpoTabela.appendChild(tr);
+      });
+    }
+
+    function exportarExcel() {
+      if (pagamentos.length === 0) {
+        alert("Não há dados na tabela para exportar!");
+        return;
+      }
+
+      const listaConsolidada = obterListaConsolidada();
+
+      // Gera XML do Excel (Spreadsheet2000) - Suporta estilos nativos de cor, borda e formato de moeda
+      let xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+  </Style>
+  <!-- Estilo Projeto -->
+  <Style ss:ID="sProjeto">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <!-- Estilo Cabeçalho (Fundo Cinza #D9D9D9 e Texto em Negrito) -->
+  <Style ss:ID="sHeader">
+   <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Interior ss:Color="#D9D9D9" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <!-- Estilo Célula Texto Esquerda -->
+  <Style ss:ID="sCellLeft">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <!-- Estilo Célula Texto Centro -->
+  <Style ss:ID="sCellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <!-- Estilo Moeda "R$ 1.234,56" -->
+  <Style ss:ID="sCellCurrency">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <NumberFormat ss:Format="&quot;R$&quot;\ #,##0.00;[Red]\-&quot;R$&quot;\ #,##0.00"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Consolidado">
+  <Table>
+   <Column ss:Width="220"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="170"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="110"/>
+`;
+
+      if (numeroProjeto) {
+        xml += `
+   <Row ss:Height="22">
+    <Cell ss:MergeAcross="4" ss:StyleID="sProjeto"><Data ss:Type="String">PROJETO: ${numeroProjeto}</Data></Cell>
+   </Row>`;
+      }
+
+      xml += `
+   <Row ss:Height="25">
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">BOLSISTA</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">QTD / OCORR.</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">PERÍODO DE REFERÊNCIA</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">DATA DE PAGAMENTO</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">VALOR POR MÊS</Data></Cell>
+   </Row>
+`;
+
+      listaConsolidada.forEach(item => {
+        item.datasPagamento.sort((a, b) => a - b);
+        let dataPagamentoTexto = "N/A";
+        if (item.datasPagamento.length > 0) {
+          const menorData = formatarData(item.datasPagamento[0]);
+          const maiorData = formatarData(item.datasPagamento[item.datasPagamento.length - 1]);
+          dataPagamentoTexto = menorData === maiorData ? menorData : `${menorData} a ${maiorData}`;
+        }
+
+        xml += `
+   <Row ss:Height="20">
+    <Cell ss:StyleID="sCellLeft"><Data ss:Type="String">${item.bolsista}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="Number">${item.quantidade}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.referenciaTexto || ''}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${dataPagamentoTexto}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valor}</Data></Cell>
+   </Row>`;
+      });
+
+      xml += `
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+      const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Consolidado_Pagamentos_${numeroProjeto || 'Bolsistas'}.xls`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function limparTudo() {
+      pagamentos = [];
+      numeroProjeto = "";
+      document.getElementById('fileInput').value = '';
+      document.getElementById('linhaProjeto').style.display = 'none';
+      document.getElementById('corpoTabela').innerHTML = `
+        <tr><td colspan="5" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td></tr>
+      `;
+    }
+  </script>
+</body>
+</html>
