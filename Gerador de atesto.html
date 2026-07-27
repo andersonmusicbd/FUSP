@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atestador de Notas Fiscais (Preview e Edição Direta)</title>
+  
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+
+  <!-- pdf-lib -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: #334155;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px rgba(30, 58, 138, 0.15);
+    }
+
+    .header h1 { margin: 0 0 6px 0; font-size: 22px; }
+    .header p { margin: 0; opacity: 0.9; font-size: 13px; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 6px;
+    }
+
+    .row { display: flex; gap: 15px; margin-bottom: 12px; }
+    .col { flex: 1; }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #475569;
+    }
+
+    input[type="text"], input[type="number"], input[type="file"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 13px;
+    }
+
+    .drop-zone {
+      border: 2px dashed #3b82f6;
+      border-radius: 8px;
+      padding: 25px;
+      text-align: center;
+      background-color: #eff6ff;
+      color: #1e40af;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .drop-zone:hover { background-color: #dbeafe; }
+
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover { background-color: var(--primary-hover); }
+    .btn-success { background-color: #16a34a; }
+    .btn-success:hover { background-color: #15803d; }
+
+    /* Lista de PDFs com Preview Integrado */
+    .pdf-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .pdf-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .pdf-card-body {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .pdf-controls {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .preview-container {
+      flex: 1;
+      background: #525659;
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      overflow: auto;
+      max-height: 600px;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      background: white;
+    }
+
+    .drag-stamp {
+      position: absolute;
+      border: 2px dashed #000;
+      background: rgba(255, 255, 255, 0.95);
+      cursor: move;
+      box-sizing: border-box;
+      user-select: none;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>📑 Carimbador de Atestos (Com Preview e Edição Direta)</h1>
+      <p>Ajuste a data identificada e arraste o carimbo diretamente na tela de cada nota fiscal enviada.</p>
+    </div>
+
+    <!-- 1. Configurações Globais -->
+    <div class="card">
+      <div class="card-title">1. Dados Globais do Atesto</div>
+      <div class="row">
+        <div class="col">
+          <label for="sap">SAP Nº</label>
+          <input type="text" id="sap" value="4600676501" oninput="updateAllStamps()">
+        </div>
+        <div class="col">
+          <label for="fusp">PROJETO FUSP Nº</label>
+          <input type="text" id="fusp" value="4099" oninput="updateAllStamps()">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="nome">Nome do Responsável</label>
+          <input type="text" id="nome" value="Diego F. Sarzosa Burgos" oninput="updateAllStamps()">
+        </div>
+        <div class="col">
+          <label for="cargo">Cargo / Função</label>
+          <input type="text" id="cargo" value="Coordenador" oninput="updateAllStamps()">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label for="assinatura">Imagem da Assinatura (PNG/JPG)</label>
+          <input type="file" id="assinatura" accept="image/*">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Upload de Arquivos -->
+    <div class="card">
+      <div class="card-title">2. Upload das Notas Fiscais (PDFs)</div>
+      <div class="drop-zone" onclick="document.getElementById('pdf-files').click()">
+        📂 <strong>Clique para selecionar os PDFs</strong> (ou arraste múltiplos arquivos aqui)
+        <input type="file" id="pdf-files" accept="application/pdf" multiple style="display:none;">
+      </div>
+
+      <div style="margin-top: 15px; display: flex; gap: 10px;">
+        <button class="btn btn-success" id="btn-download-all" onclick="downloadAllZIP()" style="display:none;">📦 Baixar Todas Atestadas (ZIP)</button>
+      </div>
+
+      <div id="status-msg" style="margin-top: 10px; font-weight: 600; color: #2563eb;"></div>
+    </div>
+
+    <!-- Lista de Previews das Notas Fiscais -->
+    <div id="pdf-cards-container"></div>
+  </div>
+
+  <script>
+    let signatureImgElement = null;
+    let loadedFiles = [];
+
+    // Carrega assinatura global
+    document.getElementById('assinatura').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const img = new Image();
+          img.onload = () => { 
+            signatureImgElement = img; 
+            updateAllStamps();
+          };
+          img.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Upload dos PDFs
+    document.getElementById('pdf-files').addEventListener('change', async function(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      document.getElementById('status-msg').textContent = "Processando e gerando previews...";
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const extractedDate = await extractDateFromPDF(file);
+        
+        const fileObj = {
+          id: Date.now() + '_' + i,
+          file: file,
+          name: file.name,
+          date: extractedDate,
+          wPct: 0.28,  // Largura padrão
+          xPct: 0.65,  // Posição X padrão (direita)
+          yPct: 0.65   // Posição Y padrão (inferior livre)
+        };
+
+        loadedFiles.push(fileObj);
+      }
+
+      document.getElementById('status-msg').textContent = `${loadedFiles.length} nota(s) carregada(s).`;
+      document.getElementById('btn-download-all').style.display = 'inline-flex';
+      renderCards();
+    });
+
+    async function extractDateFromPDF(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          fullText += textContent.items.map(item => item.str).join(' ') + ' ';
+        }
+
+        const dateRegexes = [
+          /(?:EMISS[ÃO|AO|A&O]|DATA\s+DE\s+EMISS[ÃO|AO])[\s\:\.]*(\d{2}\/\d{2}\/\d{4})/i,
+          /DATA[\s\:\.]*(\d{2}\/\d{2}\/\d{4})/i,
+          /(\d{2}\/\d{2}\/\d{4})/
+        ];
+
+        for (let regex of dateRegexes) {
+          const match = fullText.match(regex);
+          if (match && match[1]) return match[1];
+        }
+      } catch (err) {}
+      return '02/04/2024';
+    }
+
+    async function renderCards() {
+      const container = document.getElementById('pdf-cards-container');
+      container.innerHTML = '';
+
+      for (let index = 0; index < loadedFiles.length; index++) {
+        const item = loadedFiles[index];
+
+        const card = document.createElement('div');
+        card.className = 'pdf-card';
+        card.innerHTML = `
+          <div class="pdf-card-header">
+            <strong>📄 ${item.name}</strong>
+            <button class="btn btn-success" style="padding: 6px 12px; font-size: 12px;" onclick="downloadSinglePDF(${index})">💾 Baixar Atestada</button>
+          </div>
+          <div class="pdf-card-body">
+            <div class="pdf-controls">
+              <div>
+                <label>Data de Emissão (Atesto):</label>
+                <input type="text" value="${item.date}" onchange="updateItemDate(${index}, this.value)">
+                <small style="color: #64748b; font-size: 11px;">Altere se tiver sido lida errada.</small>
+              </div>
+              <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
+              <div>
+                <label>Tamanho do Carimbo (%):</label>
+                <input type="number" value="${Math.round(item.wPct * 100)}" min="15" max="50" oninput="updateItemWidth(${index}, this.value)">
+              </div>
+              <div>
+                <label>📍 Dica de Posicionamento:</label>
+                <p style="font-size: 11px; color: #475569; margin: 4px 0 0 0;">
+                  Clique e arraste o retângulo do carimbo diretamente sobre a folha para ajustar o local exato.
+                </p>
+              </div>
+            </div>
+
+            <div class="preview-container">
+              <div class="canvas-wrapper" id="wrapper-${item.id}">
+                <canvas id="canvas-${item.id}"></canvas>
+                <div class="drag-stamp" id="stamp-${item.id}">
+                  <img id="stamp-img-${item.id}" style="width:100%; height:100%; object-fit:contain;">
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+
+        // Renderiza o PDF e o carimbo interativo
+        await renderPDFPreview(item);
+      }
+    }
+
+    async function renderPDFPreview(item) {
+      const arrayBuffer = await item.file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+
+      const viewport = page.getViewport({ scale: 1.0 });
+      const canvas = document.getElementById(`canvas-${item.id}`);
+      const ctx = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+      // Gera e insere a imagem do carimbo
+      const stampImgBase64 = await generateStampImage(item.date);
+      const stampImgEl = document.getElementById(`stamp-img-${item.id}`);
+      stampImgEl.src = stampImgBase64;
+
+      // Configura o wrapper e elemento arrastável
+      const wrapper = document.getElementById(`wrapper-${item.id}`);
+      const dragStamp = document.getElementById(`stamp-${item.id}`);
+
+      wrapper.style.width = viewport.width + 'px';
+      wrapper.style.height = viewport.height + 'px';
+
+      updateStampElementStyle(item, viewport.width, viewport.height);
+      setupDragEvents(item, viewport.width, viewport.height);
+    }
+
+    function updateStampElementStyle(item, pdfWidth, pdfHeight) {
+      const dragStamp = document.getElementById(`stamp-${item.id}`);
+      const stampW = pdfWidth * item.wPct;
+      const stampH = stampW * (550 / 500);
+
+      dragStamp.style.width = stampW + 'px';
+      dragStamp.style.height = stampH + 'px';
+
+      dragStamp.style.left = (pdfWidth * item.xPct) + 'px';
+      dragStamp.style.top = (pdfHeight * item.yPct) + 'px';
+    }
+
+    function setupDragEvents(item, pdfWidth, pdfHeight) {
+      const dragStamp = document.getElementById(`stamp-${item.id}`);
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      dragStamp.onmousedown = function(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = dragStamp.offsetLeft;
+        initialTop = dragStamp.offsetTop;
+        document.onmousemove = onMouseMove;
+        document.onmouseup = onMouseUp;
+      };
+
+      function onMouseMove(e) {
+        if (!isDragging) return;
+        let newLeft = initialLeft + (e.clientX - startX);
+        let newTop = initialTop + (e.clientY - startY);
+
+        newLeft = Math.max(0, Math.min(newLeft, pdfWidth - dragStamp.offsetWidth));
+        newTop = Math.max(0, Math.min(newTop, pdfHeight - dragStamp.offsetHeight));
+
+        dragStamp.style.left = newLeft + 'px';
+        dragStamp.style.top = newTop + 'px';
+
+        item.xPct = newLeft / pdfWidth;
+        item.yPct = newTop / pdfHeight;
+      }
+
+      function onMouseUp() {
+        isDragging = false;
+        document.onmousemove = null;
+        document.onmouseup = null;
+      }
+    }
+
+    async function updateItemDate(index, newDate) {
+      loadedFiles[index].date = newDate;
+      const stampImgBase64 = await generateStampImage(newDate);
+      document.getElementById(`stamp-img-${loadedFiles[index].id}`).src = stampImgBase64;
+    }
+
+    function updateItemWidth(index, newWidthPct) {
+      const item = loadedFiles[index];
+      item.wPct = parseFloat(newWidthPct) / 100;
+
+      const canvas = document.getElementById(`canvas-${item.id}`);
+      updateStampElementStyle(item, canvas.width, canvas.height);
+    }
+
+    async function updateAllStamps() {
+      for (let item of loadedFiles) {
+        const stampImgBase64 = await generateStampImage(item.date);
+        const imgEl = document.getElementById(`stamp-img-${item.id}`);
+        if (imgEl) imgEl.src = stampImgBase64;
+      }
+    }
+
+    function generateStampImage(dateStr) {
+      return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 500;
+        canvas.height = 550;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([12, 8]);
+        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#000000';
+
+        const sap = document.getElementById('sap').value;
+        const fusp = document.getElementById('fusp').value;
+        const nome = document.getElementById('nome').value;
+        const cargo = document.getElementById('cargo').value;
+
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`SAP Nº ${sap}`, 30, 55);
+        ctx.fillText(`PROJETO FUSP Nº ${fusp}`, 30, 90);
+
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('- ATESTADO -', canvas.width / 2, 135);
+
+        ctx.font = 'bold 17px Arial';
+        const textLines = [
+          "ATESTO PARA OS DEVIDOS FINS QUE",
+          "RECEBI OS MATERIAIS E OU REALIZAÇÃO",
+          "DE SERVIÇOS CONSTANTES NO PRESENTE",
+          "DOCUMENTO"
+        ];
+        let y = 175;
+        textLines.forEach(line => {
+          ctx.fillText(line, canvas.width / 2, y);
+          y += 24;
+        });
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 22px Arial';
+        ctx.fillText(`DATA: ${dateStr}`, 30, y + 25);
+
+        ctx.strokeStyle = '#cccccc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(30, y + 55);
+        ctx.lineTo(canvas.width - 30, y + 55);
+        ctx.stroke();
+
+        const sigY = y + 65;
+        if (signatureImgElement) {
+          ctx.drawImage(signatureImgElement, (canvas.width - 240) / 2, sigY, 240, 80);
+        }
+
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 22px Arial';
+        ctx.fillText(nome, canvas.width / 2, sigY + 110);
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(cargo, canvas.width / 2, sigY + 135);
+
+        resolve(canvas.toDataURL('image/png'));
+      });
+    }
+
+    async function stampPDF(item) {
+      const stampImgBase64 = await generateStampImage(item.date);
+      const arrayBuffer = await item.file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const stampImage = await pdfDoc.embedPng(stampImgBase64);
+      
+      const page = pdfDoc.getPages()[0];
+      const { width, height } = page.getSize();
+
+      const stampWidth = width * item.wPct;
+      const stampHeight = stampWidth * (550 / 500);
+
+      const x = width * item.xPct;
+      const y = height - (height * item.yPct) - stampHeight;
+
+      page.drawImage(stampImage, {
+        x: Math.max(0, x),
+        y: Math.max(0, y),
+        width: stampWidth,
+        height: stampHeight,
+      });
+
+      return await pdfDoc.save();
+    }
+
+    async function downloadSinglePDF(index) {
+      const item = loadedFiles[index];
+      const pdfBytes = await stampPDF(item);
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ATESTADA_${item.name}`;
+      link.click();
+    }
+
+    async function downloadAllZIP() {
+      const zip = new JSZip();
+      for (let item of loadedFiles) {
+        const pdfBytes = await stampPDF(item);
+        zip.file(`ATESTADA_${item.name}`, pdfBytes);
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Notas_Fiscais_Atestadas.zip';
+      link.click();
+    }
+  </script>
+</body>
+</html>
