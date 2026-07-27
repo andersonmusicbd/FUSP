@@ -30,7 +30,7 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1400px;
       margin: 0 auto;
     }
 
@@ -119,12 +119,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      font-size: 0.82rem;
     }
 
     th, td {
       border: 1px solid #000;
-      padding: 6px 10px;
+      padding: 6px 6px;
       text-align: left;
     }
 
@@ -133,7 +133,7 @@
       color: #000;
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
     }
 
     .header-projeto {
@@ -188,19 +188,24 @@
       <table id="tabelaConsolidada">
         <thead>
           <tr id="linhaProjeto" style="display: none;">
-            <th colspan="5" class="header-projeto" id="celulaProjeto">PROJETO: </th>
+            <th colspan="10" class="header-projeto" id="celulaProjeto">PROJETO: </th>
           </tr>
           <tr>
-            <th style="width: 35%;">BOLSISTA</th>
-            <th style="width: 10%; text-align: center;">QTD / OCORR.</th>
-            <th style="width: 25%; text-align: center;">PERÍODO DE REFERÊNCIA</th>
-            <th style="width: 18%; text-align: center;">DATA DE PAGAMENTO</th>
-            <th style="width: 12%; text-align: right;">VALOR POR MÊS</th>
+            <th style="width: 22%;">BOLSISTA</th>
+            <th style="width: 12%; text-align: center;">CPF</th>
+            <th style="width: 6%; text-align: center;">QTD / OCORR.</th>
+            <th style="width: 10%; text-align: center;">INÍCIO</th>
+            <th style="width: 10%; text-align: center;">FIM</th>
+            <th style="width: 8%; text-align: right;">VALOR POR MÊS</th>
+            <th style="width: 8%; text-align: right;">IRRF PF</th>
+            <th style="width: 8%; text-align: right;">INSS</th>
+            <th style="width: 8%; text-align: right;">ISS</th>
+            <th style="width: 8%; text-align: right;">VALOR RATEIO</th>
           </tr>
         </thead>
         <tbody id="corpoTabela">
           <tr>
-            <td colspan="5" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td>
+            <td colspan="10" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td>
           </tr>
         </tbody>
       </table>
@@ -243,6 +248,24 @@
       };
 
       reader.readAsArrayBuffer(file);
+    }
+
+    function extrairCPF(textoHistorico) {
+      if (!textoHistorico) return "";
+
+      const texto = String(textoHistorico);
+      const regexCPF = /(?:CPF[:\s]*)?(\d{3}[\.\s]?\d{3}[\.\s]?\d{3}[-\s]?\d{2})/i;
+      const match = texto.match(regexCPF);
+
+      if (match && match[1]) {
+        const num = match[1].replace(/\D/g, '');
+        if (num.length === 11) {
+          return `${num.substring(0,3)}.${num.substring(3,6)}.${num.substring(6,9)}-${num.substring(9,11)}`;
+        }
+        return match[1].trim();
+      }
+
+      return "";
     }
 
     function extrairApenasNome(textoHistorico) {
@@ -303,6 +326,12 @@
       return false;
     }
 
+    function converterParaNumero(val) {
+      if (typeof val === 'number') return val;
+      if (!val) return 0;
+      return parseFloat(String(val).replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+    }
+
     function processarDadosMatriz(matriz) {
       pagamentos = [];
       numeroProjeto = buscarNumeroProjeto(matriz);
@@ -313,18 +342,23 @@
         let vRaw = linha[4];
 
         let bolsistaLimpo = extrairApenasNome(bolsistaRaw);
+        let cpfExtraido = extrairCPF(bolsistaRaw);
         let refExtraida = extrairPeriodoReferencia(bolsistaRaw);
 
         if (isRegistroInvalido(bolsistaLimpo)) {
           return;
         }
 
-        let valorNum = 0;
-        if (typeof vRaw === 'number') {
-          valorNum = vRaw;
-        } else if (vRaw) {
-          valorNum = parseFloat(String(vRaw).replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
-        }
+        let valorNum = converterParaNumero(vRaw);
+
+        let irrfNum = converterParaNumero(linha[5]);
+        let inssRet = converterParaNumero(linha[6]);
+        let inssPat = converterParaNumero(linha[7]);
+        let inssNum = inssRet + inssPat;
+        let issNum = converterParaNumero(linha[8]);
+
+        let totalImpostos = irrfNum + inssNum + issNum;
+        let valorRateioNum = valorNum - totalImpostos;
 
         let dataObj = null;
         if (dRaw instanceof Date) {
@@ -351,8 +385,13 @@
 
         pagamentos.push({
           bolsista: bolsistaLimpo,
+          cpf: cpfExtraido,
           referencia: refExtraida,
           valor: valorNum,
+          irrf: irrfNum,
+          inss: inssNum,
+          iss: issNum,
+          valorRateio: valorRateioNum,
           dataPagamento: dataValida
         });
       });
@@ -360,21 +399,22 @@
       renderizarTabelaConsolidada();
     }
 
-    function formatarData(data) {
-      if (!data) return 'N/A';
-      const dia = String(data.getDate()).padStart(2, '0');
-      const mes = String(data.getMonth() + 1).padStart(2, '0');
-      const ano = data.getFullYear();
-      return `${dia}/${mes}/${ano}`;
+    function formatarDataEstiloImg(data) {
+      if (!data) return '';
+      const mesesEng = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const dia = data.getDate();
+      const mesStr = mesesEng[data.getMonth()];
+      const anoStr = String(data.getFullYear()).slice(-2);
+      return `${dia}/${mesStr}/${anoStr}`;
     }
 
     function formatarValorMoeda(valor) {
       return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function formatarIntervaloReferencia(referenciasSet) {
+    function obterDatasInicioFim(referenciasSet) {
       const arrayRefs = Array.from(referenciasSet).filter(Boolean);
-      if (arrayRefs.length === 0) return "";
+      if (arrayRefs.length === 0) return { inicio: '', fim: '' };
 
       const datasFormatadas = arrayRefs.map(ref => {
         const [mes, ano] = ref.split('/').map(Number);
@@ -385,24 +425,31 @@
       const ultima = datasFormatadas[datasFormatadas.length - 1];
 
       const dataInicio = new Date(primeira.ano, primeira.mes - 1, 1);
-      const dataFim = new Date(ultima.ano, ultima.mes, 0);
+      const dataFim = new Date(ultima.ano, ultima.mes, 0); // último dia do mês final
 
-      return `${formatarData(dataInicio)} a ${formatarData(dataFim)}`;
+      return {
+        inicio: formatarDataEstiloImg(dataInicio),
+        fim: formatarDataEstiloImg(dataFim)
+      };
     }
 
     function obterListaConsolidada() {
       const grupos = {};
 
       pagamentos.forEach(p => {
-        const chave = `${p.bolsista}_${p.valor}`;
+        const chave = `${p.bolsista}_${p.cpf}_${p.valor}_${p.irrf}_${p.inss}_${p.iss}`;
 
         if (!grupos[chave]) {
           grupos[chave] = {
             bolsista: p.bolsista,
+            cpf: p.cpf,
             referenciasSet: new Set(),
             valor: p.valor,
-            quantidade: 0,
-            datasPagamento: []
+            irrf: p.irrf,
+            inss: p.inss,
+            iss: p.iss,
+            valorRateio: p.valorRateio,
+            quantidade: 0
           };
         }
 
@@ -410,18 +457,21 @@
         if (p.referencia) {
           grupos[chave].referenciasSet.add(p.referencia);
         }
-        if (p.dataPagamento) {
-          grupos[chave].datasPagamento.push(p.dataPagamento);
-        }
       });
 
       return Object.values(grupos).map(g => {
+        const datasRef = obterDatasInicioFim(g.referenciasSet);
         return {
           bolsista: g.bolsista,
+          cpf: g.cpf,
           quantidade: g.quantidade,
-          referenciaTexto: formatarIntervaloReferencia(g.referenciasSet),
+          inicioTexto: datasRef.inicio,
+          fimTexto: datasRef.fim,
           valor: g.valor,
-          datasPagamento: g.datasPagamento
+          irrf: g.irrf,
+          inss: g.inss,
+          iss: g.iss,
+          valorRateio: g.valorRateio
         };
       }).sort((a, b) => a.bolsista.localeCompare(b.bolsista));
     }
@@ -441,31 +491,39 @@
       }
 
       if (pagamentos.length === 0) {
-        corpoTabela.innerHTML = `<tr><td colspan="5" class="empty-state">Nenhum registro encontrado no arquivo.</td></tr>`;
+        corpoTabela.innerHTML = `<tr><td colspan="10" class="empty-state">Nenhum registro encontrado no arquivo.</td></tr>`;
         return;
       }
 
       const listaConsolidada = obterListaConsolidada();
 
       listaConsolidada.forEach(item => {
-        item.datasPagamento.sort((a, b) => a - b);
-
-        let dataPagamentoTexto = "N/A";
-        if (item.datasPagamento.length > 0) {
-          const menorData = formatarData(item.datasPagamento[0]);
-          const maiorData = formatarData(item.datasPagamento[item.datasPagamento.length - 1]);
-          dataPagamentoTexto = menorData === maiorData ? menorData : `${menorData} a ${maiorData}`;
-        }
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${item.bolsista}</td>
+          <td class="text-center">${item.cpf || ''}</td>
           <td class="text-center">${item.quantidade}</td>
-          <td class="text-center">${item.referenciaTexto || ''}</td>
-          <td class="text-center">${dataPagamentoTexto}</td>
+          <td class="text-center">${item.inicioTexto}</td>
+          <td class="text-center">${item.fimTexto}</td>
           <td class="text-right">
             <span class="currency-symbol">R$</span>
             ${formatarValorMoeda(item.valor)}
+          </td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.irrf)}
+          </td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.inss)}
+          </td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.iss)}
+          </td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.valorRateio)}
           </td>
         `;
         corpoTabela.appendChild(tr);
@@ -480,7 +538,6 @@
 
       const listaConsolidada = obterListaConsolidada();
 
-      // Gera XML do Excel (Spreadsheet2000) - Suporta estilos nativos de cor, borda e formato de moeda
       let xml = `<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
@@ -503,7 +560,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
-  <!-- Estilo Cabeçalho (Fundo Cinza #D9D9D9 e Texto em Negrito) -->
+  <!-- Estilo Cabeçalho -->
   <Style ss:ID="sHeader">
    <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1"/>
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -535,7 +592,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
-  <!-- Estilo Moeda "R$ 1.234,56" -->
+  <!-- Estilo Moeda -->
   <Style ss:ID="sCellCurrency">
    <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
    <NumberFormat ss:Format="&quot;R$&quot;\ #,##0.00;[Red]\-&quot;R$&quot;\ #,##0.00"/>
@@ -549,46 +606,53 @@
  </Styles>
  <Worksheet ss:Name="Consolidado">
   <Table>
-   <Column ss:Width="220"/>
-   <Column ss:Width="80"/>
-   <Column ss:Width="170"/>
-   <Column ss:Width="160"/>
+   <Column ss:Width="180"/>
    <Column ss:Width="110"/>
+   <Column ss:Width="70"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="100"/>
+   <Column ss:Width="90"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="100"/>
 `;
 
       if (numeroProjeto) {
         xml += `
    <Row ss:Height="22">
-    <Cell ss:MergeAcross="4" ss:StyleID="sProjeto"><Data ss:Type="String">PROJETO: ${numeroProjeto}</Data></Cell>
+    <Cell ss:MergeAcross="9" ss:StyleID="sProjeto"><Data ss:Type="String">PROJETO: ${numeroProjeto}</Data></Cell>
    </Row>`;
       }
 
       xml += `
    <Row ss:Height="25">
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">BOLSISTA</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">CPF</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">QTD / OCORR.</Data></Cell>
-    <Cell ss:StyleID="sHeader"><Data ss:Type="String">PERÍODO DE REFERÊNCIA</Data></Cell>
-    <Cell ss:StyleID="sHeader"><Data ss:Type="String">DATA DE PAGAMENTO</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">INÍCIO</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">FIM</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">VALOR POR MÊS</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">IRRF PF</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">INSS</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">ISS</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">VALOR RATEIO</Data></Cell>
    </Row>
 `;
 
       listaConsolidada.forEach(item => {
-        item.datasPagamento.sort((a, b) => a - b);
-        let dataPagamentoTexto = "N/A";
-        if (item.datasPagamento.length > 0) {
-          const menorData = formatarData(item.datasPagamento[0]);
-          const maiorData = formatarData(item.datasPagamento[item.datasPagamento.length - 1]);
-          dataPagamentoTexto = menorData === maiorData ? menorData : `${menorData} a ${maiorData}`;
-        }
-
         xml += `
    <Row ss:Height="20">
     <Cell ss:StyleID="sCellLeft"><Data ss:Type="String">${item.bolsista}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.cpf || ''}</Data></Cell>
     <Cell ss:StyleID="sCellCenter"><Data ss:Type="Number">${item.quantidade}</Data></Cell>
-    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.referenciaTexto || ''}</Data></Cell>
-    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${dataPagamentoTexto}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.inicioTexto}</Data></Cell>
+    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.fimTexto}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valor}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.irrf}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.inss}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.iss}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valorRateio}</Data></Cell>
    </Row>`;
       });
 
@@ -613,7 +677,7 @@
       document.getElementById('fileInput').value = '';
       document.getElementById('linhaProjeto').style.display = 'none';
       document.getElementById('corpoTabela').innerHTML = `
-        <tr><td colspan="5" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td></tr>
+        <tr><td colspan="10" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td></tr>
       `;
     }
   </script>
