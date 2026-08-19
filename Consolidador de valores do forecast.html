@@ -5,43 +5,53 @@ function classifyRow(itemDescription) {
       const lower = text.toLowerCase();
       if (!lower || lower.length < 2) return { category: 'IGNORAR', reason: 'Sem texto relevante' };
 
-      // 1. Linhas de Resumo, Saldos e Cabeçalhos Genéricos
+      // 1. Linhas de Resumo, Saldos e Cabeçalhos
       const blacklistKeywords = [
         'saldo final', 'saldo anterior', 'saldo pós', 'rendimento financeiro', 
         'disponível p/ extensão', 'total recebido', 'total previsto', 'resumo do projeto',
-        'rubrica', 'descrição', 'descrição do item'
+        'rubrica', 'descrição', 'descrição do item', 'nome', 'nomes'
       ];
       if (blacklistKeywords.some(kw => lower.includes(kw))) {
         return { category: 'IGNORAR', reason: 'Linha de Resumo / Saldo' };
       }
 
-      // Se for exatamente o cabeçalho "NOME", ignora a linha de título
-      if (lower === 'nome' || lower === 'nomes') {
-        return { category: 'IGNORAR', reason: 'Cabeçalho da Coluna' };
+      // 2. Serviços de Terceiros e Consultorias
+      const servicosKeywords = ['serviço', 'servico', 'técnico', 'tecnico', 'especializado', 'terceiro', 'terceiros', 'pj', 'consultoria', 'manutenção', 'calibração', 'treinamento'];
+      if (servicosKeywords.some(kw => lower.includes(kw))) {
+        return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Serviços' };
       }
 
-      // 2. Equipamentos e Material Permanente
-      const permanenteKeywords = ['permanente', 'equipamento', 'notebook', 'computador', 'servidor', 'máquina', 'hardware'];
+      // 3. Equipamentos e Material Permanente
+      const permanenteKeywords = ['permanente', 'equipamento', 'upgrade', 'microscópio', 'microscopio', 'notebook', 'computador', 'servidor', 'máquina', 'hardware', 'estação', 'bancada'];
       const mpRegex = /(?:^|[\s\-_])mp[1-6]?(?:$|[\s\-_]|\b)/i;
       if (permanenteKeywords.some(kw => lower.includes(kw)) || mpRegex.test(lower)) {
-        return { category: 'Equipamento e Material Permanente', reason: 'Material Permanente' };
+        return { category: 'Equipamento e Material Permanente', reason: 'Material Permanente / Equipamento' };
       }
 
-      // 3. Material de Consumo
-      const consumoKeywords = ['material de consumo', 'reagente', 'insumos', 'suprimentos', 'almoxarifado', 'consumo'];
+      // 4. Material de Consumo (Insumos, peças, reagentes)
+      const consumoKeywords = ['filamento', 'material de consumo', 'reagente', 'insumo', 'insumos', 'suprimentos', 'almoxarifado', 'consumo', 'placa', 'sensor', 'kit', 'cabo', 'tubo', 'peça', 'peca', 'acessório', 'acessorio'];
       const mcRegex = /(?:^|[\s\-_])mc[1-6]?(?:$|[\s\-_]|\b)/i;
       if (consumoKeywords.some(kw => lower.includes(kw)) || mcRegex.test(lower)) {
-        return { category: 'Material de Consumo', reason: 'Material de Consumo' };
+        return { category: 'Material de Consumo', reason: 'Material de Consumo / Peça / Insumo' };
       }
 
-      // 4. Passagens, Diárias, Obras, Protótipos e Terceiros
+      // 5. Passagens, Diárias, Obras e Protótipos
       if (['passagem', 'passagens', 'voo', 'aéreo'].some(kw => lower.includes(kw))) return { category: 'Passagens', reason: 'Passagens' };
       if (['diária', 'diarias', 'hospedagem', 'hotel', 'transporte'].some(kw => lower.includes(kw))) return { category: 'Diárias', reason: 'Diárias' };
       if (['protótipo', 'prototipo', 'mockup'].some(kw => lower.includes(kw))) return { category: 'Protótipo', reason: 'Protótipo' };
       if (['obra', 'obras', 'instalação', 'reforma'].some(kw => lower.includes(kw))) return { category: 'Obras e Instalações', reason: 'Obras' };
-      if (['terceiro', 'terceiros', 'pj', 'consultoria', 'serviço'].some(kw => lower.includes(kw))) return { category: 'Serviços de Terceiros / Outras Despesas', reason: 'Serviços' };
 
-      // 5. REGRA PADRÃO PARA NOMES E EQUIPE: 
-      // Qualquer item que sobrou (ex: "Zehbour Panossian", "CLT - Juliana", "PC1 - Sandro", "IC1") vai direto para Equipe.
-      return { category: 'Equipe', reason: 'Identificado como Nome / Integrante da Equipe' };
+      // 6. Equipe (Cargo Explícito ou Estrutura de Nome Próprio)
+      const teamKeywords = ['doutor', 'bolsista', 'pesquisador', 'coordenador', 'desenvolvedor', 'analista', 'gerente', 'equipe', 'pessoal', 'clt', 'bolsa', 'mestrando', 'graduação', 'estagiário'];
+      const teamCodesRegex = /(?:^|[\s\-_])(do[1-6]?|d[1-6]|ic[1-6]?|pd[1-6]?|me[1-6]?|pc[1-6]?|msc|dr|av)(?:$|[\s\-_]|\b)/i;
+      
+      // Valida se a string tem pelo menos duas palavras e parece Nome Próprio (ex: "Zehbour Panossian")
+      const words = text.trim().split(/\s+/);
+      const isFullName = words.length >= 2 && words.every(w => /^[A-Z1-9]/.test(w));
+
+      if (teamKeywords.some(kw => lower.includes(kw)) || teamCodesRegex.test(lower) || isFullName) {
+        return { category: 'Equipe', reason: 'Nome ou Cargo de Integrante da Equipe' };
+      }
+
+      return { category: 'IGNORAR', reason: 'Não corresponde a nenhuma Rúbrica' };
     }
