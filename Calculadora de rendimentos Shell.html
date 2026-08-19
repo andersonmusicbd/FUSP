@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Rendimentos e COFINS Multi-Projetos</title>
+    <!-- Biblioteca PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #16a34a;
+            --badge-reaj-bg: #dbeafe;
+            --badge-reaj-txt: #1d4ed8;
+            --badge-juros-bg: #dcfce7;
+            --badge-juros-txt: #15803d;
+            --badge-cofins-bg: #fee2e2;
+            --badge-cofins-txt: #dc2626;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        .header-box {
+            background: var(--card-bg);
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--text-dark);
+            font-size: 24px;
+            margin: 0 0 8px 0;
+        }
+
+        p.desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .upload-area {
+            border: 2.5px dashed #cbd5e1;
+            background: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .upload-area p {
+            margin: 5px 0;
+            color: #334155;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        #fileInput {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 600;
+            display: none;
+            text-align: center;
+            padding: 12px;
+            background: #eff6ff;
+            border-radius: 8px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .card-stat {
+            background: var(--card-bg);
+            padding: 18px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-stat .title {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .card-stat .value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .card-stat.total-final {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .card-stat.total-final .value {
+            color: #15803d;
+        }
+
+        .box-resultado {
+            margin-top: 25px;
+            display: none;
+        }
+
+        .topo-resultado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-copiar {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn-copiar:hover {
+            background: #15803d;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .badge-reaj { background-color: var(--badge-reaj-bg); color: var(--badge-reaj-txt); }
+        .badge-juros { background-color: var(--badge-juros-bg); color: var(--badge-juros-txt); }
+        .badge-cofins { background-color: var(--badge-cofins-bg); color: var(--badge-cofins-txt); }
+
+        .valor-celula {
+            font-family: monospace;
+            font-weight: 700;
+        }
+
+        .project-header {
+            background-color: #e2e8f0 !important;
+            font-weight: bold;
+        }
+
+        .result-row {
+            background-color: #f1f5f9;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <h1>📊 Calculadora de Rendimentos & COFINS Multi-Projetos</h1>
+        <p class="desc">
+            Selecione múltiplos arquivos PDF (com 5 páginas cada). O sistema extrairá o COFINS da 1ª página e os rendimentos (Juros / Reaj. Mon.) do extrato na 5ª página, calculando o valor líquido por projeto.
+        </p>
+    </div>
+
+    <div class="upload-area">
+        <p>📁 Clique aqui ou arraste os arquivos PDF dos Projetos</p>
+        <span style="font-size: 13px; color: #64748b;">(Você pode selecionar vários arquivos de uma vez)</span>
+        <input type="file" id="fileInput" accept=".pdf" multiple>
+    </div>
+
+    <div id="status">Processando...</div>
+
+    <div id="boxResultado" class="box-resultado">
+        <div class="summary-cards" id="summaryCards"></div>
+
+        <div style="margin-top: 25px;">
+            <div class="topo-resultado">
+                <span style="font-weight: 700; color: #334155;">Detalhamento dos Projetos:</span>
+                <button class="btn-copiar" onclick="copiarTextoTabela()">📋 Copiar para o Excel</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Projeto / Origem</th>
+                            <th>Item</th>
+                            <th style="text-align: right;">Rendimento (+)</th>
+                            <th style="text-align: right;">COFINS (-)</th>
+                            <th style="text-align: right;">Resultado Líquido</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    let dadosParaCopiar = "";
+    let projetosProcessados = [];
+
+    document.getElementById('fileInput').addEventListener('change', async function(e) {
+        const files = Array.from(e.target.files);
+        if (!files || files.length === 0) return;
+
+        mostrarStatus(`Iniciando leitura de ${files.length} arquivo(s)...`);
+        projetosProcessados = [];
+
+        for (let idx = 0; idx < files.length; idx++) {
+            const file = files[idx];
+            mostrarStatus(`Processando arquivo ${idx + 1} de ${files.length}: ${file.name}...`);
+            try {
+                const dadosProjeto = await processarArquivoPDF(file);
+                projetosProcessados.push(dadosProjeto);
+            } catch (err) {
+                console.error("Erro ao processar PDF:", file.name, err);
+            }
+        }
+
+        esconderStatus();
+        exibirResultados();
+    });
+
+    async function processarArquivoPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+
+        let paginasTexto = [];
+        for (let i = 1; i <= numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            paginasTexto.push(content.items.map(item => item.str).join(' '));
+        }
+
+        const textoPagina1 = paginasTexto[0] || "";
+        const cofinsValor = extrairCofinsPagina1(textoPagina1);
+
+        const pagExtratoIdx = numPages >= 5 ? 4 : numPages - 1; 
+        const textoPaginaExtrato = paginasTexto[pagExtratoIdx] || paginasTexto.join(' ');
+        
+        const itensRendimento = extrairRendimentosExtrato(textoPaginaExtrato);
+        const projetoNome = extrairNomeProjeto(paginasTexto.join(' ')) || file.name.replace('.pdf', '');
+
+        const totalRendimento = itensRendimento.reduce((acc, item) => acc + item.valorNum, 0);
+        const resultadoFinal = totalRendimento - cofinsValor.valorNum;
+
+        return {
+            filename: file.name,
+            nomeProjeto: projetoNome,
+            numPages: numPages,
+            cofins: cofinsValor,
+            itensRendimento: itensRendimento,
+            totalRendimento: totalRendimento,
+            resultadoFinal: resultadoFinal
+        };
+    }
+
+    function extrairCofinsPagina1(texto) {
+        const regexDinheiro = /\b\d{1,3}(?:\.\d{3})*,\d{2}\b/g;
+        let valorNum = 0;
+        let valorStr = "0,00";
+
+        const matches = texto.match(regexDinheiro);
+        if (matches && matches.length > 0) {
+            for (let m of matches) {
+                let tempNum = parseFloat(m.replace(/\./g, '').replace(',', '.'));
+                if (tempNum > 0) {
+                    valorNum = tempNum;
+                    valorStr = m;
+                    if (texto.toUpperCase().includes("COFINS") || texto.toUpperCase().includes("VALOR")) break;
+                }
+            }
+        }
+        return { valorStr, valorNum };
+    }
+
+    function extrairRendimentosExtrato(texto) {
+        let itens = [];
+        const regexDinheiro = /\d+(?:\.\d{3})*,\d{2}/;
+        const blocos = texto.split(/\s+/);
+
+        for (let i = 0; i < blocos.length; i++) {
+            let bloco = blocos[i].toUpperCase();
+
+            // Identificação de Reajuste Monetário (Histórico 741 / BACEN / REAJ) ou Juros (Histórico 737)
+            const ehReajuste = bloco.includes("REAJUSTE") || bloco.includes("REAJ") || bloco.includes("BACEN") || bloco === "741";
+            const ehJuros = bloco.includes("JUROS") || bloco === "737";
+            const ehRendimentoGenerico = bloco.includes("RENDIMENTO");
+
+            if (ehReajuste || ehJuros || ehRendimentoGenerico) {
+                let tipoLancamento = "RENDIMENTO";
+                if (ehReajuste) tipoLancamento = "REAJUSTE MONETÁRIO";
+                else if (ehJuros) tipoLancamento = "JUROS";
+                else if (ehRendimentoGenerico) tipoLancamento = "RENDIMENTO LÍQUIDO";
+
+                let valorIdentificado = "";
+
+                // Busca o valor monetário associado nas posições seguintes do array de blocos
+                for (let j = i + 1; j < Math.min(i + 14, blocos.length); j++) {
+                    let proximo = blocos[j];
+
+                    // Evita pegar valores de Resgate Automático ou Saldo
+                    if (proximo.toUpperCase().includes("RESGATE") || proximo.toUpperCase().includes("SALDO")) {
+                        if (!ehRendimentoGenerico) break;
+                    }
+
+                    let matchValor = proximo.match(regexDinheiro);
+                    if (matchValor) {
+                        valorIdentificado = matchValor[0];
+                        i = j; // Avança o ponteiro
+                        break;
+                    }
+                }
+
+                if (valorIdentificado) {
+                    let vNum = parseFloat(valorIdentificado.replace(/\./g, '').replace(',', '.'));
+                    
+                    // Evita duplicidades caso o mesmo valor tenha sido lido na sequência
+                    const jaExiste = itens.some(it => it.tipo === tipoLancamento && Math.abs(it.valorNum - vNum) < 0.001);
+                    if (!jaExiste) {
+                        itens.push({ tipo: tipoLancamento, valorStr: valorIdentificado, valorNum: vNum });
+                    }
+                }
+            }
+        }
+
+        // Fallback genérico caso não tenha encontrado pelos históricos específicos
+        if (itens.length === 0 && texto.toUpperCase().includes("RENDIMENTO")) {
+            const idxRend = texto.toUpperCase().indexOf("RENDIMENTO");
+            const trecho = texto.substring(idxRend, idxRend + 100);
+            const match = trecho.match(/\d+(?:\.\d{3})*,\d{2}/);
+            if (match) {
+                let vNum = parseFloat(match[0].replace(/\./g, '').replace(',', '.'));
+                itens.push({ tipo: "RENDIMENTO LÍQUIDO", valorStr: match[0], valorNum: vNum });
+            }
+        }
+        return itens;
+    }
+
+    function extrairNomeProjeto(texto) {
+        const matchProj = texto.match(/Projeto\s*[:\.-]?\s*(\d+[\w\/\-]*)/i) || texto.match(/(P\d{4,6})/i);
+        return matchProj ? "Projeto " + matchProj[1] : null;
+    }
+
+    function formatarMoeda(val) {
+        return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function exibirResultados() {
+        const corpoTabela = document.getElementById('corpoTabela');
+        const summaryCards = document.getElementById('summaryCards');
+        corpoTabela.innerHTML = "";
+        summaryCards.innerHTML = "";
+
+        let grandTotalRendimento = 0, grandTotalCofins = 0, grandTotalLiquido = 0;
+        let textoCopiar = "Projeto\tItem\tRendimento (+)\tCOFINS (-)\tResultado Líquido\n";
+
+        projetosProcessados.forEach((p) => {
+            grandTotalRendimento += p.totalRendimento;
+            grandTotalCofins += p.cofins.valorNum;
+            grandTotalLiquido += p.resultadoFinal;
+
+            let trProj = document.createElement('tr');
+            trProj.className = "project-header";
+            trProj.innerHTML = `<td colspan="5">📌 ${p.nomeProjeto} <span style="font-size:12px; color:#64748b;">(${p.filename})</span></td>`;
+            corpoTabela.appendChild(trProj);
+
+            p.itensRendimento.forEach(item => {
+                let trItem = document.createElement('tr');
+                let badgeClass = item.tipo.includes("REAJUSTE") || item.tipo.includes("REAJ") ? "badge-reaj" : "badge-juros";
+                trItem.innerHTML = `
+                    <td style="padding-left: 25px;">• Detalhe Extrato</td>
+                    <td><span class="badge ${badgeClass}">${item.tipo}</span></td>
+                    <td style="text-align: right;" class="valor-celula">${formatarMoeda(item.valorNum)}</td>
+                    <td style="text-align: right;" class="valor-celula">-</td>
+                    <td style="text-align: right;" class="valor-celula">-</td>
+                `;
+                corpoTabela.appendChild(trItem);
+                textoCopiar += `${p.nomeProjeto}\t${item.tipo}\t${item.valorNum.toFixed(2).replace('.', ',')}\t-\t-\n`;
+            });
+
+            let trCofins = document.createElement('tr');
+            trCofins.innerHTML = `
+                <td style="padding-left: 25px;">• Comprovante Pág. 1</td>
+                <td><span class="badge badge-cofins">COFINS</span></td>
+                <td style="text-align: right;" class="valor-celula">-</td>
+                <td style="text-align: right;" class="valor-celula" style="color: #dc2626;">-${formatarMoeda(p.cofins.valorNum)}</td>
+                <td style="text-align: right;" class="valor-celula">-</td>
+            `;
+            corpoTabela.appendChild(trCofins);
+            textoCopiar += `${p.nomeProjeto}\tCOFINS Pág.1\t-\t-${p.cofins.valorNum.toFixed(2).replace('.', ',')}\t-\n`;
+
+            let trSub = document.createElement('tr');
+            trSub.className = "result-row";
+            trSub.innerHTML = `
+                <td colspan="2" style="text-align: right;"><strong>Subtotal ${p.nomeProjeto}:</strong></td>
+                <td style="text-align: right;" class="valor-celula">${formatarMoeda(p.totalRendimento)}</td>
+                <td style="text-align: right;" class="valor-celula" style="color: #dc2626;">-${formatarMoeda(p.cofins.valorNum)}</td>
+                <td style="text-align: right;" class="valor-celula" style="color: #16a34a;">${formatarMoeda(p.resultadoFinal)}</td>
+            `;
+            corpoTabela.appendChild(trSub);
+            textoCopiar += `${p.nomeProjeto}\tSUBTOTAL\t${p.totalRendimento.toFixed(2).replace('.', ',')}\t-${p.cofins.valorNum.toFixed(2).replace('.', ',')}\t${p.resultadoFinal.toFixed(2).replace('.', ',')}\n\n`;
+        });
+
+        summaryCards.innerHTML = `
+            <div class="card-stat">
+                <div class="title">Rendimento Total</div>
+                <div class="value">${formatarMoeda(grandTotalRendimento)}</div>
+            </div>
+            <div class="card-stat">
+                <div class="title">COFINS Total Subtraído</div>
+                <div class="value" style="color: #dc2626;">-${formatarMoeda(grandTotalCofins)}</div>
+            </div>
+            <div class="card-stat total-final">
+                <div class="title">Resultado Líquido Final</div>
+                <div class="value">${formatarMoeda(grandTotalLiquido)}</div>
+            </div>
+        `;
+
+        dadosParaCopiar = textoCopiar;
+        document.getElementById('boxResultado').style.display = 'block';
+    }
+
+    function mostrarStatus(m) {
+        const s = document.getElementById('status');
+        s.innerText = m;
+        s.style.display = 'block';
+    }
+
+    function esconderStatus() {
+        document.getElementById('status').style.display = 'none';
+    }
+
+    function copiarTextoTabela() {
+        if (!dadosParaCopiar) return;
+        navigator.clipboard.writeText(dadosParaCopiar);
+        const btn = document.querySelector('.btn-copiar');
+        btn.innerHTML = "✅ Copiado para o Excel!";
+        setTimeout(() => { btn.innerHTML = "📋 Copiar para o Excel"; }, 1800);
+    }
+</script>
+
+</body>
+</html>
