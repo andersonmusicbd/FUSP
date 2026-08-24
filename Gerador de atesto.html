@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atestador de Notas Fiscais (Todas as Páginas)</title>
+  <title>Atestador de Notas Fiscais (Navegação Completa por Páginas)</title>
   
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -238,14 +238,24 @@
       font-weight: bold;
       margin-left: 8px;
     }
+
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="header">
-      <h1>📑 Carimbador de Atestos (Atesta Todas as Páginas)</h1>
-      <p>Ajuste dados, altere datas, veja em tela cheia e ateste todas as páginas de um ou mais documentos.</p>
+      <h1>📑 Carimbador de Atestos (Navegação em Múltiplas Páginas)</h1>
+      <p>Navegue entre as páginas para visualizar onde o carimbo será aplicado em cada uma delas.</p>
     </div>
 
     <!-- 1. Configurações Globais -->
@@ -330,7 +340,7 @@
       }
     });
 
-    // Upload de arquivos (corrigido para funcionar tanto para 1 arquivo quanto para múltiplos)
+    // Upload de arquivos
     document.getElementById('pdf-files').addEventListener('change', async function(e) {
       const files = Array.from(e.target.files);
       if (!files || files.length === 0) return;
@@ -350,6 +360,8 @@
           wPct: 0.28,
           xPct: 0.65,
           yPct: 0.65,
+          currentPage: 1,
+          totalPages: 1,
           completed: false
         };
 
@@ -359,9 +371,7 @@
       document.getElementById('status-msg').textContent = `${loadedFiles.length} nota(s) carregada(s).`;
       document.getElementById('btn-download-all').style.display = loadedFiles.length > 1 ? 'inline-flex' : 'none';
       
-      // Reseta o input para permitir selecionar o mesmo arquivo novamente se necessário
       e.target.value = '';
-      
       renderCards();
     });
 
@@ -430,14 +440,19 @@
               <div>
                 <label>📍 Posicionamento:</label>
                 <p style="font-size: 11px; color: #475569; margin: 4px 0 0 0;">
-                  Arraste a caixa para ajustar. O carimbo será aplicado nesta mesma posição em <strong>todas as páginas</strong>.
+                  Arraste a caixa do carimbo para ajustar. Ele será aplicado na mesma posição em <strong>todas as páginas</strong> ao baixar.
                 </p>
               </div>
             </div>
 
             <div style="flex: 1; display: flex; flex-direction: column;">
               <div class="zoom-toolbar">
-                <span style="font-size: 12px; font-weight: 600;">🔍 Zoom:</span>
+                <div class="page-nav">
+                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, -1)">◀</button>
+                  <span style="font-size: 12px; font-weight: bold;" id="page-info-${item.id}">Página ${item.currentPage} / ${item.totalPages}</span>
+                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, 1)">▶</button>
+                </div>
+
                 <div style="display: flex; gap: 6px; align-items: center;">
                   <button class="btn btn-secondary" style="padding: 2px 8px;" onclick="changeZoom(${index}, -0.15)">➖ Reduzir</button>
                   <span id="zoom-text-${item.id}" style="font-size: 12px; font-weight: bold;">${Math.round(item.scale * 100)}%</span>
@@ -466,8 +481,14 @@
     async function renderPDFPreview(item) {
       const arrayBuffer = await item.file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const page = await pdf.getPage(1);
+      
+      item.totalPages = pdf.numPages;
+      const pageInfo = document.getElementById(`page-info-${item.id}`);
+      if (pageInfo) {
+        pageInfo.textContent = `Página ${item.currentPage} / ${item.totalPages}`;
+      }
 
+      const page = await pdf.getPage(item.currentPage);
       const viewport = page.getViewport({ scale: item.scale });
       const canvas = document.getElementById(`canvas-${item.id}`);
       if (!canvas) return;
@@ -490,6 +511,16 @@
 
       updateStampElementStyle(item, viewport.width, viewport.height);
       setupDragEvents(item, viewport.width, viewport.height);
+    }
+
+    async function changePage(index, delta) {
+      const item = loadedFiles[index];
+      const newPage = item.currentPage + delta;
+
+      if (newPage >= 1 && newPage <= item.totalPages) {
+        item.currentPage = newPage;
+        await renderPDFPreview(item);
+      }
     }
 
     function updateStampElementStyle(item, pdfWidth, pdfHeight) {
@@ -686,7 +717,7 @@
       });
     }
 
-    // Aplica o carimbo em TODAS as páginas do documento
+    // Carimba TODAS as páginas
     async function stampPDF(item) {
       const stampImgBase64 = await generateStampImage(item.date);
       const arrayBuffer = await item.file.arrayBuffer();
@@ -696,7 +727,6 @@
       
       const pages = pdfDoc.getPages();
 
-      // Loop para aplicar o carimbo em cada página do documento
       for (const page of pages) {
         const { width, height } = page.getSize();
         const stampWidth = width * item.wPct;
