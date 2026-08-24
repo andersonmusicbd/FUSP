@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atestador de Notas Fiscais (Navegação Completa por Páginas)</title>
+  <title>Atestador de Notas Fiscais (Atesto Individual por Página)</title>
   
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -120,6 +120,8 @@
     .btn-success:hover { background-color: #15803d; }
     .btn-secondary { background-color: #64748b; }
     .btn-secondary:hover { background-color: #475569; }
+    .btn-danger { background-color: #dc2626; }
+    .btn-danger:hover { background-color: #b91c1c; }
     .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; }
     .btn-outline:hover { background-color: #f1f5f9; }
 
@@ -254,8 +256,8 @@
 
   <div class="container">
     <div class="header">
-      <h1>📑 Carimbador de Atestos (Navegação em Múltiplas Páginas)</h1>
-      <p>Navegue entre as páginas para visualizar onde o carimbo será aplicado em cada uma delas.</p>
+      <h1>📑 Carimbador de Atestos (Atesto por Página Individual)</h1>
+      <p>Configure e ajuste a posição do carimbo de forma independente para cada página de cada PDF.</p>
     </div>
 
     <!-- 1. Configurações Globais -->
@@ -295,12 +297,16 @@
     <div class="card">
       <div class="card-title">2. Upload das Notas Fiscais (PDFs)</div>
       <div class="drop-zone" onclick="document.getElementById('pdf-files').click()">
-        📂 <strong>Clique para selecionar PDF(s)</strong> (Aceita 1 arquivo ou vários)
+        📂 <strong>Clique para selecionar PDF(s)</strong><br>
+        <span style="font-size: 12px; font-weight: normal; color: #475569;">
+          Carregue 1 por 1 ou múltiplos arquivos.
+        </span>
         <input type="file" id="pdf-files" accept="application/pdf" multiple style="display:none;">
       </div>
 
       <div style="margin-top: 15px; display: flex; gap: 10px;">
         <button class="btn btn-success" id="btn-download-all" onclick="downloadAllZIP()" style="display:none;">📦 Baixar Todas Atestadas (ZIP)</button>
+        <button class="btn btn-danger" id="btn-clear-all" onclick="clearAllFiles()" style="display:none;">🗑️ Limpar Lista</button>
       </div>
 
       <div id="status-msg" style="margin-top: 10px; font-weight: 600; color: #2563eb;"></div>
@@ -323,7 +329,6 @@
     let signatureImgElement = null;
     let loadedFiles = [];
 
-    // Carrega assinatura global
     document.getElementById('assinatura').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -340,37 +345,50 @@
       }
     });
 
-    // Upload de arquivos
     document.getElementById('pdf-files').addEventListener('change', async function(e) {
       const files = Array.from(e.target.files);
       if (!files || files.length === 0) return;
 
-      document.getElementById('status-msg').textContent = "Processando e gerando previews...";
+      document.getElementById('status-msg').textContent = "Adicionando e processando arquivo(s)...";
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const extractedDate = await extractDateFromPDF(file);
         
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+        const totalPages = pdf.numPages;
+
+        // Configuração individual por página
+        const pagesConfig = {};
+        for (let p = 1; p <= totalPages; p++) {
+          pagesConfig[p] = {
+            date: extractedDate,
+            wPct: 0.28,
+            xPct: 0.65,
+            yPct: 0.65
+          };
+        }
+
         const fileObj = {
           id: Date.now() + '_' + Math.random().toString(36).substring(2, 7),
           file: file,
           name: file.name,
-          date: extractedDate,
           scale: 0.85,
-          wPct: 0.28,
-          xPct: 0.65,
-          yPct: 0.65,
           currentPage: 1,
-          totalPages: 1,
+          totalPages: totalPages,
+          pagesConfig: pagesConfig,
           completed: false
         };
 
         loadedFiles.push(fileObj);
       }
 
-      document.getElementById('status-msg').textContent = `${loadedFiles.length} nota(s) carregada(s).`;
-      document.getElementById('btn-download-all').style.display = loadedFiles.length > 1 ? 'inline-flex' : 'none';
+      document.getElementById('status-msg').textContent = `Total de ${loadedFiles.length} nota(s) na lista.`;
       
+      document.getElementById('btn-download-all').style.display = loadedFiles.length > 1 ? 'inline-flex' : 'none';
+      document.getElementById('btn-clear-all').style.display = loadedFiles.length > 0 ? 'inline-flex' : 'none';
+
       e.target.value = '';
       renderCards();
     });
@@ -407,6 +425,7 @@
 
       for (let index = 0; index < loadedFiles.length; index++) {
         const item = loadedFiles[index];
+        const currentPageConfig = item.pagesConfig[item.currentPage];
 
         const card = document.createElement('div');
         card.className = `pdf-card ${item.completed ? 'completed' : ''}`;
@@ -422,25 +441,28 @@
                 ${item.completed ? '↩ Reabrir' : '✅ Marcar como Concluído'}
               </button>
               <button class="btn btn-secondary" onclick="downloadSinglePDF(${index})">💾 Baixar</button>
+              <button class="btn btn-danger" style="padding: 6px 10px;" onclick="removeSinglePDF(${index})" title="Remover este arquivo">🗑️</button>
             </div>
           </div>
 
           <div class="pdf-card-body">
             <div class="pdf-controls">
-              <div>
-                <label>Data de Emissão (Atesto):</label>
-                <input type="text" value="${item.date}" onchange="updateItemDate(${index}, this.value)">
-                <small style="color: #64748b; font-size: 11px;">Altere se tiver sido lida errada.</small>
+              <div style="background: #e0f2fe; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; color: #0369a1;">
+                📌 Editando a Página ${item.currentPage}
               </div>
-              <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 5px 0;">
               <div>
-                <label>Tamanho do Carimbo (%):</label>
-                <input type="number" value="${Math.round(item.wPct * 100)}" min="15" max="50" oninput="updateItemWidth(${index}, this.value)">
+                <label>Data de Emissão da Pág. ${item.currentPage}:</label>
+                <input type="text" id="input-date-${item.id}" value="${currentPageConfig.date}" onchange="updateItemPageDate(${index}, this.value)">
+              </div>
+              <hr style="border:0; border-top: 1px solid #e2e8f0; margin: 2px 0;">
+              <div>
+                <label>Tamanho do Carimbo Pág. ${item.currentPage} (%):</label>
+                <input type="number" id="input-width-${item.id}" value="${Math.round(currentPageConfig.wPct * 100)}" min="15" max="50" oninput="updateItemPageWidth(${index}, this.value)">
               </div>
               <div>
                 <label>📍 Posicionamento:</label>
                 <p style="font-size: 11px; color: #475569; margin: 4px 0 0 0;">
-                  Arraste a caixa do carimbo para ajustar. Ele será aplicado na mesma posição em <strong>todas as páginas</strong> ao baixar.
+                  Arraste a caixa para ajustar o carimbo <strong>exclusivamente para a página ${item.currentPage}</strong>.
                 </p>
               </div>
             </div>
@@ -448,9 +470,9 @@
             <div style="flex: 1; display: flex; flex-direction: column;">
               <div class="zoom-toolbar">
                 <div class="page-nav">
-                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, -1)">◀</button>
+                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, -1)">◀ Pág Anterior</button>
                   <span style="font-size: 12px; font-weight: bold;" id="page-info-${item.id}">Página ${item.currentPage} / ${item.totalPages}</span>
-                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, 1)">▶</button>
+                  <button class="btn btn-secondary" style="padding: 1px 6px; font-size: 11px;" onclick="changePage(${index}, 1)">Próxima Pág ▶</button>
                 </div>
 
                 <div style="display: flex; gap: 6px; align-items: center;">
@@ -482,7 +504,6 @@
       const arrayBuffer = await item.file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       
-      item.totalPages = pdf.numPages;
       const pageInfo = document.getElementById(`page-info-${item.id}`);
       if (pageInfo) {
         pageInfo.textContent = `Página ${item.currentPage} / ${item.totalPages}`;
@@ -499,7 +520,8 @@
 
       await page.render({ canvasContext: ctx, viewport: viewport }).promise;
 
-      const stampImgBase64 = await generateStampImage(item.date);
+      const currentPageConfig = item.pagesConfig[item.currentPage];
+      const stampImgBase64 = await generateStampImage(currentPageConfig.date);
       const stampImgEl = document.getElementById(`stamp-img-${item.id}`);
       if (stampImgEl) stampImgEl.src = stampImgBase64;
 
@@ -519,6 +541,12 @@
 
       if (newPage >= 1 && newPage <= item.totalPages) {
         item.currentPage = newPage;
+        
+        // Atualiza os inputs do formulário com as configurações da nova página
+        const pageConfig = item.pagesConfig[item.currentPage];
+        document.getElementById(`input-date-${item.id}`).value = pageConfig.date;
+        document.getElementById(`input-width-${item.id}`).value = Math.round(pageConfig.wPct * 100);
+
         await renderPDFPreview(item);
       }
     }
@@ -527,14 +555,16 @@
       const dragStamp = document.getElementById(`stamp-${item.id}`);
       if (!dragStamp) return;
 
-      const stampW = pdfWidth * item.wPct;
+      const pageConfig = item.pagesConfig[item.currentPage];
+
+      const stampW = pdfWidth * pageConfig.wPct;
       const stampH = stampW * (550 / 500);
 
       dragStamp.style.width = stampW + 'px';
       dragStamp.style.height = stampH + 'px';
 
-      dragStamp.style.left = (pdfWidth * item.xPct) + 'px';
-      dragStamp.style.top = (pdfHeight * item.yPct) + 'px';
+      dragStamp.style.left = (pdfWidth * pageConfig.xPct) + 'px';
+      dragStamp.style.top = (pdfHeight * pageConfig.yPct) + 'px';
     }
 
     function setupDragEvents(item, pdfWidth, pdfHeight) {
@@ -565,8 +595,10 @@
         dragStamp.style.left = newLeft + 'px';
         dragStamp.style.top = newTop + 'px';
 
-        item.xPct = newLeft / pdfWidth;
-        item.yPct = newTop / pdfHeight;
+        // Atualiza a posição apenas para a página ativa
+        const pageConfig = item.pagesConfig[item.currentPage];
+        pageConfig.xPct = newLeft / pdfWidth;
+        pageConfig.yPct = newTop / pdfHeight;
       }
 
       function onMouseUp() {
@@ -574,6 +606,42 @@
         document.onmousemove = null;
         document.onmouseup = null;
       }
+    }
+
+    async function updateItemPageDate(index, newDate) {
+      const item = loadedFiles[index];
+      item.pagesConfig[item.currentPage].date = newDate;
+      const stampImgBase64 = await generateStampImage(newDate);
+      const imgEl = document.getElementById(`stamp-img-${item.id}`);
+      if (imgEl) imgEl.src = stampImgBase64;
+    }
+
+    function updateItemPageWidth(index, newWidthPct) {
+      const item = loadedFiles[index];
+      item.pagesConfig[item.currentPage].wPct = parseFloat(newWidthPct) / 100;
+
+      const canvas = document.getElementById(`canvas-${item.id}`);
+      if (canvas) updateStampElementStyle(item, canvas.width, canvas.height);
+    }
+
+    function removeSinglePDF(index) {
+      loadedFiles.splice(index, 1);
+      document.getElementById('status-msg').textContent = loadedFiles.length > 0 
+        ? `Total de ${loadedFiles.length} nota(s) na lista.` 
+        : '';
+      
+      document.getElementById('btn-download-all').style.display = loadedFiles.length > 1 ? 'inline-flex' : 'none';
+      document.getElementById('btn-clear-all').style.display = loadedFiles.length > 0 ? 'inline-flex' : 'none';
+
+      renderCards();
+    }
+
+    function clearAllFiles() {
+      loadedFiles = [];
+      document.getElementById('status-msg').textContent = 'Lista limpa.';
+      document.getElementById('btn-download-all').style.display = 'none';
+      document.getElementById('btn-clear-all').style.display = 'none';
+      renderCards();
     }
 
     function toggleCompleted(index) {
@@ -623,24 +691,10 @@
       renderCards();
     }
 
-    async function updateItemDate(index, newDate) {
-      loadedFiles[index].date = newDate;
-      const stampImgBase64 = await generateStampImage(newDate);
-      const imgEl = document.getElementById(`stamp-img-${loadedFiles[index].id}`);
-      if (imgEl) imgEl.src = stampImgBase64;
-    }
-
-    function updateItemWidth(index, newWidthPct) {
-      const item = loadedFiles[index];
-      item.wPct = parseFloat(newWidthPct) / 100;
-
-      const canvas = document.getElementById(`canvas-${item.id}`);
-      if (canvas) updateStampElementStyle(item, canvas.width, canvas.height);
-    }
-
     async function updateAllStamps() {
       for (let item of loadedFiles) {
-        const stampImgBase64 = await generateStampImage(item.date);
+        const pageConfig = item.pagesConfig[item.currentPage];
+        const stampImgBase64 = await generateStampImage(pageConfig.date);
         const imgEl = document.getElementById(`stamp-img-${item.id}`);
         if (imgEl) imgEl.src = stampImgBase64;
       }
@@ -717,23 +771,26 @@
       });
     }
 
-    // Carimba TODAS as páginas
+    // Processa a estampa individual para CADA página do PDF
     async function stampPDF(item) {
-      const stampImgBase64 = await generateStampImage(item.date);
       const arrayBuffer = await item.file.arrayBuffer();
-      
       const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-      const stampImage = await pdfDoc.embedPng(stampImgBase64);
-      
       const pages = pdfDoc.getPages();
 
-      for (const page of pages) {
+      for (let i = 0; i < pages.length; i++) {
+        const pageNumber = i + 1;
+        const pageConfig = item.pagesConfig[pageNumber];
+        const page = pages[i];
+
+        const stampImgBase64 = await generateStampImage(pageConfig.date);
+        const stampImage = await pdfDoc.embedPng(stampImgBase64);
+
         const { width, height } = page.getSize();
-        const stampWidth = width * item.wPct;
+        const stampWidth = width * pageConfig.wPct;
         const stampHeight = stampWidth * (550 / 500);
 
-        const x = width * item.xPct;
-        const y = height - (height * item.yPct) - stampHeight;
+        const x = width * pageConfig.xPct;
+        const y = height - (height * pageConfig.yPct) - stampHeight;
 
         page.drawImage(stampImage, {
           x: Math.max(0, x),
