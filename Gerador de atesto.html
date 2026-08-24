@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atestador de Notas Fiscais (Tela Cheia e Conclusão)</title>
+  <title>Atestador de Notas Fiscais (Todas as Páginas)</title>
   
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -123,7 +123,6 @@
     .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; }
     .btn-outline:hover { background-color: #f1f5f9; }
 
-    /* Card da Nota Fiscal */
     .pdf-card {
       background: white;
       border: 2px solid var(--border-color);
@@ -134,7 +133,6 @@
       transition: all 0.3s ease;
     }
 
-    /* Estilo para nota concluída */
     .pdf-card.completed {
       border-color: #22c55e;
       background-color: #f0fdf4;
@@ -202,7 +200,6 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
-    /* Modal Tela Cheia */
     .modal-fullscreen {
       display: none;
       position: fixed;
@@ -247,8 +244,8 @@
 
   <div class="container">
     <div class="header">
-      <h1>📑 Carimbador de Atestos</h1>
-      <p>Ajuste dados, altere datas, veja em tela cheia e marque como concluído antes de baixar.</p>
+      <h1>📑 Carimbador de Atestos (Atesta Todas as Páginas)</h1>
+      <p>Ajuste dados, altere datas, veja em tela cheia e ateste todas as páginas de um ou mais documentos.</p>
     </div>
 
     <!-- 1. Configurações Globais -->
@@ -288,7 +285,7 @@
     <div class="card">
       <div class="card-title">2. Upload das Notas Fiscais (PDFs)</div>
       <div class="drop-zone" onclick="document.getElementById('pdf-files').click()">
-        📂 <strong>Clique para selecionar os PDFs</strong> (ou arraste múltiplos arquivos aqui)
+        📂 <strong>Clique para selecionar PDF(s)</strong> (Aceita 1 arquivo ou vários)
         <input type="file" id="pdf-files" accept="application/pdf" multiple style="display:none;">
       </div>
 
@@ -333,10 +330,10 @@
       }
     });
 
-    // Upload dos PDFs
+    // Upload de arquivos (corrigido para funcionar tanto para 1 arquivo quanto para múltiplos)
     document.getElementById('pdf-files').addEventListener('change', async function(e) {
       const files = Array.from(e.target.files);
-      if (files.length === 0) return;
+      if (!files || files.length === 0) return;
 
       document.getElementById('status-msg').textContent = "Processando e gerando previews...";
 
@@ -345,7 +342,7 @@
         const extractedDate = await extractDateFromPDF(file);
         
         const fileObj = {
-          id: Date.now() + '_' + i,
+          id: Date.now() + '_' + Math.random().toString(36).substring(2, 7),
           file: file,
           name: file.name,
           date: extractedDate,
@@ -360,7 +357,11 @@
       }
 
       document.getElementById('status-msg').textContent = `${loadedFiles.length} nota(s) carregada(s).`;
-      document.getElementById('btn-download-all').style.display = 'inline-flex';
+      document.getElementById('btn-download-all').style.display = loadedFiles.length > 1 ? 'inline-flex' : 'none';
+      
+      // Reseta o input para permitir selecionar o mesmo arquivo novamente se necessário
+      e.target.value = '';
+      
       renderCards();
     });
 
@@ -387,7 +388,7 @@
           if (match && match[1]) return match[1];
         }
       } catch (err) {}
-      return '02/04/2024';
+      return '29/04/2026';
     }
 
     async function renderCards() {
@@ -429,7 +430,7 @@
               <div>
                 <label>📍 Posicionamento:</label>
                 <p style="font-size: 11px; color: #475569; margin: 4px 0 0 0;">
-                  Arraste a caixa do carimbo na folha para ajustar a posição.
+                  Arraste a caixa para ajustar. O carimbo será aplicado nesta mesma posição em <strong>todas as páginas</strong>.
                 </p>
               </div>
             </div>
@@ -588,7 +589,6 @@
       const modal = document.getElementById('fullscreen-modal');
       modal.style.display = 'none';
 
-      // Re-renderiza para devolver o wrapper ao card de origem
       renderCards();
     }
 
@@ -686,27 +686,32 @@
       });
     }
 
+    // Aplica o carimbo em TODAS as páginas do documento
     async function stampPDF(item) {
       const stampImgBase64 = await generateStampImage(item.date);
       const arrayBuffer = await item.file.arrayBuffer();
+      
       const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
       const stampImage = await pdfDoc.embedPng(stampImgBase64);
       
-      const page = pdfDoc.getPages()[0];
-      const { width, height } = page.getSize();
+      const pages = pdfDoc.getPages();
 
-      const stampWidth = width * item.wPct;
-      const stampHeight = stampWidth * (550 / 500);
+      // Loop para aplicar o carimbo em cada página do documento
+      for (const page of pages) {
+        const { width, height } = page.getSize();
+        const stampWidth = width * item.wPct;
+        const stampHeight = stampWidth * (550 / 500);
 
-      const x = width * item.xPct;
-      const y = height - (height * item.yPct) - stampHeight;
+        const x = width * item.xPct;
+        const y = height - (height * item.yPct) - stampHeight;
 
-      page.drawImage(stampImage, {
-        x: Math.max(0, x),
-        y: Math.max(0, y),
-        width: stampWidth,
-        height: stampHeight,
-      });
+        page.drawImage(stampImage, {
+          x: Math.max(0, x),
+          y: Math.max(0, y),
+          width: stampWidth,
+          height: stampHeight,
+        });
+      }
 
       return await pdfDoc.save();
     }
