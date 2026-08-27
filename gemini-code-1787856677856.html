@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destacar e Editar Extrato PDF</title>
+  <!-- Bibliotecas para manipular e visualizar PDF -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .section {
+      background-color: #f8f9fa;
+      border: 1px solid #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .controls-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    input[type="text"], input[type="file"], select {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+    }
+    .btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .btn-primary { background-color: #2563eb; color: white; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-success { background-color: #16a34a; color: white; }
+    .btn-success:hover { background-color: #15803d; }
+    #pdfPreview {
+      width: 100%;
+      height: 600px;
+      border: 1px solid #ccc;
+      margin-top: 15px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Editor e Destaque de Extrato em PDF</h2>
+
+  <div class="section">
+    <div class="controls-grid">
+      <div>
+        <label><strong>1. Upload do PDF:</strong></label><br>
+        <input type="file" id="pdfFileInput" accept="application/pdf">
+      </div>
+      <div>
+        <label><strong>2. Valor para Grifar:</strong></label><br>
+        <input type="text" id="targetValue" placeholder="Ex: 8.479,20">
+      </div>
+      <div style="margin-top: 18px;">
+        <button class="btn btn-primary" onclick="processPDF()">✨ Grifar no PDF</button>
+        <button class="btn btn-success" id="downloadBtn" onclick="downloadPDF()" disabled>💾 Baixar PDF Editado</button>
+      </div>
+    </div>
+  </div>
+
+  <iframe id="pdfPreview" title="Visualização do PDF"></iframe>
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+  let currentArrayBuffer = null;
+  let modifiedPdfBytes = null;
+
+  // Carrega o PDF ao selecionar o arquivo
+  document.getElementById('pdfFileInput').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    currentArrayBuffer = await file.arrayBuffer();
+    renderPreview(currentArrayBuffer);
+  });
+
+  // Função principal para localizar texto e desenhar o grifo no PDF
+  async function processPDF() {
+    if (!currentArrayBuffer) {
+      alert("Por favor, faça upload de um arquivo PDF primeiro.");
+      return;
+    }
+
+    const searchValue = document.getElementById('targetValue').value.trim();
+    if (!searchValue) {
+      alert("Digite o valor que deseja grifar.");
+      return;
+    }
+
+    const pdfDoc = await PDFLib.PDFDocument.load(currentArrayBuffer);
+    const pdfJsDoc = await pdfjsLib.getDocument({ data: currentArrayBuffer }).promise;
+    
+    let totalHighlights = 0;
+
+    for (let i = 0; i < pdfJsDoc.numPages; i++) {
+      const pageJs = await pdfJsDoc.getPage(i + 1);
+      const textContent = await pageJs.getTextContent();
+      const viewport = pageJs.getViewport({ scale: 1.0 });
+
+      const pdfLibPage = pdfDoc.getPages()[i];
+      const { height } = pdfLibPage.getSize();
+
+      // Percorre os elementos de texto da página
+      for (const item of textContent.items) {
+        if (item.str.includes(searchValue)) {
+          // Extrai as coordenadas do texto no PDF
+          const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+          const x = tx[4];
+          const y = height - tx[5]; // Converte coordenadas Y
+          const width = item.width || (searchValue.length * 6);
+          const itemHeight = item.height || 12;
+
+          // Desenha o retângulo amarelo (com semitransparência) sobre o texto
+          pdfLibPage.drawRectangle({
+            x: x - 2,
+            y: y - (itemHeight / 4),
+            width: width + 4,
+            height: itemHeight + 2,
+            color: PDFLib.rgb(1, 1, 0), // Amarelo
+            opacity: 0.4, // Transparência do destaque
+          });
+
+          totalHighlights++;
+        }
+      }
+    }
+
+    if (totalHighlights === 0) {
+      alert("O valor informado não foi localizado no texto do PDF.");
+      return;
+    }
+
+    modifiedPdfBytes = await pdfDoc.save();
+    renderPreview(modifiedPdfBytes);
+    document.getElementById('downloadBtn').disabled = false;
+  }
+
+  // Atualiza o iframe com a visualização do PDF
+  function renderPreview(pdfData) {
+    const blob = new Blob([pdfData], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+    document.getElementById('pdfPreview').src = blobUrl;
+  }
+
+  // Baixa o arquivo PDF alterado
+  function downloadPDF() {
+    if (!modifiedPdfBytes) return;
+    const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'extrato_destacado.pdf';
+    link.click();
+  }
+</script>
+
+</body>
+</html>
