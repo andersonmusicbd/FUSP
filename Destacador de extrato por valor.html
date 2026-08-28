@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Destacar Linha Inteira no PDF</title>
+  <!-- Bibliotecas para manipular e carregar PDF -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+      margin-top: 0;
+      color: #1a252f;
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 10px;
+    }
+    .section {
+      background-color: #f8f9fa;
+      border: 1px solid #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .controls-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+    }
+    .btn {
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .btn-primary { background-color: #2563eb; color: white; }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    .btn-success { background-color: #16a34a; color: white; }
+    .btn-success:hover { background-color: #15803d; }
+    #pdfPreview {
+      width: 100%;
+      height: 650px;
+      border: 1px solid #ccc;
+      margin-top: 15px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Destacar Linha Completa no PDF de Extrato</h2>
+
+  <div class="section">
+    <div class="controls-grid">
+      <div>
+        <label><strong>1. Upload do PDF:</strong></label><br>
+        <input type="file" id="pdfFileInput" accept="application/pdf">
+      </div>
+      <div>
+        <label><strong>2. Valor para Grifar a Linha:</strong></label><br>
+        <input type="text" id="targetValue" placeholder="Ex: 8.479,20 ou 5.460,42">
+      </div>
+      <div style="margin-top: 18px;">
+        <button class="btn btn-primary" onclick="processPDF()">✨ Grifar Linha Inteira</button>
+        <button class="btn btn-success" id="downloadBtn" onclick="downloadPDF()" disabled>💾 Baixar PDF Editado</button>
+      </div>
+    </div>
+  </div>
+
+  <iframe id="pdfPreview" title="Visualização do PDF"></iframe>
+</div>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+  let currentArrayBuffer = null;
+  let modifiedPdfBytes = null;
+
+  // Carrega o arquivo PDF na memória
+  document.getElementById('pdfFileInput').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    currentArrayBuffer = await file.arrayBuffer();
+    renderPreview(currentArrayBuffer);
+  });
+
+  async function processPDF() {
+    if (!currentArrayBuffer) {
+      alert("Por favor, selecione um arquivo PDF primeiro.");
+      return;
+    }
+
+    const searchValue = document.getElementById('targetValue').value.trim();
+    if (!searchValue) {
+      alert("Digite o valor a ser buscado no extrato.");
+      return;
+    }
+
+    const pdfDoc = await PDFLib.PDFDocument.load(currentArrayBuffer);
+    const pdfJsDoc = await pdfjsLib.getDocument({ data: currentArrayBuffer }).promise;
+    
+    let totalHighlights = 0;
+
+    for (let pageIdx = 0; pageIdx < pdfJsDoc.numPages; pageIdx++) {
+      const pageJs = await pdfJsDoc.getPage(pageIdx + 1);
+      const textContent = await pageJs.getTextContent();
+      const viewport = pageJs.getViewport({ scale: 1.0 });
+
+      const pdfLibPage = pdfDoc.getPages()[pageIdx];
+      const { width: pageWidth, height: pageHeight } = pdfLibPage.getSize();
+
+      // Mapeia os elementos e suas coordenadas na página
+      for (const item of textContent.items) {
+        if (item.str.includes(searchValue)) {
+          // Extrai a coordenada de altura Y da linha onde o valor foi encontrado
+          const transform = pdfjsLib.Util.transform(viewport.transform, item.transform);
+          const yPosition = pageHeight - transform[5]; // Converte Y para o sistema do PDF-Lib
+          
+          const lineHeight = item.height || 12; // Altura estimada da linha de texto
+
+          // Define as margens laterais do grifo (cobrindo da esquerda até a direita)
+          const marginX = 35; // Margem inicial onde começam as datas (balancete)
+          const highlightWidth = pageWidth - (marginX * 2);
+
+          // Desenha uma faixa retangular horizontal cobrindo toda a extensão da linha
+          pdfLibPage.drawRectangle({
+            x: marginX,
+            y: yPosition - (lineHeight / 3),
+            width: highlightWidth,
+            height: lineHeight + 4,
+            color: PDFLib.rgb(1, 1, 0), // Cor Amarela
+            opacity: 0.20, // Semitransparente para não cobrir o texto impresso
+          });
+
+          totalHighlights++;
+        }
+      }
+    }
+
+    if (totalHighlights === 0) {
+      alert("O valor informado não foi encontrado no texto do PDF.");
+      return;
+    }
+
+    modifiedPdfBytes = await pdfDoc.save();
+    renderPreview(modifiedPdfBytes);
+    document.getElementById('downloadBtn').disabled = false;
+  }
+
+  function renderPreview(pdfData) {
+    const blob = new Blob([pdfData], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+    document.getElementById('pdfPreview').src = blobUrl;
+  }
+
+  function downloadPDF() {
+    if (!modifiedPdfBytes) return;
+    const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'extrato_linha_destacada.pdf';
+    link.click();
+  }
+</script>
+
+</body>
+</html>
