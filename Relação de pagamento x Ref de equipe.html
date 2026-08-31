@@ -434,46 +434,109 @@
     }
 
     function obterListaConsolidada() {
-      const grupos = {};
+      // 1. Agrupar pagamentos estritamente pelo Bolsista + CPF + Valor por Mês
+      const gruposPorPessoaEValor = {};
 
       pagamentos.forEach(p => {
-        const chave = `${p.bolsista}_${p.cpf}_${p.valor}_${p.irrf}_${p.inss}_${p.iss}`;
+        const chave = `${p.bolsista}_${p.cpf}_${p.valor.toFixed(2)}`;
 
-        if (!grupos[chave]) {
-          grupos[chave] = {
+        if (!gruposPorPessoaEValor[chave]) {
+          gruposPorPessoaEValor[chave] = {
             bolsista: p.bolsista,
             cpf: p.cpf,
-            referenciasSet: new Set(),
-            valor: p.valor,
-            irrf: p.irrf,
-            inss: p.inss,
-            iss: p.iss,
-            valorRateio: p.valorRateio,
-            quantidade: 0
+            valorMes: p.valor,
+            itens: []
           };
         }
 
-        grupos[chave].quantidade += 1;
-        if (p.referencia) {
-          grupos[chave].referenciasSet.add(p.referencia);
+        gruposPorPessoaEValor[chave].itens.push(p);
+      });
+
+      const resultadoFinal = [];
+
+      // 2. Verificar sequências contínuas de meses e consolidar impostos e rateio do bloco
+      Object.values(gruposPorPessoaEValor).forEach(grupo => {
+        const pagamentosComRef = grupo.itens.map(p => {
+          if (!p.referencia) return null;
+          const [m, a] = p.referencia.split('/').map(Number);
+          return {
+            ...p,
+            mes: m,
+            ano: a,
+            chaveMes: a * 12 + m
+          };
+        }).filter(Boolean);
+
+        if (pagamentosComRef.length === 0) {
+          // Caso não haja referências de mês válidas
+          const irrfTotal = grupo.itens.reduce((acc, cur) => acc + cur.irrf, 0);
+          const inssTotal = grupo.itens.reduce((acc, cur) => acc + cur.inss, 0);
+          const issTotal = grupo.itens.reduce((acc, cur) => acc + cur.iss, 0);
+          const rateioTotal = grupo.itens.reduce((acc, cur) => acc + cur.valorRateio, 0);
+
+          resultadoFinal.push({
+            bolsista: grupo.bolsista,
+            cpf: grupo.cpf,
+            quantidade: grupo.itens.length,
+            inicioTexto: '',
+            fimTexto: '',
+            valor: grupo.valorMes,
+            irrf: irrfTotal,
+            inss: inssTotal,
+            iss: issTotal,
+            valorRateio: rateioTotal
+          });
+          return;
+        }
+
+        // Ordena por ordem cronológica (Mês/Ano)
+        pagamentosComRef.sort((a, b) => a.chaveMes - b.chaveMes);
+
+        let blocoAtual = [pagamentosComRef[0]];
+
+        for (let i = 1; i < pagamentosComRef.length; i++) {
+          const mesAnterior = pagamentosComRef[i - 1].chaveMes;
+          const mesAtual = pagamentosComRef[i].chaveMes;
+
+          // Se for o mês seguinte ou o mesmo mês, junta no mesmo bloco
+          if (mesAtual === mesAnterior + 1 || mesAtual === mesAnterior) {
+            blocoAtual.push(pagamentosComRef[i]);
+          } else {
+            // Houve quebra na sequência de meses -> gera linha para o bloco anterior
+            adicionarLinhaConsolidada(resultadoFinal, grupo, blocoAtual);
+            blocoAtual = [pagamentosComRef[i]];
+          }
+        }
+
+        if (blocoAtual.length > 0) {
+          adicionarLinhaConsolidada(resultadoFinal, grupo, blocoAtual);
         }
       });
 
-      return Object.values(grupos).map(g => {
-        const datasRef = obterDatasInicioFim(g.referenciasSet);
-        return {
-          bolsista: g.bolsista,
-          cpf: g.cpf,
-          quantidade: g.quantidade,
-          inicioTexto: datasRef.inicio,
-          fimTexto: datasRef.fim,
-          valor: g.valor,
-          irrf: g.irrf,
-          inss: g.inss,
-          iss: g.iss,
-          valorRateio: g.valorRateio
-        };
-      }).sort((a, b) => a.bolsista.localeCompare(b.bolsista));
+      return resultadoFinal.sort((a, b) => a.bolsista.localeCompare(b.bolsista));
+    }
+
+    function adicionarLinhaConsolidada(listaDestino, grupo, blocoItens) {
+      const referenciasSet = new Set(blocoItens.map(b => b.referencia));
+      const datasRef = obterDatasInicioFim(referenciasSet);
+
+      const irrfTotal = blocoItens.reduce((acc, cur) => acc + cur.irrf, 0);
+      const inssTotal = blocoItens.reduce((acc, cur) => acc + cur.inss, 0);
+      const issTotal = blocoItens.reduce((acc, cur) => acc + cur.iss, 0);
+      const rateioTotal = blocoItens.reduce((acc, cur) => acc + cur.valorRateio, 0);
+
+      listaDestino.push({
+        bolsista: grupo.bolsista,
+        cpf: grupo.cpf,
+        quantidade: blocoItens.length,
+        inicioTexto: datasRef.inicio,
+        fimTexto: datasRef.fim,
+        valor: grupo.valorMes,
+        irrf: irrfTotal,
+        inss: inssTotal,
+        iss: issTotal,
+        valorRateio: rateioTotal
+      });
     }
 
     function renderizarTabelaConsolidada() {
