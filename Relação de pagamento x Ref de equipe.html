@@ -30,7 +30,7 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1500px;
       margin: 0 auto;
     }
 
@@ -133,7 +133,7 @@
       color: #000;
       font-weight: bold;
       text-transform: uppercase;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
     }
 
     .header-projeto {
@@ -188,24 +188,25 @@
       <table id="tabelaConsolidada">
         <thead>
           <tr id="linhaProjeto" style="display: none;">
-            <th colspan="10" class="header-projeto" id="celulaProjeto">PROJETO: </th>
+            <th colspan="11" class="header-projeto" id="celulaProjeto">PROJETO: </th>
           </tr>
           <tr>
-            <th style="width: 22%;">BOLSISTA</th>
-            <th style="width: 12%; text-align: center;">CPF</th>
-            <th style="width: 6%; text-align: center;">QTD / OCORR.</th>
-            <th style="width: 10%; text-align: center;">INÍCIO</th>
-            <th style="width: 10%; text-align: center;">FIM</th>
+            <th style="width: 20%;">BOLSISTA</th>
+            <th style="width: 10%; text-align: center;">CPF</th>
+            <th style="width: 5%; text-align: center;">QTD / OCORR.</th>
+            <th style="width: 8%; text-align: center;">INÍCIO</th>
+            <th style="width: 8%; text-align: center;">FIM</th>
             <th style="width: 8%; text-align: right;">VALOR POR MÊS</th>
+            <th style="width: 8%; text-align: right;">VALOR BRUTO</th>
             <th style="width: 8%; text-align: right;">IRRF PF</th>
             <th style="width: 8%; text-align: right;">INSS</th>
             <th style="width: 8%; text-align: right;">ISS</th>
-            <th style="width: 8%; text-align: right;">VALOR RATEIO</th>
+            <th style="width: 9%; text-align: right;">VALOR RATEIO</th>
           </tr>
         </thead>
         <tbody id="corpoTabela">
           <tr>
-            <td colspan="10" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td>
+            <td colspan="11" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td>
           </tr>
         </tbody>
       </table>
@@ -434,7 +435,7 @@
     }
 
     function obterListaConsolidada() {
-      // 1. Agrupar pagamentos estritamente pelo Bolsista + CPF + Valor por Mês
+      // 1. Agrupar pagamentos pelo Bolsista + CPF + Valor por Mês
       const gruposPorPessoaEValor = {};
 
       pagamentos.forEach(p => {
@@ -454,7 +455,7 @@
 
       const resultadoFinal = [];
 
-      // 2. Verificar sequências contínuas de meses e consolidar impostos e rateio do bloco
+      // 2. Verificar sequências contínuas de meses e consolidar valores do bloco
       Object.values(gruposPorPessoaEValor).forEach(grupo => {
         const pagamentosComRef = grupo.itens.map(p => {
           if (!p.referencia) return null;
@@ -468,7 +469,7 @@
         }).filter(Boolean);
 
         if (pagamentosComRef.length === 0) {
-          // Caso não haja referências de mês válidas
+          const brutoTotal = grupo.itens.reduce((acc, cur) => acc + cur.valor, 0);
           const irrfTotal = grupo.itens.reduce((acc, cur) => acc + cur.irrf, 0);
           const inssTotal = grupo.itens.reduce((acc, cur) => acc + cur.inss, 0);
           const issTotal = grupo.itens.reduce((acc, cur) => acc + cur.iss, 0);
@@ -481,6 +482,7 @@
             inicioTexto: '',
             fimTexto: '',
             valor: grupo.valorMes,
+            valorBruto: brutoTotal,
             irrf: irrfTotal,
             inss: inssTotal,
             iss: issTotal,
@@ -520,6 +522,7 @@
       const referenciasSet = new Set(blocoItens.map(b => b.referencia));
       const datasRef = obterDatasInicioFim(referenciasSet);
 
+      const brutoTotal = blocoItens.reduce((acc, cur) => acc + cur.valor, 0);
       const irrfTotal = blocoItens.reduce((acc, cur) => acc + cur.irrf, 0);
       const inssTotal = blocoItens.reduce((acc, cur) => acc + cur.inss, 0);
       const issTotal = blocoItens.reduce((acc, cur) => acc + cur.iss, 0);
@@ -532,6 +535,7 @@
         inicioTexto: datasRef.inicio,
         fimTexto: datasRef.fim,
         valor: grupo.valorMes,
+        valorBruto: brutoTotal,
         irrf: irrfTotal,
         inss: inssTotal,
         iss: issTotal,
@@ -554,7 +558,7 @@
       }
 
       if (pagamentos.length === 0) {
-        corpoTabela.innerHTML = `<tr><td colspan="10" class="empty-state">Nenhum registro encontrado no arquivo.</td></tr>`;
+        corpoTabela.innerHTML = `<tr><td colspan="11" class="empty-state">Nenhum registro encontrado no arquivo.</td></tr>`;
         return;
       }
 
@@ -571,6 +575,10 @@
           <td class="text-right">
             <span class="currency-symbol">R$</span>
             ${formatarValorMoeda(item.valor)}
+          </td>
+          <td class="text-right">
+            <span class="currency-symbol">R$</span>
+            ${formatarValorMoeda(item.valorBruto)}
           </td>
           <td class="text-right">
             <span class="currency-symbol">R$</span>
@@ -675,6 +683,7 @@
    <Column ss:Width="100"/>
    <Column ss:Width="100"/>
    <Column ss:Width="90"/>
+   <Column ss:Width="90"/>
    <Column ss:Width="80"/>
    <Column ss:Width="80"/>
    <Column ss:Width="80"/>
@@ -684,7 +693,7 @@
       if (numeroProjeto) {
         xml += `
    <Row ss:Height="22">
-    <Cell ss:MergeAcross="9" ss:StyleID="sProjeto"><Data ss:Type="String">PROJETO: ${numeroProjeto}</Data></Cell>
+    <Cell ss:MergeAcross="10" ss:StyleID="sProjeto"><Data ss:Type="String">PROJETO: ${numeroProjeto}</Data></Cell>
    </Row>`;
       }
 
@@ -696,6 +705,7 @@
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">INÍCIO</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">FIM</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">VALOR POR MÊS</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">VALOR BRUTO</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">IRRF PF</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">INSS</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">ISS</Data></Cell>
@@ -712,6 +722,7 @@
     <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.inicioTexto}</Data></Cell>
     <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.fimTexto}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valor}</Data></Cell>
+    <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valorBruto}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.irrf}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.inss}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.iss}</Data></Cell>
@@ -740,9 +751,15 @@
       document.getElementById('fileInput').value = '';
       document.getElementById('linhaProjeto').style.display = 'none';
       document.getElementById('corpoTabela').innerHTML = `
-        <tr><td colspan="10" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td></tr>
+        <tr><td colspan="11" class="empty-state">Nenhum arquivo carregado ainda. Importe uma planilha para gerar a tabela.</td></tr>
       `;
     }
   </script>
 </body>
 </html>
+```eof
+
+### Alterações Realizadas:
+1. **Nova Coluna `VALOR BRUTO`**: Adicionada logo após a coluna `VALOR POR MÊS`.
+2. **Cálculo da Somatória**: Para cada bloco consolidado contínuo, calcula-se a soma do valor bruto mensal do período (`VALOR POR MÊS` × `QTD / OCORR.`).
+3. **Exportação Excel**: A coluna `VALOR BRUTO` também foi incluída no arquivo `.xls` exportado.
