@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Combinador de Extratos BB</title>
+    <!-- CDN confiável do pdf-lib -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         body {
@@ -14,7 +15,7 @@
             padding: 40px 20px;
         }
         .container {
-            max-width: 750px;
+            max-width: 780px;
             margin: 0 auto;
             background: #ffffff;
             padding: 30px;
@@ -29,13 +30,81 @@
         p.desc {
             color: #64748b;
             font-size: 14px;
-            margin: 0 0 25px 0;
+            margin: 0 0 20px 0;
             line-height: 1.5;
         }
+        
+        /* Painel de Configurações do Nome */
+        .config-panel {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+        .config-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 600px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+        }
+        .form-group input, .form-group select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #3b82f6;
+        }
+        .preview-box {
+            grid-column: 1 / -1;
+            background: #eff6ff;
+            border: 1px dashed #bfdbfe;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .preview-box code {
+            font-weight: 700;
+            background: #dbeafe;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
         .upload-area {
             border: 3px dashed #cbd5e1;
             background: #f8fafc;
-            padding: 40px 20px;
+            padding: 35px 20px;
             text-align: center;
             border-radius: 8px;
             cursor: pointer;
@@ -50,7 +119,7 @@
             margin: 0;
             color: #1e40af;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
         }
         #fileInput {
             position: absolute;
@@ -94,6 +163,12 @@
         .nome-projeto {
             font-weight: 600;
             color: #0f172a;
+        }
+        .nome-preview-item {
+            font-size: 11px;
+            color: #2563eb;
+            font-weight: 600;
+            margin-top: 2px;
         }
         .arquivos-par {
             font-size: 12px;
@@ -159,8 +234,45 @@
 
 <div class="container">
     <h1>&#128450;&#65039; Combinador de Extratos BB (CC + INV)</h1>
-    <p class="desc">Selecione todos os arquivos de uma vez. O sistema vai extrair o número de identificação final, agrupar os pares e gerar o PDF final.</p>
+    <p class="desc">Selecione todos os arquivos de uma vez. O sistema junta a Conta Corrente e o Investimento e permite personalizar a nomenclatura dos arquivos gerados.</p>
 
+    <!-- PAINEL DE CONFIGURAÇÃO DE NOME -->
+    <div class="config-panel">
+        <div class="config-title">&#9881;&#65039; Formato do Nome do Arquivo Final</div>
+        <div class="config-grid">
+            <div class="form-group">
+                <label for="selectModelo">Padrão do Nome:</label>
+                <select id="selectModelo" onchange="atualizarExemploNome()">
+                    <option value="mes_ano_prefixo">MM.AAAA Prefixo.ID (ex: 04.2026 P.420406)</option>
+                    <option value="prefixo_id_mes_ano">Prefixo.ID MM.AAAA (ex: P.420406 04.2026)</option>
+                    <option value="extrato_id_mes_ano">Extrato_ID_MM_AAAA (ex: Extrato_420406_04_2026)</option>
+                    <option value="personalizado">Personalizado (Padrão Livre)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="inputDataRef">Mês/Ano Ref. (MM.AAAA ou MM.YY):</label>
+                <input type="text" id="inputDataRef" value="04.2026" placeholder="Ex: 04.2026" oninput="atualizarExemploNome()">
+            </div>
+
+            <div class="form-group">
+                <label for="inputPrefixo">Prefixo / Texto de Identificação:</label>
+                <input type="text" id="inputPrefixo" value="P." placeholder="Ex: P. ou Projeto_" oninput="atualizarExemploNome()">
+            </div>
+
+            <div class="form-group" id="groupMascara" style="display: none;">
+                <label for="inputMascara">Máscara Personalizada (use {DATA}, {PREFIXO}, {ID}):</label>
+                <input type="text" id="inputMascara" value="{DATA} {PREFIXO}{ID}" placeholder="{DATA} {PREFIXO}{ID}" oninput="atualizarExemploNome()">
+            </div>
+
+            <div class="preview-box">
+                <span>Exemplo de nome gerado:</span>
+                <code id="exemploNomePreview">04.2026 P.420406.pdf</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE UPLOAD -->
     <div class="upload-area">
         <p>&#128194; Arraste ou clique para selecionar TODOS os PDFs do Banco do Brasil</p>
         <input type="file" id="fileInput" accept=".pdf" multiple="">
@@ -175,12 +287,58 @@
     </div>
 </div>
 
+<!-- Input invisível para upload manual dos arquivos faltantes -->
 <input type="file" id="inputFaltante" accept=".pdf" style="display: none;">
 
 <script>
     let mapProjetos = {};
     let idEmEdicao = null;
     let tipoEmEdicao = null;
+
+    function gerarNomeArquivo(idConta) {
+        const modelo = document.getElementById('selectModelo').value;
+        const dataRef = document.getElementById('inputDataRef').value.trim() || '04.2026';
+        const prefixo = document.getElementById('inputPrefixo').value;
+
+        let nomeFinal = "";
+
+        if (modelo === 'mes_ano_prefixo') {
+            nomeFinal = `${dataRef} ${prefixo}${idConta}.pdf`;
+        } else if (modelo === 'prefixo_id_mes_ano') {
+            nomeFinal = `${prefixo}${idConta} ${dataRef}.pdf`;
+        } else if (modelo === 'extrato_id_mes_ano') {
+            let dataFormatada = dataRef.replace('.', '_');
+            nomeFinal = `Extrato_${idConta}_${dataFormatada}.pdf`;
+        } else if (modelo === 'personalizado') {
+            let mascara = document.getElementById('inputMascara').value || "{DATA} {PREFIXO}{ID}";
+            nomeFinal = mascara
+                .replace(/{DATA}/g, dataRef)
+                .replace(/{PREFIXO}/g, prefixo)
+                .replace(/{ID}/g, idConta) + ".pdf";
+        }
+
+        // Sanitização simples de caracteres inválidos em nomes de arquivo
+        return nomeFinal.replace(/[/\\?%*:|"<>]/g, '-');
+    }
+
+    function atualizarExemploNome() {
+        const modelo = document.getElementById('selectModelo').value;
+        const groupMascara = document.getElementById('groupMascara');
+        
+        if (modelo === 'personalizado') {
+            groupMascara.style.display = 'flex';
+        } else {
+            groupMascara.style.display = 'none';
+        }
+
+        const exemplo = gerarNomeArquivo("420406");
+        document.getElementById('exemploNomePreview').innerText = exemplo;
+
+        // Atualiza os nomes na lista se já houver arquivos carregados
+        if (Object.keys(mapProjetos).length > 0) {
+            renderizarListaProjetos();
+        }
+    }
 
     document.getElementById('fileInput').addEventListener('change', async function(e) {
         const files = e.target.files;
@@ -242,9 +400,12 @@
             let btnAddCC = !par.cc ? `<button class="btn-adicionar" onclick="solicitarArquivoFaltante('${id}', 'cc')">+ Adicionar CC</button>` : '';
             let btnAddINV = !par.inv ? `<button class="btn-adicionar" onclick="solicitarArquivoFaltante('${id}', 'inv')">+ Adicionar INV</button>` : '';
 
+            let nomeFinalPrevisto = gerarNomeArquivo(id);
+
             itemDiv.innerHTML = `
                 <div>
                     <div class="nome-projeto">&#128273; Conta / ID: ${id}</div>
+                    <div class="nome-preview-item">&#128196; Nome de saída: ${nomeFinalPrevisto}</div>
                     <div class="arquivos-par">
                         1º (Frente): ${rotuloCC} ${btnAddCC}<br> 
                         2º (Verso): ${rotuloINV} ${btnAddINV}
@@ -276,14 +437,12 @@
             mapProjetos[idEmEdicao][tipoEmEdicao] = file;
             renderizarListaProjetos();
         }
-        this.value = ''; // Limpa o input para poder carregar novamente se necessário
+        this.value = '';
     });
 
     async function mesclarPDFs(fileCC, fileINV) {
         const { PDFDocument } = PDFLib;
         const pdfCombinado = await PDFDocument.create();
-
-        // O parâmetro ignoreEncryption evita falhas em PDFs do BB com restrições
         const options = { ignoreEncryption: true };
 
         // 1. Processa CC
@@ -308,9 +467,10 @@
 
         try {
             let bytes = await mesclarPDFs(par.cc, par.inv);
-            dispararDownload(bytes, `Extrato_Combinado_Conta_${id}.pdf`);
+            let nomeFormatado = gerarNomeArquivo(id);
+            dispararDownload(bytes, nomeFormatado);
         } catch (error) {
-            alert(`Erro ao juntar os arquivos da conta ${id}. Verifique o console do navegador para mais detalhes.`);
+            alert(`Erro ao juntar os arquivos da conta ${id}. Verifique o console do navegador.`);
             console.error(error);
         }
     }
@@ -342,6 +502,9 @@
         s.innerText = msg;
         s.style.display = 'block';
     }
+
+    // Inicializa a prévia do exemplo na carga da página
+    atualizarExemploNome();
 </script>
 
 </body>
