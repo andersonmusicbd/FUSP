@@ -400,13 +400,22 @@
       renderizarTabelaConsolidada();
     }
 
-   function formatarDataEstiloImg(data) {
-  if (!data) return '';
-  const dia = String(data.getDate()).padStart(2, '0');
-  const mes = String(data.getMonth() + 1).padStart(2, '0');
-  const ano = data.getFullYear();
-  return `${dia}/${mes}/${ano}`;
-}
+    function formatarDataEstiloImg(data) {
+      if (!data) return '';
+      const dia = String(data.getDate()).padStart(2, '0');
+      const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+      const mes = meses[data.getMonth()];
+      const ano = data.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatarIsoData(data) {
+      if (!data) return '';
+      const ano = data.getFullYear();
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
+      const dia = String(data.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}T00:00:00.000`;
+    }
 
     function formatarValorMoeda(valor) {
       return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -414,7 +423,7 @@
 
     function obterDatasInicioFim(referenciasSet) {
       const arrayRefs = Array.from(referenciasSet).filter(Boolean);
-      if (arrayRefs.length === 0) return { inicio: '', fim: '' };
+      if (arrayRefs.length === 0) return { inicio: '', fim: '', dataInicioObj: null, dataFimObj: null };
 
       const datasFormatadas = arrayRefs.map(ref => {
         const [mes, ano] = ref.split('/').map(Number);
@@ -429,7 +438,9 @@
 
       return {
         inicio: formatarDataEstiloImg(dataInicio),
-        fim: formatarDataEstiloImg(dataFim)
+        fim: formatarDataEstiloImg(dataFim),
+        dataInicioObj: dataInicio,
+        dataFimObj: dataFim
       };
     }
 
@@ -480,6 +491,8 @@
             quantidade: grupo.itens.length,
             inicioTexto: '',
             fimTexto: '',
+            dataInicioObj: null,
+            dataFimObj: null,
             valor: grupo.valorMes,
             valorBruto: brutoTotal,
             irrf: irrfTotal,
@@ -533,6 +546,8 @@
         quantidade: blocoItens.length,
         inicioTexto: datasRef.inicio,
         fimTexto: datasRef.fim,
+        dataInicioObj: datasRef.dataInicioObj,
+        dataFimObj: datasRef.dataFimObj,
         valor: grupo.valorMes,
         valorBruto: brutoTotal,
         irrf: irrfTotal,
@@ -662,6 +677,17 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
   </Style>
+  <!-- Estilo Data -->
+  <Style ss:ID="sCellDate">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <NumberFormat ss:Format="dd/mmm/yyyy"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
   <!-- Estilo Moeda -->
   <Style ss:ID="sCellCurrency">
    <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
@@ -713,13 +739,16 @@
 `;
 
       listaConsolidada.forEach(item => {
+        const inicioCell = item.dataInicioObj ? `<Cell ss:StyleID="sCellDate"><Data ss:Type="DateTime">${formatarIsoData(item.dataInicioObj)}</Data></Cell>` : `<Cell ss:StyleID="sCellCenter"><Data ss:Type="String"></Data></Cell>`;
+        const fimCell = item.dataFimObj ? `<Cell ss:StyleID="sCellDate"><Data ss:Type="DateTime">${formatarIsoData(item.dataFimObj)}</Data></Cell>` : `<Cell ss:StyleID="sCellCenter"><Data ss:Type="String"></Data></Cell>`;
+
         xml += `
    <Row ss:Height="20">
     <Cell ss:StyleID="sCellLeft"><Data ss:Type="String">${item.bolsista}</Data></Cell>
     <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.cpf || ''}</Data></Cell>
     <Cell ss:StyleID="sCellCenter"><Data ss:Type="Number">${item.quantidade}</Data></Cell>
-    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.inicioTexto}</Data></Cell>
-    <Cell ss:StyleID="sCellCenter"><Data ss:Type="String">${item.fimTexto}</Data></Cell>
+    ${inicioCell}
+    ${fimCell}
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valor}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.valorBruto}</Data></Cell>
     <Cell ss:StyleID="sCellCurrency"><Data ss:Type="Number">${item.irrf}</Data></Cell>
@@ -756,9 +785,3 @@
   </script>
 </body>
 </html>
-```eof
-
-### Alterações Realizadas:
-1. **Nova Coluna `VALOR BRUTO`**: Adicionada logo após a coluna `VALOR POR MÊS`.
-2. **Cálculo da Somatória**: Para cada bloco consolidado contínuo, calcula-se a soma do valor bruto mensal do período (`VALOR POR MÊS` × `QTD / OCORR.`).
-3. **Exportação Excel**: A coluna `VALOR BRUTO` também foi incluída no arquivo `.xls` exportado.
