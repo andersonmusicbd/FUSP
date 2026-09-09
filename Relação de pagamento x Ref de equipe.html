@@ -400,14 +400,13 @@
       renderizarTabelaConsolidada();
     }
 
-    function formatarDataEstiloImg(data) {
-      if (!data) return '';
-      const mesesEng = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const dia = data.getDate();
-      const mesStr = mesesEng[data.getMonth()];
-      const anoStr = String(data.getFullYear()).slice(-2);
-      return `${dia}/${mesStr}/${anoStr}`;
-    }
+   function formatarDataEstiloImg(data) {
+  if (!data) return '';
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  return `${dia}/${mes}/${ano}`;
+}
 
     function formatarValorMoeda(valor) {
       return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
