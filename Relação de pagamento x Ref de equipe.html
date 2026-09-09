@@ -403,8 +403,7 @@
     function formatarDataEstiloImg(data) {
       if (!data) return '';
       const dia = String(data.getDate()).padStart(2, '0');
-      const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-      const mes = meses[data.getMonth()];
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
       const ano = data.getFullYear();
       return `${dia}/${mes}/${ano}`;
     }
@@ -680,7 +679,7 @@
   <!-- Estilo Data -->
   <Style ss:ID="sCellDate">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <NumberFormat ss:Format="dd/mmm/yyyy"/>
+   <NumberFormat ss:Format="dd/mm/yyyy"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
