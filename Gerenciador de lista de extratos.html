@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Extratos Bancários</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (xlsx) for Excel processing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .active-tab {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        /* Toast notification animation */
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter {
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .toast-exit {
+            animation: fadeOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* Custom Scrollbar for sidebar list */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2.5 rounded-xl shadow-inner">
+                    <i class="fa-solid fa-file-invoice-dollar text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Fluxo Extratos BB</h1>
+                    <p class="text-xs text-slate-400">Navegação e Copia Rápida de Projetos e Contas</p>
+                </div>
+            </div>
+
+            <!-- Stats Header Badge -->
+            <div id="headerStats" class="hidden flex items-center bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-sm gap-4">
+                <div class="text-slate-300">
+                    <span class="text-xs uppercase font-semibold text-slate-400 block">Arquivo Atual</span>
+                    <span id="currentFileName" class="font-medium text-white truncate max-w-[150px] inline-block">planilha.xlsx</span>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <button id="btnNewUpload" onclick="resetApp()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded transition duration-150 flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload"></i> Novo Arquivo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow flex flex-col">
+
+        <!-- VIEW 1: UPLOAD AREA -->
+        <section id="uploadSection" class="my-auto max-w-2xl mx-auto w-full">
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200/80 text-center">
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 text-2xl">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Importar Planilha de Contas</h2>
+                <p class="text-slate-500 text-sm mb-6">Carregue um arquivo Excel (<code>.xlsx</code> ou <code>.xls</code>) contendo o Número do Projeto e Número da Conta.</p>
+
+                <!-- Dropzone -->
+                <div id="dropZone" onclick="document.getElementById('fileInput').click()" 
+                     class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-blue-50/50 transition-all rounded-xl p-8 cursor-pointer group">
+                    <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileSelect(event)">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-400 group-hover:text-blue-500 mb-3 transition-colors"></i>
+                    <p class="text-slate-700 font-medium text-base mb-1">Clique para selecionar ou arraste o arquivo aqui</p>
+                    <p class="text-slate-400 text-xs">Suporta arquivos .xlsx, .xls</p>
+                </div>
+
+                <!-- Features Highlight -->
+                <div class="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-slate-100 text-left text-xs text-slate-600">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                        <span>Cópia rápida de nomes formatei para BB CC e INV</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-keyboard text-blue-500 mt-0.5"></i>
+                        <span>Atalhos de teclado (Espaço = Concluir, Setas = Avançar)</span>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-floppy-disk text-amber-500 mt-0.5"></i>
+                        <span>Salva o progresso automaticamente no navegador</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: COLUMN MAPPER MODAL / SECTION -->
+        <section id="columnMappingSection" class="hidden my-auto max-w-lg mx-auto w-full">
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                        <i class="fa-solid fa-sliders text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Confirmar Colunas da Planilha</h3>
+                        <p class="text-xs text-slate-500">Selecione quais colunas correspondem a cada dado</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Coluna com o Número do Projeto:</label>
+                        <select id="projectColumnSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Coluna com o Número da Conta:</label>
+                        <select id="accountColumnSelect" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button onclick="cancelMapping()" class="w-1/2 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmMapping()" class="w-1/2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition shadow-md shadow-blue-500/20">
+                        Iniciar Extração
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: MAIN APP INTERFACE -->
+        <section id="appSection" class="hidden flex-grow flex flex-col gap-5">
+            
+            <!-- Progress Bar Bar Header -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="w-full sm:w-1/2">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span id="progressText" class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Progresso: <span id="completedCount" class="text-blue-600">0</span> de <span id="totalCount">0</span>
+                        </span>
+                        <span id="progressPercent" class="text-xs font-extrabold text-blue-600">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200/60">
+                        <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="exportReport()" title="Baixar relatório em Excel com status de conclusão" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-file-export"></i> Exportar Relatório
+                    </button>
+                    <button onclick="clearProgress()" title="Limpar marcações de concluído" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> Resetar Progresso
+                    </button>
+                </div>
+            </div>
+
+            <!-- Workspace: Card (Left) + List Sidebar (Right) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+                
+                <!-- Main Focused Card Column -->
+                <div class="lg:col-span-2 flex flex-col">
+                    <div class="bg-white rounded-2xl shadow-md border border-slate-200/80 p-6 flex-grow flex flex-col justify-between relative overflow-hidden">
+                        
+                        <!-- Top Bar inside Card -->
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
+                                    Item <span id="currentIndexDisplay" class="text-slate-900 font-bold">1</span> de <span id="totalIndexDisplay">0</span>
+                                </span>
+                                <span id="cardStatusBadge" class="text-xs font-bold px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 flex items-center gap-1">
+                                    <i class="fa-regular fa-clock"></i> Pendente
+                                </span>
+                            </div>
+                            <span class="text-xs text-slate-400 hidden sm:inline">Dica: Use <kbd class="px-1.5 py-0.5 text-xs bg-slate-100 border rounded shadow-sm text-slate-600">Espaço</kbd> para Concluir</span>
+                        </div>
+
+                        <!-- Card Core Information (Giant Typography) -->
+                        <div class="my-6 space-y-6">
+                            
+                            <!-- Project Number Display -->
+                            <div class="bg-blue-50/60 rounded-2xl p-5 border border-blue-100 relative group transition hover:border-blue-300">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs uppercase font-bold text-blue-600 tracking-wider">Número do Projeto</span>
+                                    <button onclick="copyToClipboard(document.getElementById('projectVal').innerText, 'Número do Projeto')" 
+                                            class="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                                <div id="projectVal" class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight font-mono break-all">
+                                    ---
+                                </div>
+                            </div>
+
+                            <!-- Account Number Display -->
+                            <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 relative group transition hover:border-slate-300">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs uppercase font-bold text-slate-500 tracking-wider">Número da Conta</span>
+                                    <button onclick="copyToClipboard(document.getElementById('accountVal').innerText, 'Número da Conta')" 
+                                            class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                                <div id="accountVal" class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 tracking-tight font-mono break-all">
+                                    ---
+                                </div>
+                            </div>
+
+                            <!-- Formatted File Names Section -->
+                            <div class="pt-2 border-t border-slate-100 space-y-3">
+                                <p class="text-xs font-semibold uppercase text-slate-400 tracking-wider mb-2">Nomes Sugeridos para Arquivo Final</p>
+
+                                <!-- CC File Name -->
+                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 transition">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="p-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-bold flex-shrink-0">CC</div>
+                                        <div class="overflow-hidden">
+                                            <span class="text-xs text-slate-400 block font-medium">Conta Corrente</span>
+                                            <span id="fileNameCC" class="font-bold text-slate-800 text-sm sm:text-base font-mono truncate block">Banco do Brasil CC ---</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="copyToClipboard(document.getElementById('fileNameCC').innerText, 'Nome do arquivo CC')" 
+                                            class="flex-shrink-0 bg-white hover:bg-blue-50 text-blue-700 border border-slate-200 hover:border-blue-300 px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy text-sm"></i> <span class="hidden sm:inline">Copiar</span>
+                                    </button>
+                                </div>
+
+                                <!-- Investment File Name -->
+                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 transition">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="p-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold flex-shrink-0">INV</div>
+                                        <div class="overflow-hidden">
+                                            <span class="text-xs text-slate-400 block font-medium">Investimento</span>
+                                            <span id="fileNameINV" class="font-bold text-slate-800 text-sm sm:text-base font-mono truncate block">Banco do Brasil INV ---</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="copyToClipboard(document.getElementById('fileNameINV').innerText, 'Nome do arquivo INV')" 
+                                            class="flex-shrink-0 bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200 hover:border-emerald-300 px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy text-sm"></i> <span class="hidden sm:inline">Copiar</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Card Action Navigation Controls -->
+                        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                            <!-- Prev / Next Arrow Buttons -->
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button onclick="prevItem()" id="btnPrev" class="flex-1 sm:flex-initial px-4 py-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-arrow-left"></i> Anterior
+                                </button>
+                                <button onclick="nextItem()" id="btnNext" class="flex-1 sm:flex-initial px-4 py-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
+                                    Próximo <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+
+                            <!-- Main Action: Toggle Complete & Jump -->
+                            <button id="btnToggleComplete" onclick="toggleCompleteAndNext()" 
+                                    class="w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check-circle text-lg"></i>
+                                <span id="btnToggleText">Marcar Concluído & Próximo</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Sidebar Item List -->
+                <div class="lg:col-span-1 bg-white rounded-2xl shadow-md border border-slate-200/80 p-4 flex flex-col h-[550px] lg:h-auto">
+                    
+                    <!-- Sidebar Header & Filters -->
+                    <div class="pb-3 border-b border-slate-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-blue-600"></i> Lista de Contas
+                            </h3>
+                            <span id="badgeTotalFilter" class="text-xs bg-slate-100 font-semibold px-2 py-0.5 rounded text-slate-600">0 itens</span>
+                        </div>
+
+                        <!-- Filter Tabs -->
+                        <div class="flex text-xs border-b border-slate-200 space-x-4">
+                            <button onclick="setFilter('all')" id="tabFilterAll" class="pb-2 font-medium active-tab transition">Todos</button>
+                            <button onclick="setFilter('pending')" id="tabFilterPending" class="pb-2 font-medium text-slate-500 hover:text-slate-800 transition">Pendentes</button>
+                            <button onclick="setFilter('completed')" id="tabFilterCompleted" class="pb-2 font-medium text-slate-500 hover:text-slate-800 transition">Concluídos</button>
+                        </div>
+
+                        <!-- Search input -->
+                        <div class="mt-3 relative">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3 top-3"></i>
+                            <input type="text" id="searchInput" oninput="renderList()" placeholder="Buscar projeto ou conta..." 
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Scrollable List Container -->
+                    <div id="itemsListView" class="flex-grow overflow-y-auto py-2 space-y-1.5 pr-1">
+                        <!-- Items rendered via JS -->
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+        <p>Gerenciador de Extratos BB &copy; — Produtividade em Extração de Dados</p>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        /* APP STATE */
+        let rawExcelData = [];
+        let itemsList = []; // { id, project, account, completed }
+        let currentIndex = 0;
+        let currentFilter = 'all'; // 'all', 'pending', 'completed'
+        let currentFileName = '';
+
+        const STORAGE_KEY = 'bb_extratos_app_state_v1';
+
+        /* INITIALIZATION */
+        window.onload = function () {
+            loadStateFromStorage();
+            setupKeyboardShortcuts();
+            setupDragAndDrop();
+        };
+
+        /* LOCAL STORAGE SYSTEM */
+        function saveStateToStorage() {
+            if (itemsList.length === 0) return;
+            const state = {
+                fileName: currentFileName,
+                items: itemsList,
+                currentIndex: currentIndex
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadStateFromStorage() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.items && parsed.items.length > 0) {
+                        itemsList = parsed.items;
+                        currentFileName = parsed.fileName || 'Arquivo Salvo';
+                        currentIndex = parsed.currentIndex || 0;
+                        
+                        document.getElementById('currentFileName').innerText = currentFileName;
+                        showAppSection();
+                        renderCurrentCard();
+                        updateProgress();
+                        renderList();
+                        showToast('Progresso anterior restaurado automaticamente!');
+                    }
+                } catch(e) {
+                    console.error('Erro ao ler estado salvo:', e);
+                }
+            }
+        }
+
+        function clearProgress() {
+            if (confirm('Deseja realmente desmarcar todas as contas concluídas?')) {
+                itemsList.forEach(item => item.completed = false);
+                saveStateToStorage();
+                renderCurrentCard();
+                updateProgress();
+                renderList();
+                showToast('Progresso resetado com sucesso.');
+            }
+        }
+
+        function resetApp() {
+            if (itemsList.length > 0 && !confirm('Carregar um novo arquivo descartará o progresso atual. Continuar?')) {
+                return;
+            }
+            localStorage.removeItem(STORAGE_KEY);
+            itemsList = [];
+            rawExcelData = [];
+            currentIndex = 0;
+            
+            document.getElementById('fileInput').value = '';
+            document.getElementById('appSection').classList.add('hidden');
+            document.getElementById('columnMappingSection').classList.add('hidden');
+            document.getElementById('headerStats').classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+        }
+
+        /* EXCEL DRAG & DROP & SELECT */
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-blue-500', 'bg-blue-50');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    processFile(files[0]);
+                }
+            });
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length) {
+                processFile(files[0]);
+            }
+        }
+
+        /* EXCEL PROCESSING WITH SHEETJS */
+        function processFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showToast('Por favor, selecione um arquivo Excel válido (.xlsx ou .xls)', 'error');
+                return;
+            }
+
+            currentFileName = file.name;
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first worksheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    // Convert to JSON
+                    rawExcelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (rawExcelData.length < 2) {
+                        showToast('A planilha parece estar vazia ou sem dados suficientes.', 'error');
+                        return;
+                    }
+
+                    detectAndSetupColumns(rawExcelData);
+
+                } catch (err) {
+                    console.error(err);
+                    showToast('Erro ao ler a planilha Excel. Verifique o arquivo.', 'error');
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        /* COLUMN DETECTION & MAPPING */
+        function detectAndSetupColumns(data) {
+            const headers = data[0].map(h => String(h || '').trim());
+            
+            let projectColIndex = -1;
+            let accountColIndex = -1;
+
+            // Common header variations detection
+            headers.forEach((header, index) => {
+                const lower = header.toLowerCase();
+                if (lower.includes('projeto') || lower.includes('proj') || lower === 'num_projeto' || lower === 'cd_projeto') {
+                    if (projectColIndex === -1) projectColIndex = index;
+                }
+                if (lower.includes('conta') || lower.includes('cc') || lower === 'num_conta' || lower === 'conta_corrente') {
+                    if (accountColIndex === -1) accountColIndex = index;
+                }
+            });
+
+            // Populate mapping dropdowns
+            const projSelect = document.getElementById('projectColumnSelect');
+            const accSelect = document.getElementById('accountColumnSelect');
+
+            projSelect.innerHTML = '';
+            accSelect.innerHTML = '';
+
+            headers.forEach((h, idx) => {
+                const optionText = `Coluna ${idx + 1}: "${h}"`;
+                projSelect.add(new Option(optionText, idx));
+                accSelect.add(new Option(optionText, idx));
+            });
+
+            // Set auto-detected values or default to first/second column
+            projSelect.value = projectColIndex !== -1 ? projectColIndex : 0;
+            accSelect.value = accountColIndex !== -1 ? accountColIndex : (headers.length > 1 ? 1 : 0);
+
+            // Hide Upload, Show Mapper
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('columnMappingSection').classList.remove('hidden');
+        }
+
+        function cancelMapping() {
+            document.getElementById('columnMappingSection').classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+        }
+
+        function confirmMapping() {
+            const projIdx = parseInt(document.getElementById('projectColumnSelect').value);
+            const accIdx = parseInt(document.getElementById('accountColumnSelect').value);
+
+            if (projIdx === accIdx) {
+                showToast('Por favor, selecione colunas diferentes para Projeto e Conta.', 'error');
+                return;
+            }
+
+            // Build items list
+            itemsList = [];
+            for (let i = 1; i < rawExcelData.length; i++) {
+                const row = rawExcelData[i];
+                if (!row || row.length === 0) continue;
+
+                const projectVal = row[projIdx] !== undefined ? String(row[projIdx]).trim() : '';
+                const accountVal = row[accIdx] !== undefined ? String(row[accIdx]).trim() : '';
+
+                if (projectVal || accountVal) {
+                    itemsList.push({
+                        id: i,
+                        project: projectVal || 'N/A',
+                        account: accountVal || 'N/A',
+                        completed: false
+                    });
+                }
+            }
+
+            if (itemsList.length === 0) {
+                showToast('Nenhum dado válido encontrado na coluna selecionada.', 'error');
+                return;
+            }
+
+            currentIndex = 0;
+            document.getElementById('columnMappingSection').classList.add('hidden');
+            document.getElementById('currentFileName').innerText = currentFileName;
+            
+            showAppSection();
+            renderCurrentCard();
+            updateProgress();
+            renderList();
+            saveStateToStorage();
+            showToast(`${itemsList.length} registros carregados com sucesso!`);
+        }
+
+        function showAppSection() {
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('columnMappingSection').classList.add('hidden');
+            document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('headerStats').classList.remove('hidden');
+        }
+
+        /* CARD RENDERING LOGIC */
+        function renderCurrentCard() {
+            if (itemsList.length === 0) return;
+
+            const item = itemsList[currentIndex];
+
+            // Render Values
+            document.getElementById('projectVal').innerText = item.project;
+            document.getElementById('accountVal').innerText = item.account;
+
+            // Formatted File Names
+            document.getElementById('fileNameCC').innerText = `Banco do Brasil CC ${item.project}`;
+            document.getElementById('fileNameINV').innerText = `Banco do Brasil INV ${item.project}`;
+
+            // Counters
+            document.getElementById('currentIndexDisplay').innerText = currentIndex + 1;
+            document.getElementById('totalIndexDisplay').innerText = itemsList.length;
+
+            // Status Badge & Button Text
+            const badge = document.getElementById('cardStatusBadge');
+            const btnToggleText = document.getElementById('btnToggleText');
+            const btnToggleComplete = document.getElementById('btnToggleComplete');
+
+            if (item.completed) {
+                badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 flex items-center gap-1";
+                badge.innerHTML = '<i class="fa-solid fa-check"></i> Concluído';
+
+                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white rounded-xl font-bold text-sm transition shadow-md flex items-center justify-center gap-2";
+                btnToggleText.innerText = "Desmarcar Conclusão";
+            } else {
+                badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 flex items-center gap-1";
+                badge.innerHTML = '<i class="fa-regular fa-clock"></i> Pendente';
+
+                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2";
+                btnToggleText.innerText = "Marcar Concluído & Próximo";
+            }
+
+            // Button Disable State
+            document.getElementById('btnPrev').disabled = currentIndex === 0;
+            document.getElementById('btnPrev').style.opacity = currentIndex === 0 ? "0.5" : "1";
+
+            document.getElementById('btnNext').disabled = currentIndex === itemsList.length - 1;
+            document.getElementById('btnNext').style.opacity = currentIndex === itemsList.length - 1 ? "0.5" : "1";
+
+            highlightActiveInList();
+        }
+
+        /* NAVIGATION LOGIC */
+        function prevItem() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCurrentCard();
+                saveStateToStorage();
+            }
+        }
+
+        function nextItem() {
+            if (currentIndex < itemsList.length - 1) {
+                currentIndex++;
+                renderCurrentCard();
+                saveStateToStorage();
+            }
+        }
+
+        function jumpToIndex(idx) {
+            if (idx >= 0 && idx < itemsList.length) {
+                currentIndex = idx;
+                renderCurrentCard();
+                saveStateToStorage();
+            }
+        }
+
+        function toggleCompleteAndNext() {
+            const currentItem = itemsList[currentIndex];
+            currentItem.completed = !currentItem.completed;
+
+            updateProgress();
+            renderList();
+
+            if (currentItem.completed) {
+                // Find next pending item
+                let nextPendingIndex = -1;
+                for (let i = currentIndex + 1; i < itemsList.length; i++) {
+                    if (!itemsList[i].completed) {
+                        nextPendingIndex = i;
+                        break;
+                    }
+                }
+
+                // If not found after, search from beginning
+                if (nextPendingIndex === -1) {
+                    for (let i = 0; i < currentIndex; i++) {
+                        if (!itemsList[i].completed) {
+                            nextPendingIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (nextPendingIndex !== -1) {
+                    currentIndex = nextPendingIndex;
+                    showToast('Marcado como concluído! Avançando...', 'success');
+                } else {
+                    showToast('Parabéns! Todos os extratos foram concluídos! 🎉', 'success');
+                }
+            } else {
+                showToast('Item desmarcado.');
+            }
+
+            renderCurrentCard();
+            saveStateToStorage();
+        }
+
+        /* PROGRESS CALCULATIONS */
+        function updateProgress() {
+            const total = itemsList.length;
+            const completedCount = itemsList.filter(i => i.completed).length;
+            const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+
+            document.getElementById('completedCount').innerText = completedCount;
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('progressPercent').innerText = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        /* SIDEBAR LIST RENDER */
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.getElementById('tabFilterAll').className = filter === 'all' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
+            document.getElementById('tabFilterPending').className = filter === 'pending' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
+            document.getElementById('tabFilterCompleted').className = filter === 'completed' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
+            renderList();
+        }
+
+        function renderList() {
+            const container = document.getElementById('itemsListView');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = itemsList.map((item, originalIndex) => ({ ...item, originalIndex }));
+
+            if (currentFilter === 'pending') {
+                filtered = filtered.filter(i => !i.completed);
+            } else if (currentFilter === 'completed') {
+                filtered = filtered.filter(i => i.completed);
+            }
+
+            if (searchTerm) {
+                filtered = filtered.filter(i => 
+                    i.project.toLowerCase().includes(searchTerm) || 
+                    i.account.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            document.getElementById('badgeTotalFilter').innerText = `${filtered.length} itens`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs">
+                        <i class="fa-solid fa-inbox text-2xl mb-2 block"></i>
+                        Nenhum item encontrado
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(item => {
+                const isActive = item.originalIndex === currentIndex;
+                const statusIcon = item.completed 
+                    ? '<i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>' 
+                    : '<i class="fa-regular fa-circle text-slate-300 text-sm"></i>';
+
+                const activeClasses = isActive 
+                    ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500/30' 
+                    : 'bg-slate-50/60 hover:bg-slate-100 border-slate-200/80';
+
+                return `
+                    <div id="sideItem-${item.originalIndex}" onclick="jumpToIndex(${item.originalIndex})" 
+                         class="p-2.5 rounded-xl border ${activeClasses} cursor-pointer transition flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            ${statusIcon}
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold text-slate-800 truncate">Proj: ${item.project}</p>
+                                <p class="text-[11px] text-slate-500 truncate font-mono">Conta: ${item.account}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-semibold">#${item.originalIndex + 1}</span>
+                    </div>
+                `;
+            }).join('');
+
+            highlightActiveInList();
+        }
+
+        function highlightActiveInList() {
+            const activeElem = document.getElementById(`sideItem-${currentIndex}`);
+            if (activeElem) {
+                activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        /* CLIPBOARD COPY UTILITY */
+        function copyToClipboard(text, label) {
+            if (!text || text === '---') return;
+
+            // Fallback for document.execCommand as requested
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast(`${label} copiado!`, 'success');
+                } else {
+                    showToast('Erro ao copiar text.', 'error');
+                }
+            } catch (err) {
+                showToast('Não foi possível copiar.', 'error');
+            }
+            
+            document.body.removeChild(tempInput);
+        }
+
+        /* EXPORT REPORT */
+        function exportReport() {
+            if (itemsList.length === 0) return;
+
+            const exportData = itemsList.map(i => ({
+                'Número do Projeto': i.project,
+                'Número da Conta': i.account,
+                'Nome Arquivo CC': `Banco do Brasil CC ${i.project}`,
+                'Nome Arquivo INV': `Banco do Brasil INV ${i.project}`,
+                'Status Extrato': i.completed ? 'CONCLUÍDO' : 'PENDENTE'
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Relatório Extratos");
+
+            const dateStr = new Date().toISOString().slice(0,10);
+            XLSX.writeFile(workbook, `Relatorio_Extratos_BB_${dateStr}.xlsx`);
+            showToast('Relatório baixado em Excel!', 'success');
+        }
+
+        /* KEYBOARD SHORTCUTS */
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ignore keypresses if user is typing in input fields
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+
+                if (document.getElementById('appSection').classList.contains('hidden')) {
+                    return;
+                }
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    toggleCompleteAndNext();
+                } else if (e.code === 'ArrowRight') {
+                    e.preventDefault();
+                    nextItem();
+                } else if (e.code === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevItem();
+                }
+            });
+        }
+
+        /* TOAST NOTIFICATION SYSTEM */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let bgClass = 'bg-slate-900 text-white';
+            let icon = 'fa-info-circle';
+
+            if (type === 'success') {
+                bgClass = 'bg-emerald-600 text-white';
+                icon = 'fa-check-circle';
+            } else if (type === 'error') {
+                bgClass = 'bg-rose-600 text-white';
+                icon = 'fa-exclamation-circle';
+            }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-xl font-medium text-xs flex items-center gap-2.5 toast-enter pointer-events-auto border border-white/10`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
