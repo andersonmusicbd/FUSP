@@ -55,25 +55,25 @@
 
     <!-- Header -->
     <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 p-2.5 rounded-xl shadow-inner">
-                    <i class="fa-solid fa-file-invoice-dollar text-2xl text-white"></i>
+                <div class="bg-blue-600 p-2 rounded-xl shadow-inner">
+                    <i class="fa-solid fa-file-invoice-dollar text-xl text-white"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white">Fluxo Extratos BB</h1>
-                    <p class="text-xs text-slate-400">Navegação e Copia Rápida de Projetos e Contas</p>
+                    <h1 class="text-lg font-bold tracking-tight text-white leading-tight">Fluxo Extratos BB</h1>
+                    <p class="text-[11px] text-slate-400">Navegação e Cópia Rápida de Projetos e Contas</p>
                 </div>
             </div>
 
             <!-- Stats Header Badge -->
-            <div id="headerStats" class="hidden flex items-center bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 text-sm gap-4">
+            <div id="headerStats" class="hidden flex items-center bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs gap-3">
                 <div class="text-slate-300">
-                    <span class="text-xs uppercase font-semibold text-slate-400 block">Arquivo Atual</span>
-                    <span id="currentFileName" class="font-medium text-white truncate max-w-[150px] inline-block">planilha.xlsx</span>
+                    <span class="text-[10px] uppercase font-semibold text-slate-400 block">Arquivo Atual</span>
+                    <span id="currentFileName" class="font-medium text-white truncate max-w-[140px] inline-block">planilha.xlsx</span>
                 </div>
-                <div class="h-8 w-px bg-slate-700"></div>
-                <button id="btnNewUpload" onclick="resetApp()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded transition duration-150 flex items-center gap-1.5">
+                <div class="h-6 w-px bg-slate-700"></div>
+                <button id="btnNewUpload" onclick="resetApp()" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded transition duration-150 flex items-center gap-1.5">
                     <i class="fa-solid fa-upload"></i> Novo Arquivo
                 </button>
             </div>
@@ -81,7 +81,7 @@
     </header>
 
     <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow flex flex-col">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full flex-grow flex flex-col justify-start">
 
         <!-- VIEW 1: UPLOAD AREA -->
         <section id="uploadSection" class="my-auto max-w-2xl mx-auto w-full">
@@ -105,7 +105,7 @@
                 <div class="grid grid-cols-3 gap-3 mt-8 pt-6 border-t border-slate-100 text-left text-xs text-slate-600">
                     <div class="flex items-start gap-2">
                         <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
-                        <span>Cópia rápida de nomes formatei para BB CC e INV</span>
+                        <span>Cópia rápida com nomes formatados BB CC e INV</span>
                     </div>
                     <div class="flex items-start gap-2">
                         <i class="fa-solid fa-keyboard text-blue-500 mt-0.5"></i>
@@ -158,42 +158,42 @@
         </section>
 
         <!-- VIEW 3: MAIN APP INTERFACE -->
-        <section id="appSection" class="hidden flex-grow flex flex-col gap-5">
+        <section id="appSection" class="hidden flex-col gap-4">
             
-            <!-- Progress Bar Bar Header -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- Progress Bar Header -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div class="w-full sm:w-1/2">
-                    <div class="flex justify-between items-center mb-1.5">
+                    <div class="flex justify-between items-center mb-1">
                         <span id="progressText" class="text-xs font-bold uppercase tracking-wider text-slate-500">
                             Progresso: <span id="completedCount" class="text-blue-600">0</span> de <span id="totalCount">0</span>
                         </span>
                         <span id="progressPercent" class="text-xs font-extrabold text-blue-600">0%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200/60">
-                        <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200/60">
+                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                     </div>
                 </div>
 
                 <!-- Action Controls -->
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <button onclick="exportReport()" title="Baixar relatório em Excel com status de conclusão" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-2">
+                    <button onclick="exportReport()" title="Baixar relatório em Excel com status de conclusão" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
                         <i class="fa-solid fa-file-export"></i> Exportar Relatório
                     </button>
-                    <button onclick="clearProgress()" title="Limpar marcações de concluído" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-2">
-                        <i class="fa-solid fa-rotate-left"></i> Resetar Progresso
+                    <button onclick="clearProgress()" title="Limpar marcações de concluído" class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 font-medium px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> Resetar
                     </button>
                 </div>
             </div>
 
             <!-- Workspace: Card (Left) + List Sidebar (Right) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 
                 <!-- Main Focused Card Column -->
                 <div class="lg:col-span-2 flex flex-col">
-                    <div class="bg-white rounded-2xl shadow-md border border-slate-200/80 p-6 flex-grow flex flex-col justify-between relative overflow-hidden">
+                    <div class="bg-white rounded-2xl shadow-md border border-slate-200/80 p-5 flex flex-col relative overflow-hidden">
                         
                         <!-- Top Bar inside Card -->
-                        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
                                     Item <span id="currentIndexDisplay" class="text-slate-900 font-bold">1</span> de <span id="totalIndexDisplay">0</span>
@@ -202,94 +202,104 @@
                                     <i class="fa-regular fa-clock"></i> Pendente
                                 </span>
                             </div>
-                            <span class="text-xs text-slate-400 hidden sm:inline">Dica: Use <kbd class="px-1.5 py-0.5 text-xs bg-slate-100 border rounded shadow-sm text-slate-600">Espaço</kbd> para Concluir</span>
+
+                            <!-- Fast Navigation Buttons Top Right -->
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="prevItem()" id="btnPrevTop" title="Anterior (Seta Esquerda)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs transition flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-left text-[10px]"></i> <span class="hidden sm:inline">Anterior</span>
+                                </button>
+                                <button onclick="nextItem()" id="btnNextTop" title="Próximo (Seta Direita)" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs transition flex items-center gap-1">
+                                    <span class="hidden sm:inline">Próximo</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Card Core Information (Giant Typography) -->
-                        <div class="my-6 space-y-6">
+                        <!-- Card Core Information -->
+                        <div class="space-y-4">
                             
                             <!-- Project Number Display -->
-                            <div class="bg-blue-50/60 rounded-2xl p-5 border border-blue-100 relative group transition hover:border-blue-300">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-xs uppercase font-bold text-blue-600 tracking-wider">Número do Projeto</span>
+                            <div class="bg-blue-50/60 rounded-xl p-4 border border-blue-100 relative group transition hover:border-blue-300">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="text-[11px] uppercase font-bold text-blue-600 tracking-wider">Número do Projeto</span>
                                     <button onclick="copyToClipboard(document.getElementById('projectVal').innerText, 'Número do Projeto')" 
-                                            class="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1.5">
+                                            class="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1">
                                         <i class="fa-regular fa-copy"></i> Copiar
                                     </button>
                                 </div>
-                                <div id="projectVal" class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight font-mono break-all">
+                                <div id="projectVal" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-mono break-all leading-none py-1">
                                     ---
                                 </div>
                             </div>
 
                             <!-- Account Number Display -->
-                            <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 relative group transition hover:border-slate-300">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-xs uppercase font-bold text-slate-500 tracking-wider">Número da Conta</span>
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 relative group transition hover:border-slate-300">
+                                <div class="flex justify-between items-center mb-0.5">
+                                    <span class="text-[11px] uppercase font-bold text-slate-500 tracking-wider">Número da Conta</span>
                                     <button onclick="copyToClipboard(document.getElementById('accountVal').innerText, 'Número da Conta')" 
-                                            class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1.5">
+                                            class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-md shadow-sm transition flex items-center gap-1">
                                         <i class="fa-regular fa-copy"></i> Copiar
                                     </button>
                                 </div>
-                                <div id="accountVal" class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 tracking-tight font-mono break-all">
+                                <div id="accountVal" class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight font-mono break-all leading-none py-1">
                                     ---
                                 </div>
                             </div>
 
                             <!-- Formatted File Names Section -->
-                            <div class="pt-2 border-t border-slate-100 space-y-3">
-                                <p class="text-xs font-semibold uppercase text-slate-400 tracking-wider mb-2">Nomes Sugeridos para Arquivo Final</p>
+                            <div class="pt-2 border-t border-slate-100 space-y-2">
+                                <p class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider mb-1">Nomes Sugeridos para Arquivo Final</p>
 
                                 <!-- CC File Name -->
-                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 transition">
-                                    <div class="flex items-center gap-3 overflow-hidden">
-                                        <div class="p-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-bold flex-shrink-0">CC</div>
+                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 transition">
+                                    <div class="flex items-center gap-2.5 overflow-hidden">
+                                        <div class="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold flex-shrink-0">CC</div>
                                         <div class="overflow-hidden">
-                                            <span class="text-xs text-slate-400 block font-medium">Conta Corrente</span>
+                                            <span class="text-[10px] text-slate-400 block font-medium leading-tight">Conta Corrente</span>
                                             <span id="fileNameCC" class="font-bold text-slate-800 text-sm sm:text-base font-mono truncate block">Banco do Brasil CC ---</span>
                                         </div>
                                     </div>
                                     <button onclick="copyToClipboard(document.getElementById('fileNameCC').innerText, 'Nome do arquivo CC')" 
-                                            class="flex-shrink-0 bg-white hover:bg-blue-50 text-blue-700 border border-slate-200 hover:border-blue-300 px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
-                                        <i class="fa-regular fa-copy text-sm"></i> <span class="hidden sm:inline">Copiar</span>
+                                            class="flex-shrink-0 bg-white hover:bg-blue-50 text-blue-700 border border-slate-200 hover:border-blue-300 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy"></i> <span class="hidden sm:inline">Copiar</span>
                                     </button>
                                 </div>
 
                                 <!-- Investment File Name -->
-                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 transition">
-                                    <div class="flex items-center gap-3 overflow-hidden">
-                                        <div class="p-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold flex-shrink-0">INV</div>
+                                <div class="flex items-center justify-between gap-3 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 transition">
+                                    <div class="flex items-center gap-2.5 overflow-hidden">
+                                        <div class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold flex-shrink-0">INV</div>
                                         <div class="overflow-hidden">
-                                            <span class="text-xs text-slate-400 block font-medium">Investimento</span>
+                                            <span class="text-[10px] text-slate-400 block font-medium leading-tight">Investimento</span>
                                             <span id="fileNameINV" class="font-bold text-slate-800 text-sm sm:text-base font-mono truncate block">Banco do Brasil INV ---</span>
                                         </div>
                                     </div>
                                     <button onclick="copyToClipboard(document.getElementById('fileNameINV').innerText, 'Nome do arquivo INV')" 
-                                            class="flex-shrink-0 bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200 hover:border-emerald-300 px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
-                                        <i class="fa-regular fa-copy text-sm"></i> <span class="hidden sm:inline">Copiar</span>
+                                            class="flex-shrink-0 bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200 hover:border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                                        <i class="fa-regular fa-copy"></i> <span class="hidden sm:inline">Copiar</span>
                                     </button>
                                 </div>
                             </div>
 
                         </div>
 
-                        <!-- Card Action Navigation Controls -->
-                        <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <!-- Card Action Controls - Direct Attachment Below Card Info -->
+                        <div class="mt-5 pt-3 border-t border-slate-200/80 bg-slate-50/70 -mx-5 -mb-5 p-4 rounded-b-2xl flex flex-col sm:flex-row gap-2.5 items-center justify-between">
                             <!-- Prev / Next Arrow Buttons -->
                             <div class="flex gap-2 w-full sm:w-auto">
-                                <button onclick="prevItem()" id="btnPrev" class="flex-1 sm:flex-initial px-4 py-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-arrow-left"></i> Anterior
+                                <button onclick="prevItem()" id="btnPrev" class="flex-1 sm:flex-initial px-4 py-3 bg-white hover:bg-slate-100 border border-slate-200 active:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-arrow-left"></i> Anterior <kbd class="hidden md:inline-block px-1.5 py-0.5 text-[10px] bg-slate-100 border rounded text-slate-500 font-sans">←</kbd>
                                 </button>
-                                <button onclick="nextItem()" id="btnNext" class="flex-1 sm:flex-initial px-4 py-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2">
-                                    Próximo <i class="fa-solid fa-arrow-right"></i>
+                                <button onclick="nextItem()" id="btnNext" class="flex-1 sm:flex-initial px-4 py-3 bg-white hover:bg-slate-100 border border-slate-200 active:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition shadow-sm flex items-center justify-center gap-1.5">
+                                    Próximo <kbd class="hidden md:inline-block px-1.5 py-0.5 text-[10px] bg-slate-100 border rounded text-slate-500 font-sans">→</kbd> <i class="fa-solid fa-arrow-right"></i>
                                 </button>
                             </div>
 
                             <!-- Main Action: Toggle Complete & Jump -->
                             <button id="btnToggleComplete" onclick="toggleCompleteAndNext()" 
-                                    class="w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-check-circle text-lg"></i>
+                                    class="w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check-circle text-base"></i>
                                 <span id="btnToggleText">Marcar Concluído & Próximo</span>
+                                <kbd class="hidden md:inline-block px-2 py-0.5 text-[10px] bg-emerald-700 border border-emerald-500 rounded text-emerald-100 font-sans">Espaço</kbd>
                             </button>
                         </div>
 
@@ -297,29 +307,29 @@
                 </div>
 
                 <!-- Sidebar Item List -->
-                <div class="lg:col-span-1 bg-white rounded-2xl shadow-md border border-slate-200/80 p-4 flex flex-col h-[550px] lg:h-auto">
+                <div class="lg:col-span-1 bg-white rounded-2xl shadow-md border border-slate-200/80 p-4 flex flex-col h-[480px] lg:h-auto">
                     
                     <!-- Sidebar Header & Filters -->
                     <div class="pb-3 border-b border-slate-100">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <h3 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                                 <i class="fa-solid fa-list-check text-blue-600"></i> Lista de Contas
                             </h3>
-                            <span id="badgeTotalFilter" class="text-xs bg-slate-100 font-semibold px-2 py-0.5 rounded text-slate-600">0 itens</span>
+                            <span id="badgeTotalFilter" class="text-[11px] bg-slate-100 font-semibold px-2 py-0.5 rounded text-slate-600">0 itens</span>
                         </div>
 
                         <!-- Filter Tabs -->
-                        <div class="flex text-xs border-b border-slate-200 space-x-4">
-                            <button onclick="setFilter('all')" id="tabFilterAll" class="pb-2 font-medium active-tab transition">Todos</button>
-                            <button onclick="setFilter('pending')" id="tabFilterPending" class="pb-2 font-medium text-slate-500 hover:text-slate-800 transition">Pendentes</button>
-                            <button onclick="setFilter('completed')" id="tabFilterCompleted" class="pb-2 font-medium text-slate-500 hover:text-slate-800 transition">Concluídos</button>
+                        <div class="flex text-xs border-b border-slate-200 space-x-3">
+                            <button onclick="setFilter('all')" id="tabFilterAll" class="pb-1.5 font-medium active-tab transition">Todos</button>
+                            <button onclick="setFilter('pending')" id="tabFilterPending" class="pb-1.5 font-medium text-slate-500 hover:text-slate-800 transition">Pendentes</button>
+                            <button onclick="setFilter('completed')" id="tabFilterCompleted" class="pb-1.5 font-medium text-slate-500 hover:text-slate-800 transition">Concluídos</button>
                         </div>
 
                         <!-- Search input -->
-                        <div class="mt-3 relative">
-                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3 top-3"></i>
+                        <div class="mt-2.5 relative">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-2.5 top-2.5"></i>
                             <input type="text" id="searchInput" oninput="renderList()" placeholder="Buscar projeto ou conta..." 
-                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-7 pr-2.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                         </div>
                     </div>
 
@@ -337,7 +347,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+    <footer class="bg-white border-t border-slate-200 py-2.5 text-center text-[11px] text-slate-400">
         <p>Gerenciador de Extratos BB &copy; — Produtividade em Extração de Dados</p>
     </footer>
 
@@ -588,6 +598,7 @@
             document.getElementById('uploadSection').classList.add('hidden');
             document.getElementById('columnMappingSection').classList.add('hidden');
             document.getElementById('appSection').classList.remove('hidden');
+            document.getElementById('appSection').classList.add('flex');
             document.getElementById('headerStats').classList.remove('hidden');
         }
 
@@ -618,22 +629,35 @@
                 badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 flex items-center gap-1";
                 badge.innerHTML = '<i class="fa-solid fa-check"></i> Concluído';
 
-                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white rounded-xl font-bold text-sm transition shadow-md flex items-center justify-center gap-2";
+                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3 bg-slate-600 hover:bg-slate-700 active:bg-slate-800 text-white rounded-xl font-bold text-sm transition shadow-md flex items-center justify-center gap-2";
                 btnToggleText.innerText = "Desmarcar Conclusão";
             } else {
                 badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 flex items-center gap-1";
                 badge.innerHTML = '<i class="fa-regular fa-clock"></i> Pendente';
 
-                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2";
+                btnToggleComplete.className = "w-full sm:w-auto flex-grow sm:flex-grow-0 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl font-bold text-sm transition shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2";
                 btnToggleText.innerText = "Marcar Concluído & Próximo";
             }
 
             // Button Disable State
-            document.getElementById('btnPrev').disabled = currentIndex === 0;
-            document.getElementById('btnPrev').style.opacity = currentIndex === 0 ? "0.5" : "1";
+            const isFirst = currentIndex === 0;
+            const isLast = currentIndex === itemsList.length - 1;
 
-            document.getElementById('btnNext').disabled = currentIndex === itemsList.length - 1;
-            document.getElementById('btnNext').style.opacity = currentIndex === itemsList.length - 1 ? "0.5" : "1";
+            ['btnPrev', 'btnPrevTop'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = isFirst;
+                    btn.style.opacity = isFirst ? "0.5" : "1";
+                }
+            });
+
+            ['btnNext', 'btnNextTop'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = isLast;
+                    btn.style.opacity = isLast ? "0.5" : "1";
+                }
+            });
 
             highlightActiveInList();
         }
@@ -719,9 +743,9 @@
         /* SIDEBAR LIST RENDER */
         function setFilter(filter) {
             currentFilter = filter;
-            document.getElementById('tabFilterAll').className = filter === 'all' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
-            document.getElementById('tabFilterPending').className = filter === 'pending' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
-            document.getElementById('tabFilterCompleted').className = filter === 'completed' ? 'pb-2 font-medium active-tab transition' : 'pb-2 font-medium text-slate-500 hover:text-slate-800 transition';
+            document.getElementById('tabFilterAll').className = filter === 'all' ? 'pb-1.5 font-medium active-tab transition' : 'pb-1.5 font-medium text-slate-500 hover:text-slate-800 transition';
+            document.getElementById('tabFilterPending').className = filter === 'pending' ? 'pb-1.5 font-medium active-tab transition' : 'pb-1.5 font-medium text-slate-500 hover:text-slate-800 transition';
+            document.getElementById('tabFilterCompleted').className = filter === 'completed' ? 'pb-1.5 font-medium active-tab transition' : 'pb-1.5 font-medium text-slate-500 hover:text-slate-800 transition';
             renderList();
         }
 
@@ -768,8 +792,8 @@
 
                 return `
                     <div id="sideItem-${item.originalIndex}" onclick="jumpToIndex(${item.originalIndex})" 
-                         class="p-2.5 rounded-xl border ${activeClasses} cursor-pointer transition flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-2.5 overflow-hidden">
+                         class="p-2 rounded-xl border ${activeClasses} cursor-pointer transition flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 overflow-hidden">
                             ${statusIcon}
                             <div class="overflow-hidden">
                                 <p class="text-xs font-bold text-slate-800 truncate">Proj: ${item.project}</p>
@@ -795,7 +819,6 @@
         function copyToClipboard(text, label) {
             if (!text || text === '---') return;
 
-            // Fallback for document.execCommand as requested
             const tempInput = document.createElement('textarea');
             tempInput.value = text;
             document.body.appendChild(tempInput);
@@ -806,7 +829,7 @@
                 if (successful) {
                     showToast(`${label} copiado!`, 'success');
                 } else {
-                    showToast('Erro ao copiar text.', 'error');
+                    showToast('Erro ao copiar texto.', 'error');
                 }
             } catch (err) {
                 showToast('Não foi possível copiar.', 'error');
@@ -877,7 +900,7 @@
                 icon = 'fa-exclamation-circle';
             }
 
-            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-xl font-medium text-xs flex items-center gap-2.5 toast-enter pointer-events-auto border border-white/10`;
+            toast.className = `${bgClass} px-4 py-2.5 rounded-xl shadow-xl font-medium text-xs flex items-center gap-2.5 toast-enter pointer-events-auto border border-white/10`;
             toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span>${message}</span>`;
 
             container.appendChild(toast);
@@ -890,7 +913,7 @@
                         toast.parentNode.removeChild(toast);
                     }
                 }, 300);
-            }, 2500);
+            }, 2200);
         }
     </script>
 </body>
