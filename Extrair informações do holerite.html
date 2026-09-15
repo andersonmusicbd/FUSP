@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extrator e Consolidador de Holerites (FUSP / Geral)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- SheetJS (XLSX) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Estilos estilo planilha de Excel */
+    .excel-table {
+      border-collapse: collapse;
+      font-size: 13px;
+      width: 100%;
+    }
+    .excel-table th, .excel-table td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      text-align: right;
+    }
+    .excel-table th.col-label, .excel-table td.col-label {
+      text-align: left;
+      font-weight: 600;
+    }
+    .excel-table th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: center;
+    }
+    .excel-summary-row {
+      background-color: #f8fafc;
+      font-weight: bold;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col font-sans">
+
+  <header class="bg-emerald-800 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="file-spreadsheet" class="w-8 h-8"></i>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">Consolidador de Holerites FUSP / Geral</h1>
+          <p class="text-xs text-emerald-200">Leitura automatizada de PDFs e consolidação por competência</p>
+        </div>
+      </div>
+      <div id="statusBadge" class="text-xs bg-emerald-700 border border-emerald-500 rounded-full px-3 py-1 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="statusBadgeText">Pronto para leitura</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+    <!-- Area de Upload & Ações -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+        
+        <!-- Drag & Drop Area -->
+        <div class="lg:col-span-2 border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/50 hover:bg-emerald-50 transition-colors rounded-xl p-6 text-center cursor-pointer relative" id="dropArea">
+          <input type="file" id="fileInput" multiple accept="application/pdf" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+          <div class="flex flex-col items-center justify-center space-y-2">
+            <div class="p-3 bg-emerald-100 text-emerald-700 rounded-full">
+              <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">Arraste seus PDFs de holerites aqui ou <span class="text-emerald-600 underline">clique para selecionar</span></p>
+            <p class="text-xs text-slate-500">Suporta múltiplos holerites FUSP em PDF simultaneamente</p>
+          </div>
+        </div>
+
+        <!-- Estatísticas & Exportação -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between h-full space-y-4">
+          <div>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Resumo da Leitura</h3>
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <span class="block text-2xl font-bold text-slate-800" id="totalFiles">0</span>
+                <span class="text-xs text-slate-500">Arquivos Lidos</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <span class="block text-2xl font-bold text-emerald-600" id="totalMonths">0</span>
+                <span class="text-xs text-slate-500">Meses Detectados</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <button id="btnExportXlsx" disabled class="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm">
+              <i data-lucide="download" class="w-4 h-4"></i> Exportar para Excel (.xlsx)
+            </button>
+            <button id="btnExportCsv" disabled class="w-full py-2 px-4 bg-white hover:bg-slate-100 border border-slate-300 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-700 font-medium rounded-lg text-xs transition-colors flex items-center justify-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4"></i> Exportar para CSV
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Barra de Progresso -->
+      <div id="progressContainer" class="hidden mt-4">
+        <div class="flex justify-between text-xs text-slate-600 mb-1">
+          <span id="progressText">Lendo arquivos...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+          <div id="progressBar" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loadedFilesSection" class="hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Holerites Processados</h3>
+        <div class="flex items-center gap-3">
+          <button id="btnToggleEditModal" class="text-xs text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Conferir / Ajustar Valores & Texto Lido
+          </button>
+          <button id="btnClear" class="text-xs text-red-600 hover:underline flex items-center gap-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar Tudo
+          </button>
+        </div>
+      </div>
+      <div id="fileBadgeList" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1"></div>
+    </div>
+
+    <div id="tablesContainer" class="space-y-6">
+
+      <!-- Tabela 1: Encargos e Descontos -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i data-lucide="minus-circle" class="w-4 h-4 text-red-400"></i> Encargos e Descontos
+          </h2>
+          <span class="text-xs text-slate-300 bg-slate-700 px-2 py-0.5 rounded">Valores em R$</span>
+        </div>
+        <div class="overflow-x-auto p-4">
+          <table class="excel-table" id="tableEncargos">
+            <thead>
+              <tr id="headerEncargos">
+                <th class="col-label">Encargos</th>
+                <th>TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="bodyEncargos">
+              <tr>
+                <td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado. Faça o upload dos holerites para ver a consolidação.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tabela 2: Vencimentos / Proventos -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i> Vencimentos (Salário Bruto)
+          </h2>
+          <span class="text-xs text-slate-300 bg-slate-700 px-2 py-0.5 rounded">Valores em R$</span>
+        </div>
+        <div class="overflow-x-auto p-4">
+          <table class="excel-table" id="tableVencimentos">
+            <thead>
+              <tr id="headerVencimentos">
+                <th class="col-label">Vencimentos</th>
+                <th>TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="bodyVencimentos">
+              <tr>
+                <td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tabela 3: Total Líquido -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i data-lucide="wallet" class="w-4 h-4 text-blue-400"></i> Total Líquido
+          </h2>
+          <span class="text-xs text-slate-300 bg-slate-700 px-2 py-0.5 rounded">Valores em R$</span>
+        </div>
+        <div class="overflow-x-auto p-4">
+          <table class="excel-table" id="tableLiquido">
+            <thead>
+              <tr id="headerLiquido">
+                <th class="col-label">Item</th>
+                <th>TOTAL</th>
+              </tr>
+            </thead>
+            <tbody id="bodyLiquido">
+              <tr>
+                <td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i> Validação dos Dados Extraídos dos Holerites
+        </h3>
+        <button id="btnCloseModal" class="text-slate-300 hover:text-white">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        <p class="text-xs text-slate-500">
+          Você pode ajustar manualmente os valores lidos de qualquer holerite se houver inconsistência. Os valores de encargos são extraídos priorizando o valor final do desconto na linha do PDF.
+        </p>
+        
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-xs text-left text-slate-700">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-2.5">Arquivo</th>
+                <th class="p-2.5">Mês / Ano</th>
+                <th class="p-2.5">INSS (0003)</th>
+                <th class="p-2.5">IRRF (0004)</th>
+                <th class="p-2.5">VR (0096)</th>
+                <th class="p-2.5">VA (0100)</th>
+                <th class="p-2.5">Convênio (0094)</th>
+                <th class="p-2.5">Salário Bruto (0002)</th>
+                <th class="p-2.5">Líquido</th>
+              </tr>
+            </thead>
+            <tbody id="modalTableBody" class="divide-y divide-slate-200">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Inspecção de Texto Bruto Lido do PDF -->
+        <div class="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-2">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="file-code" class="w-4 h-4 text-emerald-600"></i> Texto Bruto Extraído do PDF Selecionado
+          </h4>
+          <p class="text-xs text-slate-500">Selecione um holerite abaixo para conferir as linhas exatas lidas pelo motor do navegador:</p>
+          <div class="flex items-center gap-3">
+            <select id="selectRawTextFile" class="text-xs p-2 border border-slate-300 rounded bg-white font-medium flex-grow max-w-xs">
+              <!-- Opções via JS -->
+            </select>
+          </div>
+          <pre id="rawTextDisplay" class="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-xs h-40 overflow-y-auto whitespace-pre-wrap leading-relaxed">Nenhum holerite selecionado.</pre>
+        </div>
+
+      </div>
+      <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-end gap-3">
+        <button id="btnCancelModal" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium text-xs">
+          Cancelar
+        </button>
+        <button id="btnSaveModal" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-medium text-xs shadow-sm">
+          Salvar e Recalcular
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+    Processamento 100% local no seu navegador. Nenhuma informação de holerite sai do seu computador.
+  </footer>
+
+  <script>
+    // Inicializar ícones Lucide
+    lucide.createIcons();
+
+    // Configurar PDF.js Worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Meses do Ano para ordenação cronológica
+    const MESES_ORDEM = [
+      "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
+      "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+    ];
+
+    // Estado da aplicação
+    let extractedData = [];
+    let consolidatedMonths = [];
+
+    // Elementos DOM
+    const fileInput = document.getElementById('fileInput');
+    const dropArea = document.getElementById('dropArea');
+    const totalFilesEl = document.getElementById('totalFiles');
+    const totalMonthsEl = document.getElementById('totalMonths');
+    const btnExportXlsx = document.getElementById('btnExportXlsx');
+    const btnExportCsv = document.getElementById('btnExportCsv');
+    const btnClear = document.getElementById('btnClear');
+    const loadedFilesSection = document.getElementById('loadedFilesSection');
+    const fileBadgeList = document.getElementById('fileBadgeList');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+
+    const editModal = document.getElementById('editModal');
+    const btnToggleEditModal = document.getElementById('btnToggleEditModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnCancelModal = document.getElementById('btnCancelModal');
+    const btnSaveModal = document.getElementById('btnSaveModal');
+    const modalTableBody = document.getElementById('modalTableBody');
+    const selectRawTextFile = document.getElementById('selectRawTextFile');
+    const rawTextDisplay = document.getElementById('rawTextDisplay');
+
+    // Drag and Drop listeners
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.classList.add('border-emerald-500', 'bg-emerald-100/50');
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.classList.remove('border-emerald-500', 'bg-emerald-100/50');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      handleFiles(dt.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    btnClear.addEventListener('click', resetAll);
+    btnToggleEditModal.addEventListener('click', openEditModal);
+    btnCloseModal.addEventListener('click', () => editModal.classList.add('hidden'));
+    btnCancelModal.addEventListener('click', () => editModal.classList.add('hidden'));
+    btnSaveModal.addEventListener('click', saveModalChanges);
+    selectRawTextFile.addEventListener('change', updateRawTextDisplay);
+
+    function resetAll() {
+      extractedData = [];
+      consolidatedMonths = [];
+      fileInput.value = '';
+      totalFilesEl.textContent = '0';
+      totalMonthsEl.textContent = '0';
+      loadedFilesSection.classList.add('hidden');
+      fileBadgeList.innerHTML = '';
+      btnExportXlsx.disabled = true;
+      btnExportCsv.disabled = true;
+      renderEmptyTables();
+    }
+
+    async function handleFiles(files) {
+      const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      if (pdfFiles.length === 0) return;
+
+      progressContainer.classList.remove('hidden');
+      
+      let processed = 0;
+      for (let i = 0; i < pdfFiles.length; i++) {
+        const file = pdfFiles[i];
+        progressText.textContent = `Lendo (${i + 1}/${pdfFiles.length}): ${file.name}`;
+        
+        try {
+          const parsedData = await parsePDF(file);
+          if (parsedData) {
+            extractedData.push(parsedData);
+            addFileBadge(file.name, parsedData.mesAno);
+          }
+        } catch (err) {
+          console.error(`Erro ao ler ${file.name}:`, err);
+        }
+
+        processed++;
+        const pct = Math.round((processed / pdfFiles.length) * 100);
+        progressBar.style.width = pct + '%';
+        progressPercent.textContent = pct + '%';
+      }
+
+      setTimeout(() => {
+        progressContainer.classList.add('hidden');
+        progressBar.style.width = '0%';
+      }, 600);
+
+      loadedFilesSection.classList.remove('hidden');
+      processAndRenderData();
+    }
+
+    function addFileBadge(fileName, mesAno) {
+      const badge = document.createElement('div');
+      badge.className = 'bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-md border border-slate-300 flex items-center gap-1.5';
+      badge.innerHTML = `<i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i> 
+                        <span class="font-medium truncate max-w-[150px]">${fileName}</span> 
+                        <span class="text-slate-400">(${mesAno || 'N/A'})</span>`;
+      fileBadgeList.appendChild(badge);
+      lucide.createIcons();
+    }
+
+    /**
+     * CONVERSOR DE MOEDA DE ALTA PRECISÃO
+     * Suporta: "15,729.14", "15.729,14", "583.12", "583,12"
+     */
+    function parseMoney(valStr) {
+      if (valStr === undefined || valStr === null) return 0;
+      let s = valStr.toString().trim();
+      
+      // Remover prefixos não numéricos como "R$" ou espaços
+      s = s.replace(/[^\d.,]/g, '');
+      if (!s) return 0;
+
+      const hasDot = s.includes('.');
+      const hasComma = s.includes(',');
+
+      if (hasDot && hasComma) {
+        const lastDot = s.lastIndexOf('.');
+        const lastComma = s.lastIndexOf(',');
+        if (lastComma > lastDot) {
+          // Formato BR: 15.729,14
+          s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+          // Formato US: 15,729.14
+          s = s.replace(/,/g, '');
+        }
+      } else if (hasComma) {
+        // Exemplo BR simples: "583,12"
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else if (hasDot) {
+        // Exemplo: "583.12" ou "15.729"
+        const parts = s.split('.');
+        if (parts.length > 2) {
+          const decimalPart = parts.pop();
+          s = parts.join('') + '.' + decimalPart;
+        } else if (parts.length === 2) {
+          if (parts[1].length === 3 && parts[0].length <= 3) {
+            // Provável milhar puro: 15.729
+            s = parts.join('');
+          }
+        }
+      }
+
+      const num = parseFloat(s);
+      return isNaN(num) ? 0 : num;
+    }
+
+    async function parsePDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let lines = [];
+      let rawFullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        
+        // Agrupar itens por coordenada Y (tolerância de 4px)
+        const items = textContent.items;
+        let lineGroups = [];
+
+        items.forEach(item => {
+          if (!item.str || !item.str.trim()) return;
+          const y = item.transform[5];
+          const x = item.transform[4];
+
+          let group = lineGroups.find(g => Math.abs(g.y - y) <= 4.0);
+          if (!group) {
+            group = { y: y, items: [] };
+            lineGroups.push(group);
+          }
+          group.items.push({ x: x, str: item.str });
+        });
+
+        // Ordenar linhas de cima para baixo
+        lineGroups.sort((a, b) => b.y - a.y);
+
+        lineGroups.forEach(group => {
+          // Ordenar palavras da esquerda para a direita
+          group.items.sort((a, b) => a.x - b.x);
+          const lineText = group.items.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim();
+          if (lineText) {
+            lines.push(lineText);
+            rawFullText += lineText + '\n';
+          }
+        });
+      }
+
+      return extractHoleriteInfo(lines, rawFullText, file.name);
+    }
+
+    function extractHoleriteInfo(lines, rawFullText, fileName) {
+      // 1. EXTRAÇÃO DE MÊS / ANO
+      let mesAno = "";
+      const mesAnoMatch = rawFullText.match(/(?:Mês\/Ano|Mes\/Ano|Competência)\s*[:\.]?\s*([A-Za-zçÇ]+\/\d{4}|\d{1,2}\/\d{4})/i);
+      if (mesAnoMatch) {
+        mesAno = mesAnoMatch[1].trim();
+      } else {
+        const mesMatch = rawFullText.match(/(Janeiro|Fevereiro|Março|Marco|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro)\/(\d{4})/i);
+        if (mesMatch) {
+          mesAno = `${mesMatch[1]}/${mesMatch[2]}`;
+        } else {
+          mesAno = "Não identificado";
+        }
+      }
+
+      if (mesAno.includes('/')) {
+        let [m, y] = mesAno.split('/');
+        m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+        mesAno = `${m}/${y}`;
+      }
+
+      let inss = 0;
+      let irrf = 0;
+      let vr = 0;
+      let va = 0;
+      let convenio = 0;
+      let salario = 0;
+      let liquido = 0;
+
+      // Padrão de valores monetários ou numéricos decimais nas colunas da tabela
+      // Exemplo: 5,525.30 | 583.12 | 14.00 | 27.50
+      const moneyPattern = /(?:R\$\s*)?(\d{1,3}(?:[\.,]\d{3})*[\.,]\d{2})\b/g;
+
+      lines.forEach(line => {
+        const cleanLine = line.replace(/\s+/g, ' ').trim();
+        const matches = [...cleanLine.matchAll(moneyPattern)].map(m => m[1]);
+
+        // CRÍTICO: Nas linhas da tabela FUSP, a estrutura é:
+        // Cód | Descrição | Referência | Vencimentos | Descontos
+        // Exemplo linha INSS: "0003 INSS (DESCONTO) 14.00 583.12"
+        // Aqui 14.00 é Referência, e 583.12 é o DESCONTO real. O valor do desconto é SEMPRE o ÚLTIMO número da linha!
+
+        // --- CÓDIGO 0002 ou SALÁRIO ---
+        if (/\b0002\b/.test(cleanLine) || (/SALARIO|SALÁRIO/i.test(cleanLine) && !/BASE|CONTR|INSS|FGTS/i.test(cleanLine))) {
+          if (matches.length > 0) {
+            // Para salário em "0002 SALARIO - DIAS TRABALHAD 30.00 5,525.30", o último número é o valor
+            salario = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- CÓDIGO 0003 ou INSS ---
+        if (/\b0003\b/.test(cleanLine) || (/INSS/i.test(cleanLine) && !/BASE|SAL|CONTR|CÁLC/i.test(cleanLine))) {
+          if (matches.length > 0) {
+            // Pega o último valor monetário (ignora a referência de 14.00%)
+            inss = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- CÓDIGO 0004 ou IRRF ---
+        if (/\b0004\b/.test(cleanLine) || (/IRRF/i.test(cleanLine) && !/BASE|CÁLC/i.test(cleanLine))) {
+          if (matches.length > 0) {
+            // Pega o último valor monetário (ignora a referência de 27.50%)
+            irrf = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- CÓDIGO 0096 ou VALE REFEIÇÃO ---
+        if (/\b0096\b/.test(cleanLine) || /VALE\s*REFEI/i.test(cleanLine)) {
+          if (matches.length > 0) {
+            vr = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- CÓDIGO 0100 ou VALE ALIMENTAÇÃO ---
+        if (/\b0100\b/.test(cleanLine) || /VALE\s*ALIMENTA/i.test(cleanLine)) {
+          if (matches.length > 0) {
+            va = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- CÓDIGO 0094 ou CONVÊNIO / BB DENTAL ---
+        if (/\b0094\b/.test(cleanLine) || /BB\s*DENTAL|CONVENIO|CONVÊNIO|PLANO\s*SAUDE/i.test(cleanLine)) {
+          if (matches.length > 0) {
+            convenio = parseMoney(matches[matches.length - 1]);
+          }
+        }
+
+        // --- VALOR LÍQUIDO ---
+        if (/Valor\s*Líquido|Valor\s*Liquido|Líquido\s*a\s*Receber/i.test(cleanLine)) {
+          if (matches.length > 0) {
+            liquido = parseMoney(matches[matches.length - 1]);
+          }
+        }
+      });
+
+      // Fallback para Valor Líquido no texto completo
+      if (liquido === 0) {
+        const liqMatch = rawFullText.match(/(?:Valor\s*Líquido|Valor\s*Liquido)[^\d]*([\d\.,]+)/i);
+        if (liqMatch) {
+          liquido = parseMoney(liqMatch[1]);
+        } else {
+          // Se não encontrou a string explícita, calcula: Bruto - Descontos
+          const totalDescontos = inss + irrf + vr + va + convenio;
+          liquido = salario > totalDescontos ? (salario - totalDescontos) : 0;
+        }
+      }
+
+      // Fallback para Salário se 0
+      if (salario === 0) {
+        const salMatch = rawFullText.match(/(?:Total\s*de\s*Vencimentos|Salário\s*Base)[^\d]*([\d\.,]+)/i);
+        if (salMatch) salario = parseMoney(salMatch[1]);
+      }
+
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        fileName,
+        mesAno,
+        rawFullText,
+        encargos: {
+          INSS: inss,
+          IRRF: irrf,
+          VR: vr,
+          VA: va,
+          Convenio: convenio
+        },
+        vencimentos: {
+          Salario: salario
+        },
+        totalLiquido: liquido
+      };
+    }
+
+    function processAndRenderData() {
+      if (extractedData.length === 0) return;
+
+      const mesMap = {};
+      extractedData.forEach(item => {
+        mesMap[item.mesAno] = item;
+      });
+
+      consolidatedMonths = Object.keys(mesMap).sort((a, b) => {
+        const [mA, yA] = a.split('/');
+        const [mB, yB] = b.split('/');
+        
+        if (yA && yB && yA !== yB) return parseInt(yA) - parseInt(yB);
+        
+        const idxA = MESES_ORDEM.findIndex(m => (mA || '').toLowerCase().startsWith(m.substring(0, 3)));
+        const idxB = MESES_ORDEM.findIndex(m => (mB || '').toLowerCase().startsWith(m.substring(0, 3)));
+        return idxA - idxB;
+      });
+
+      totalFilesEl.textContent = extractedData.length;
+      totalMonthsEl.textContent = consolidatedMonths.length;
+
+      btnExportXlsx.disabled = false;
+      btnExportCsv.disabled = false;
+
+      renderEncargosTable(mesMap);
+      renderVencimentosTable(mesMap);
+      renderLiquidoTable(mesMap);
+    }
+
+    function formatCurrency(val) {
+      if (val === undefined || val === null || isNaN(val) || val === 0) {
+        return 'R$ -';
+      }
+      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function renderEncargosTable(mesMap) {
+      const headerRow = document.getElementById('headerEncargos');
+      const body = document.getElementById('bodyEncargos');
+
+      headerRow.innerHTML = `<th class="col-label">Encargos</th>` + 
+        consolidatedMonths.map(m => `<th>${m.split('/')[0]}</th>`).join('') + 
+        `<th>TOTAL</th>`;
+
+      const rubricas = [
+        { key: 'INSS', label: 'INSS' },
+        { key: 'IRRF', label: 'IRRF' },
+        { key: 'VR', label: 'VR' },
+        { key: 'VA', label: 'VA' },
+        { key: 'Convenio', label: 'Convenio' }
+      ];
+
+      let bodyHTML = '';
+      const monthlyTotals = Array(consolidatedMonths.length).fill(0);
+      let grandTotal = 0;
+
+      rubricas.forEach(rubrica => {
+        let rowHTML = `<tr><td class="col-label">${rubrica.label}</td>`;
+        let rowTotal = 0;
+
+        consolidatedMonths.forEach((m, idx) => {
+          const val = mesMap[m]?.encargos[rubrica.key] || 0;
+          rowTotal += val;
+          monthlyTotals[idx] += val;
+          rowHTML += `<td>${formatCurrency(val)}</td>`;
+        });
+
+        grandTotal += rowTotal;
+        rowHTML += `<td class="font-bold">${formatCurrency(rowTotal)}</td></tr>`;
+        bodyHTML += rowHTML;
+      });
+
+      let totalRowHTML = `<tr class="excel-summary-row"><td class="col-label">TOTAL DESCONTOS</td>`;
+      monthlyTotals.forEach(tot => {
+        totalRowHTML += `<td>${formatCurrency(tot)}</td>`;
+      });
+      totalRowHTML += `<td class="text-slate-900">${formatCurrency(grandTotal)}</td></tr>`;
+
+      body.innerHTML = bodyHTML + totalRowHTML;
+    }
+
+    function renderVencimentosTable(mesMap) {
+      const headerRow = document.getElementById('headerVencimentos');
+      const body = document.getElementById('bodyVencimentos');
+
+      headerRow.innerHTML = `<th class="col-label">Vencimentos</th>` + 
+        consolidatedMonths.map(m => `<th>${m.split('/')[0]}</th>`).join('') + 
+        `<th>TOTAL</th>`;
+
+      let rowHTML = `<tr><td class="col-label">Salário Bruto / Proventos</td>`;
+      let rowTotal = 0;
+
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.vencimentos.Salario || 0;
+        rowTotal += val;
+        rowHTML += `<td>${formatCurrency(val)}</td>`;
+      });
+
+      rowHTML += `<td class="font-bold">${formatCurrency(rowTotal)}</td></tr>`;
+      body.innerHTML = rowHTML;
+    }
+
+    function renderLiquidoTable(mesMap) {
+      const headerRow = document.getElementById('headerLiquido');
+      const body = document.getElementById('bodyLiquido');
+
+      headerRow.innerHTML = `<th class="col-label">Total Líquido</th>` + 
+        consolidatedMonths.map(m => `<th>${m.split('/')[0]}</th>`).join('') + 
+        `<th>TOTAL</th>`;
+
+      let rowHTML = `<tr class="font-bold text-slate-800"><td class="col-label">Valor Líquido Recebido</td>`;
+      let rowTotal = 0;
+
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.totalLiquido || 0;
+        rowTotal += val;
+        rowHTML += `<td>${formatCurrency(val)}</td>`;
+      });
+
+      rowHTML += `<td class="text-emerald-700 font-extrabold">${formatCurrency(rowTotal)}</td></tr>`;
+      body.innerHTML = rowHTML;
+    }
+
+    function renderEmptyTables() {
+      document.getElementById('headerEncargos').innerHTML = `<th class="col-label">Encargos</th><th>TOTAL</th>`;
+      document.getElementById('bodyEncargos').innerHTML = `<tr><td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado. Faça o upload para visualizar os encargos.</td></tr>`;
+
+      document.getElementById('headerVencimentos').innerHTML = `<th class="col-label">Vencimentos</th><th>TOTAL</th>`;
+      document.getElementById('bodyVencimentos').innerHTML = `<tr><td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado.</td></tr>`;
+
+      document.getElementById('headerLiquido').innerHTML = `<th class="col-label">Item</th><th>TOTAL</th>`;
+      document.getElementById('bodyLiquido').innerHTML = `<tr><td colspan="2" class="text-center text-slate-400 py-6">Nenhum PDF carregado.</td></tr>`;
+    }
+
+    function openEditModal() {
+      if (extractedData.length === 0) return;
+      
+      modalTableBody.innerHTML = '';
+      selectRawTextFile.innerHTML = '';
+
+      extractedData.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `${item.fileName} (${item.mesAno})`;
+        selectRawTextFile.appendChild(opt);
+
+        const tr = document.createElement('tr');
+        tr.dataset.id = item.id;
+        tr.innerHTML = `
+          <td class="p-2 border font-medium truncate max-w-[120px]" title="${item.fileName}">${item.fileName}</td>
+          <td class="p-2 border"><input type="text" class="w-full text-xs p-1 border rounded input-mes" value="${item.mesAno}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-inss" value="${item.encargos.INSS}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-irrf" value="${item.encargos.IRRF}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-vr" value="${item.encargos.VR}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-va" value="${item.encargos.VA}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-convenio" value="${item.encargos.Convenio}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-salario" value="${item.vencimentos.Salario}"></td>
+          <td class="p-2 border"><input type="number" step="0.01" class="w-full text-xs p-1 border rounded input-liquido" value="${item.totalLiquido}"></td>
+        `;
+        modalTableBody.appendChild(tr);
+      });
+
+      updateRawTextDisplay();
+      editModal.classList.remove('hidden');
+    }
+
+    function updateRawTextDisplay() {
+      const selectedId = selectRawTextFile.value;
+      const item = extractedData.find(d => d.id === selectedId);
+      if (item) {
+        rawTextDisplay.textContent = item.rawFullText || "Nenhum texto disponível.";
+      } else {
+        rawTextDisplay.textContent = "Selecione um holerite acima.";
+      }
+    }
+
+    function saveModalChanges() {
+      const rows = modalTableBody.querySelectorAll('tr');
+      rows.forEach(tr => {
+        const id = tr.dataset.id;
+        const item = extractedData.find(d => d.id === id);
+        if (item) {
+          item.mesAno = tr.querySelector('.input-mes').value;
+          item.encargos.INSS = parseFloat(tr.querySelector('.input-inss').value) || 0;
+          item.encargos.IRRF = parseFloat(tr.querySelector('.input-irrf').value) || 0;
+          item.encargos.VR = parseFloat(tr.querySelector('.input-vr').value) || 0;
+          item.encargos.VA = parseFloat(tr.querySelector('.input-va').value) || 0;
+          item.encargos.Convenio = parseFloat(tr.querySelector('.input-convenio').value) || 0;
+          item.vencimentos.Salario = parseFloat(tr.querySelector('.input-salario').value) || 0;
+          item.totalLiquido = parseFloat(tr.querySelector('.input-liquido').value) || 0;
+        }
+      });
+
+      editModal.classList.add('hidden');
+      processAndRenderData();
+    }
+
+    btnExportXlsx.addEventListener('click', () => {
+      if (consolidatedMonths.length === 0) return;
+
+      const wb = XLSX.utils.book_new();
+      const sheetData = [];
+
+      sheetData.push(["ENCARGOS / DESCONTOS"]);
+      sheetData.push(["Encargos", ...consolidatedMonths.map(m => m.split('/')[0]), "TOTAL"]);
+
+      const mesMap = {};
+      extractedData.forEach(item => mesMap[item.mesAno] = item);
+
+      const rubricas = [
+        { key: 'INSS', label: 'INSS' },
+        { key: 'IRRF', label: 'IRRF' },
+        { key: 'VR', label: 'VR' },
+        { key: 'VA', label: 'VA' },
+        { key: 'Convenio', label: 'Convenio' }
+      ];
+
+      const monthlyEncTotals = Array(consolidatedMonths.length).fill(0);
+      let grandEncTotal = 0;
+
+      rubricas.forEach(r => {
+        let rowSum = 0;
+        const row = [r.label];
+        consolidatedMonths.forEach((m, idx) => {
+          const val = mesMap[m]?.encargos[r.key] || 0;
+          rowSum += val;
+          monthlyEncTotals[idx] += val;
+          row.push(val);
+        });
+        grandEncTotal += rowSum;
+        row.push(rowSum);
+        sheetData.push(row);
+      });
+
+      sheetData.push(["TOTAL DESCONTOS", ...monthlyEncTotals, grandEncTotal]);
+      sheetData.push([]); 
+
+      sheetData.push(["VENCIMENTOS"]);
+      sheetData.push(["Descrição", ...consolidatedMonths.map(m => m.split('/')[0]), "TOTAL"]);
+      
+      let vencTotal = 0;
+      const vencRow = ["Salário Bruto"];
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.vencimentos.Salario || 0;
+        vencTotal += val;
+        vencRow.push(val);
+      });
+      vencRow.push(vencTotal);
+      sheetData.push(vencRow);
+      sheetData.push([]); 
+
+      sheetData.push(["TOTAL LÍQUIDO"]);
+      sheetData.push(["Item", ...consolidatedMonths.map(m => m.split('/')[0]), "TOTAL"]);
+      
+      let liqTotal = 0;
+      const liqRow = ["Valor Líquido"];
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.totalLiquido || 0;
+        liqTotal += val;
+        liqRow.push(val);
+      });
+      liqRow.push(liqTotal);
+      sheetData.push(liqRow);
+
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      XLSX.utils.book_append_sheet(wb, ws, "Consolidado Holerites");
+
+      XLSX.writeFile(wb, "Consolidado_Holerites.xlsx");
+    });
+
+    btnExportCsv.addEventListener('click', () => {
+      if (consolidatedMonths.length === 0) return;
+
+      const mesMap = {};
+      extractedData.forEach(item => mesMap[item.mesAno] = item);
+
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Categoria;Item;" + consolidatedMonths.join(";") + ";TOTAL\n";
+
+      const rubricas = ['INSS', 'IRRF', 'VR', 'VA', 'Convenio'];
+      rubricas.forEach(r => {
+        let rowSum = 0;
+        let line = `Desconto;${r}`;
+        consolidatedMonths.forEach(m => {
+          const val = mesMap[m]?.encargos[r] || 0;
+          rowSum += val;
+          line += `;${val.toFixed(2)}`;
+        });
+        line += `;${rowSum.toFixed(2)}\n`;
+        csvContent += line;
+      });
+
+      let vencSum = 0;
+      let vencLine = "Vencimento;Salario";
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.vencimentos.Salario || 0;
+        vencSum += val;
+        vencLine += `;${val.toFixed(2)}`;
+      });
+      vencLine += `;${vencSum.toFixed(2)}\n`;
+      csvContent += vencLine;
+
+      let liqSum = 0;
+      let liqLine = "Liquido;Total Liquido";
+      consolidatedMonths.forEach(m => {
+        const val = mesMap[m]?.totalLiquido || 0;
+        liqSum += val;
+        liqLine += `;${val.toFixed(2)}`;
+      });
+      liqLine += `;${liqSum.toFixed(2)}\n`;
+      csvContent += liqLine;
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Consolidado_Holerites.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+  </script>
+</body>
+</html>
