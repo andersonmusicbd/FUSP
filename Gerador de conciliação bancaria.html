@@ -33,17 +33,8 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
-        h1 {
-            color: var(--primary);
-            margin-bottom: 8px;
-            font-size: 24px;
-        }
-
-        p.subtitle {
-            color: #64748b;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
+        h1 { color: var(--primary); margin-bottom: 8px; font-size: 24px; }
+        p.subtitle { color: #64748b; margin-bottom: 25px; font-size: 14px; }
 
         .upload-grid {
             display: grid;
@@ -61,26 +52,11 @@
             transition: border-color 0.3s ease;
         }
 
-        .upload-card:hover {
-            border-color: var(--primary);
-        }
+        .upload-card:hover { border-color: var(--primary); }
+        .upload-card h3 { font-size: 16px; color: var(--primary); margin-top: 0; margin-bottom: 10px; }
+        .upload-card p { font-size: 12px; color: #64748b; margin-bottom: 15px; }
 
-        .upload-card h3 {
-            font-size: 16px;
-            color: var(--primary);
-            margin-top: 0;
-            margin-bottom: 10px;
-        }
-
-        .upload-card p {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 15px;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
 
         .btn-file {
             display: inline-block;
@@ -94,17 +70,8 @@
             transition: all 0.2s;
         }
 
-        .btn-file:hover {
-            background-color: #cbd5e1;
-        }
-
-        .file-name {
-            display: block;
-            margin-top: 10px;
-            font-size: 12px;
-            color: var(--success);
-            font-weight: bold;
-        }
+        .btn-file:hover { background-color: #cbd5e1; }
+        .file-name { display: block; margin-top: 10px; font-size: 12px; color: var(--success); font-weight: bold; }
 
         .action-area {
             text-align: center;
@@ -126,9 +93,7 @@
             margin-right: 10px;
         }
 
-        .btn-process:hover {
-            background-color: var(--primary-hover);
-        }
+        .btn-process:hover { background-color: var(--primary-hover); }
 
         .btn-export {
             background-color: var(--success);
@@ -142,9 +107,7 @@
             display: none;
         }
 
-        .btn-export:hover {
-            background-color: #166534;
-        }
+        .btn-export:hover { background-color: #166534; }
 
         .table-container {
             margin-top: 30px;
@@ -154,44 +117,15 @@
             border-radius: 8px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
-        }
-
-        th {
-            background-color: var(--primary);
-            color: white;
-            padding: 10px;
-            position: sticky;
-            top: 0;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
-
-        tr.row-resgate {
-            background-color: #fef3c7;
-            font-weight: bold;
-        }
-
-        tr.row-saldo-anterior {
-            background-color: #e0f2fe;
-            font-weight: bold;
-        }
-
-        .numeric {
-            text-align: right;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th { background-color: var(--primary); color: white; padding: 10px; position: sticky; top: 0; font-weight: 600; }
+        td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        tr.row-resgate { background-color: #fef3c7; font-weight: bold; }
+        tr.row-saldo-anterior { background-color: #e0f2fe; font-weight: bold; }
+        .numeric { text-align: right; }
+        .debit { color: #dc2626; }
+        .credit { color: #2563eb; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -203,7 +137,7 @@
     <div class="upload-grid">
         <div class="upload-card">
             <h3>1. Relatório de Movimentação (.xlsx / .pdf)</h3>
-            <p>Carregue os relatórios com os pagamentos individuais (ex: Carlos, Paula, Jaqueline).</p>
+            <p>Carregue os relatórios com os pagamentos individuais.</p>
             <label class="btn-file" for="relatorioFile">Selecionar Arquivos</label>
             <input type="file" id="relatorioFile" accept=".xlsx, .xls, .pdf" multiple>
             <span class="file-name" id="relatorioName"></span>
@@ -211,7 +145,7 @@
 
         <div class="upload-card">
             <h3>2. Extrato / Resgates (.xlsx / .csv / .pdf)</h3>
-            <p>Carregue os extratos com os débitos aglutinados e número de borderô.</p>
+            <p>Carregue os extratos com os débitos aglutinados e números de borderô.</p>
             <label class="btn-file" for="extratoFile">Selecionar Arquivos</label>
             <input type="file" id="extratoFile" accept=".xlsx, .xls, .csv, .pdf" multiple>
             <span class="file-name" id="extratoName"></span>
@@ -258,21 +192,47 @@
         document.getElementById('extratoName').innerText = files.length === 1 ? files[0].name : `${files.length} arquivos selecionados`;
     });
 
-    function parseDate(dateStr) {
-        if (!dateStr) return null;
-        if (dateStr instanceof Date) return dateStr;
-        const parts = dateStr.toString().trim().split('/');
-        if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
-        return new Date(dateStr);
+    function parseDate(val) {
+        if (!val) return null;
+        if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+
+        if (typeof val === 'number') {
+            const parsed = XLSX.SSF.parse_date_code(val);
+            if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
+        }
+
+        const str = val.toString().trim();
+        const parts = str.split('/');
+        if (parts.length === 3) {
+            let year = parseInt(parts[2]);
+            if (year < 100) year += 2000;
+            return new Date(year, parseInt(parts[1]) - 1, parseInt(parts[0]));
+        }
+
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
     }
 
     function formatDate(date) {
-        if (!date) return '';
         const d = parseDate(date);
-        if (isNaN(d.getTime())) return date;
+        if (!d) return '';
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         return `${day}/${month}/${d.getFullYear()}`;
+    }
+
+    function parseNumber(val) {
+        if (val === null || val === undefined || val === '') return null;
+        if (typeof val === 'number') return isNaN(val) ? null : val;
+
+        let str = val.toString().replace('R$', '').replace(/\s/g, '').trim();
+        if (str.includes(',') && str.includes('.')) {
+            str = str.replace(/\./g, '').replace(',', '.');
+        } else if (str.includes(',')) {
+            str = str.replace(',', '.');
+        }
+        const num = parseFloat(str);
+        return isNaN(num) ? null : num;
     }
 
     function readExcel(file) {
@@ -280,8 +240,8 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: false, cellText: false });
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
                 resolve(json);
             };
             reader.onerror = reject;
@@ -309,24 +269,33 @@
         return lines;
     }
 
-    // Função para encontrar a combinação de lançamentos que somam o valor total do borderô no extrato
-    function findSubsetSum(numbers, target, maxCombo = 8) {
-        target = Math.round(target * 100);
-        const cents = numbers.map(n => Math.round(Math.abs(n.valor) * 100));
+    function findSubsetSum(items, target) {
+        const targetCents = Math.round(target * 100);
+        const availableItems = items.map((item, idx) => ({
+            index: idx,
+            cents: Math.round(Math.abs(item.valor) * 100),
+            matched: item._matched
+        })).filter(i => !i.matched);
+
+        for (let item of availableItems) {
+            if (Math.abs(item.cents - targetCents) <= 1) {
+                return [item.index];
+            }
+        }
 
         function helper(start, currentTarget, currentCombo) {
-            if (currentTarget === 0) return currentCombo;
-            if (currentTarget < 0 || currentCombo.length >= maxCombo) return null;
+            if (Math.abs(currentTarget) <= 1 && currentCombo.length > 0) return currentCombo;
+            if (currentTarget < -1 || currentCombo.length >= 20) return null;
 
-            for (let i = start; i < cents.length; i++) {
-                if (numbers[i]._matched) continue;
-                const result = helper(i + 1, currentTarget - cents[i], [...currentCombo, i]);
-                if (result) return result;
+            for (let i = start; i < availableItems.length; i++) {
+                const item = availableItems[i];
+                const res = helper(i + 1, currentTarget - item.cents, [...currentCombo, item.index]);
+                if (res) return res;
             }
             return null;
         }
 
-        return helper(0, target, []);
+        return helper(0, targetCents, []);
     }
 
     async function processarConciliacao() {
@@ -334,14 +303,20 @@
         const extratoFiles = document.getElementById('extratoFile').files;
 
         if (relatorioFiles.length === 0) {
-            alert('Por favor, selecione os arquivos do Relatório.');
+            alert('Por favor, selecione pelo menos um arquivo de Relatório.');
             return;
         }
 
         let txs = [];
         let borderosExtrato = [];
 
-        // 1. Extrair Lançamentos do Relatório
+        const rubricasConhecidas = [
+            'IRRF PF', 'IMPOSTOS E TAXAS', 'REMUNERAÇÃO DE PESSOAL', 
+            'DIARIAS', 'DIÁRIAS', 'BOLSA', 'BOLSAS', 'SERVIÇOS DE TERCEIROS',
+            'MATERIAL DE CONSUMO', 'EQUIPAMENTOS', 'PASSAGENS'
+        ];
+
+        // 1. Processar Relatórios (Extraindo apenas o valor da despesa real)
         for (let i = 0; i < relatorioFiles.length; i++) {
             const file = relatorioFiles[i];
             const ext = file.name.split('.').pop().toLowerCase();
@@ -349,35 +324,82 @@
             if (ext === 'pdf') {
                 const pdfLines = await readPDF(file);
                 pdfLines.forEach(line => {
-                    const match = line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d+[\d.,]*)/);
-                    if (match) {
-                        const dt = formatDate(match[1]);
-                        let valor = parseFloat(match[3].replace(/\./g, '').replace(',', '.'));
-                        if (dt && !isNaN(valor)) {
-                            txs.push({ dt, doc: '', rubrica: '', nome: match[2].trim(), cpf_cnpj: '', valor, _matched: false });
+                    const matches = [...line.matchAll(/(-?\d+[\d.,]*)/g)];
+                    if (matches.length >= 2) {
+                        const valorDespesaStr = matches[matches.length - 2][0]; // Pega o penúltimo valor (Despesa), ignorando o último (Saldo)
+                        const valorReal = parseNumber(valorDespesaStr);
+                        const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{4})/);
+                        const dt = dateMatch ? formatDate(dateMatch[1]) : null;
+
+                        if (dt && valorReal !== null && valorReal !== 0) {
+                            txs.push({ dt, doc: '', rubrica: 'Despesa', nome: line, cpf_cnpj: '', valor: -Math.abs(valorReal), _matched: false });
                         }
                     }
                 });
             } else {
-                const data = await readExcel(file);
-                data.forEach((row, idx) => {
-                    if (idx < 5) return;
-                    const dt = formatDate(row[1]);
-                    const doc = row[3] ? String(row[3]).trim() : '';
-                    const rubrica = row[6] ? String(row[6]).trim() : (row[4] ? String(row[4]).trim() : '');
-                    const historico = row[8] ? String(row[8]).trim() : (row[6] ? String(row[6]).trim() : '');
-                    const cpf_cnpj = row[12] ? String(row[12]).trim() : (row[10] ? String(row[10]).trim() : '');
-                    let valor = row[13] !== undefined ? parseFloat(row[13]) : (row[11] !== undefined ? parseFloat(row[11]) : NaN);
+                const rows = await readExcel(file);
+                rows.forEach(row => {
+                    if (!row || row.length === 0) return;
 
-                    if (dt && !isNaN(valor)) {
-                        let nome = historico.includes(' - ') ? historico.split(' - ')[0].trim() : historico;
-                        txs.push({ dt, doc, rubrica, nome, cpf_cnpj, valor, _matched: false });
+                    let dt = null;
+                    let numerosEncontrados = [];
+                    let rubricaEncontrada = '';
+                    let textosEncontrados = [];
+
+                    row.forEach(cell => {
+                        if (cell === null || cell === undefined) return;
+
+                        if (!dt) {
+                            let parsed = parseDate(cell);
+                            if (parsed) dt = formatDate(parsed);
+                        }
+
+                        let parsedNum = parseNumber(cell);
+                        if (parsedNum !== null && parsedNum !== 0) {
+                            numerosEncontrados.push(parsedNum);
+                        }
+
+                        if (typeof cell === 'string') {
+                            let txt = cell.trim();
+                            if (txt.length > 2 && !txt.includes('/') && isNaN(txt) && !txt.toLowerCase().includes('saldo anterior')) {
+                                let matchRubrica = rubricasConhecidas.find(r => r.toLowerCase() === txt.toLowerCase());
+                                if (matchRubrica) {
+                                    rubricaEncontrada = matchRubrica;
+                                } else {
+                                    textosEncontrados.push(txt);
+                                }
+                            }
+                        }
+                    });
+
+                    // Pega o penúltimo número se houver mais de um (para evitar o Saldo Acumulado da última coluna)
+                    let valorReal = null;
+                    if (numerosEncontrados.length >= 2) {
+                        valorReal = numerosEncontrados[numerosEncontrados.length - 2];
+                    } else if (numerosEncontrados.length === 1) {
+                        valorReal = numerosEncontrados[0];
+                    }
+
+                    if (dt && valorReal !== null) {
+                        textosEncontrados.sort((a, b) => b.length - a.length);
+                        let historicoFinal = textosEncontrados.length > 0 ? textosEncontrados[0] : (rubricaEncontrada || 'Lançamento');
+                        let rubricaFinal = rubricaEncontrada || (textosEncontrados.length > 1 ? textosEncontrados[1] : 'Outros');
+
+                        txs.push({
+                            dt: dt,
+                            doc: '',
+                            rubrica: rubricaFinal,
+                            nome: historicoFinal,
+                            cpf_cnpj: '',
+                            valor: -Math.abs(valorReal),
+                            _matched: false
+                        });
                     }
                 });
             }
         }
 
-        // 2. Extrair Débitos do Extrato (procurando Número do Borderô)
+        // 2. Processar Extratos / Resgates
         for (let i = 0; i < extratoFiles.length; i++) {
             const file = extratoFiles[i];
             const ext = file.name.split('.').pop().toLowerCase();
@@ -385,35 +407,71 @@
             if (ext === 'pdf') {
                 const lines = await readPDF(file);
                 lines.forEach(line => {
-                    const match = line.match(/(?:BORDERO|BORDERÔ|OB|CH)?\s*(\d+)\s+.*?(-?\d+[\d.,]*)/i);
+                    const match = line.match(/(\d{2}\/\d{2}\/\d{4})?\s*(?:BORDERO|BORDERÔ|OB|CH|LOTE)?\s*([\d.]+)\s+.*?(-?\d+[\d.,]*)/i);
                     if (match) {
-                        let borderoNum = match[1];
-                        let val = parseFloat(match[2].replace(/\./g, '').replace(',', '.'));
-                        if (!isNaN(val) && val > 0) borderosExtrato.push({ num: borderoNum, total: val });
+                        let dt = formatDate(match[1]);
+                        let borderoNum = match[2].replace(/\./g, '').trim();
+                        let val = parseNumber(match[3]);
+                        if (val !== null && val > 0 && borderoNum !== '32' && borderoNum.length >= 3) {
+                            borderosExtrato.push({ dt: dt, num: borderoNum, total: Math.abs(val) });
+                        }
                     }
                 });
             } else {
-                const data = await readExcel(file);
-                data.forEach(row => {
-                    let borderoNum = row[0] ? String(row[0]).trim() : '';
-                    let val = parseFloat(row[1] || row[6] || row[8]);
-                    if (borderoNum && !isNaN(val)) borderosExtrato.push({ num: borderoNum, total: Math.abs(val) });
+                const rows = await readExcel(file);
+                rows.forEach(row => {
+                    if (!row || row.length === 0) return;
+
+                    let dt = null;
+                    let borderoNum = '';
+                    let val = null;
+
+                    row.forEach(cell => {
+                        if (cell === null || cell === undefined) return;
+
+                        if (!dt) {
+                            let parsedDt = parseDate(cell);
+                            if (parsedDt) dt = formatDate(parsedDt);
+                        }
+
+                        let rawStr = cell.toString().trim();
+                        let cleanNumStr = rawStr.replace(/\./g, '');
+
+                        if (!borderoNum && /^\d{3,10}$/.test(cleanNumStr) && cleanNumStr !== '32') {
+                            borderoNum = cleanNumStr;
+                        }
+
+                        let parsedVal = parseNumber(cell);
+                        if (parsedVal !== null && parsedVal > 0) {
+                            val = parsedVal;
+                        }
+                    });
+
+                    if (borderoNum && val !== null) {
+                        borderosExtrato.push({ dt: dt, num: borderoNum, total: Math.abs(val) });
+                    }
                 });
             }
         }
 
-        // 3. Vincular o número do Borderô às linhas individuais cujos valores somados equivalem ao valor do extrato
+        // 3. Vincular borderôs por soma de débitos
         borderosExtrato.forEach(ext => {
-            const matchIndices = findSubsetSum(txs, ext.total);
-            if (matchIndices) {
+            let candidates = txs;
+            if (ext.dt) {
+                let sameDateCandidates = txs.filter(t => t.dt === ext.dt);
+                if (sameDateCandidates.length > 0) candidates = sameDateCandidates;
+            }
+
+            const matchIndices = findSubsetSum(candidates, ext.total);
+            if (matchIndices && matchIndices.length > 0) {
                 matchIndices.forEach(idx => {
-                    txs[idx].doc = ext.num;
-                    txs[idx]._matched = true;
+                    candidates[idx].doc = ext.num;
+                    candidates[idx]._matched = true;
                 });
             }
         });
 
-        // 4. Agrupar por data e gerar visualização final
+        // 4. Agrupar por data e aplicar a fórmula contábil exata da imagem (J + I + K_anterior)
         let dateGroups = {};
         txs.forEach(tx => {
             if (!dateGroups[tx.dt]) dateGroups[tx.dt] = [];
@@ -425,6 +483,7 @@
         conciliacaoResult = [];
         const dataInicial = sortedDates.length > 0 ? getDiaAnterior(sortedDates[0]) : '31/10/2025';
 
+        // Linha inicial: Saldo Anterior
         conciliacaoResult.push({
             ch_ob: '000', data: dataInicial, rubrica: '', historico: 'Saldo Anterior',
             doc: '00000', cpf_cnpj: '', valor: '', credito: '0.00', saldo: '0.00', type: 'saldo-anterior'
@@ -434,14 +493,14 @@
 
         sortedDates.forEach(dt => {
             let group = dateGroups[dt];
-            let dayTotalDebit = 0.0;
+            let batchDebitSum = 0.0;
 
             group.forEach(tx => {
-                let valStr = tx.valor < 0 ? Math.abs(tx.valor).toFixed(2) : '';
-                let credStr = tx.valor > 0 ? tx.valor.toFixed(2) : '';
-
-                runningBalance += tx.valor;
+                let debitVal = -Math.abs(tx.valor); // Valor negativo na coluna Débito (I)
+                runningBalance += debitVal;         // Aplica a soma da fórmula K17 + I18
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
+
+                batchDebitSum += Math.abs(tx.valor);
 
                 conciliacaoResult.push({
                     ch_ob: tx.doc || 'SEM BORDERÔ',
@@ -450,24 +509,29 @@
                     historico: tx.nome,
                     doc: tx.doc,
                     cpf_cnpj: tx.cpf_cnpj,
-                    valor: valStr,
-                    credito: credStr,
+                    valor: debitVal.toFixed(2),
+                    credito: '',
                     saldo: runningBalance.toFixed(2),
                     type: 'tx'
                 });
-
-                if (tx.valor < 0) dayTotalDebit += Math.abs(tx.valor);
-                else dayTotalDebit -= tx.valor;
             });
 
-            if (dayTotalDebit > 0) {
-                runningBalance += dayTotalDebit;
+            // Adiciona a linha de Resgate (Crédito = J) zerando a pendência acumulada (Fórmula: J18 + I18 + K17)
+            if (batchDebitSum > 0) {
+                runningBalance += batchDebitSum;
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
 
                 conciliacaoResult.push({
-                    ch_ob: '32', data: dt, rubrica: '', historico: 'Resgate',
-                    doc: '', cpf_cnpj: '', valor: '', credito: dayTotalDebit.toFixed(2),
-                    saldo: runningBalance.toFixed(2), type: 'resgate'
+                    ch_ob: '32',
+                    data: dt,
+                    rubrica: '',
+                    historico: '',
+                    doc: '',
+                    cpf_cnpj: '',
+                    valor: '',
+                    credito: batchDebitSum.toFixed(2),
+                    saldo: runningBalance.toFixed(2),
+                    type: 'resgate'
                 });
             }
         });
@@ -477,6 +541,7 @@
 
     function getDiaAnterior(dateStr) {
         let d = parseDate(dateStr);
+        if (!d) return '31/10/2025';
         d.setDate(d.getDate() - 1);
         return formatDate(d);
     }
@@ -497,9 +562,9 @@
                 <td>${row.historico}</td>
                 <td>${row.doc}</td>
                 <td>${row.cpf_cnpj}</td>
-                <td class="numeric">${row.valor}</td>
-                <td class="numeric">${row.credito}</td>
-                <td class="numeric">${row.saldo}</td>
+                <td class="numeric debit">${row.valor ? 'R$ ' + row.valor : ''}</td>
+                <td class="numeric credit">${row.credito ? 'R$ ' + row.credito : ''}</td>
+                <td class="numeric" style="font-weight: bold;">R$ ${row.saldo}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -518,8 +583,8 @@
             'Historico': r.historico,
             'NF/DOC.FISCAL': r.doc,
             'CPF/CNPJ': r.cpf_cnpj,
-            'Valor': r.valor !== '' ? parseFloat(r.valor) : '',
-            'Credito': r.credito !== '' ? parseFloat(r.credito) : '',
+            'Valor (D)': r.valor !== '' ? parseFloat(r.valor) : '',
+            'Crédito (C)': r.credito !== '' ? parseFloat(r.credito) : '',
             'Saldo parcial': parseFloat(r.saldo)
         }));
 
