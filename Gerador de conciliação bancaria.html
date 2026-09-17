@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conciliação Bancária Automática - RCGI / PETRONAS</title>
-    <!-- SheetJS para processamento de arquivos Excel em navegador -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- PDF.js para leitura e extração de texto de arquivos PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
@@ -203,19 +201,17 @@
     <p class="subtitle">Projeto 403901 - PETRONAS/EP/PME/RCGI (BlueShore)</p>
 
     <div class="upload-grid">
-        <!-- Input Relatório -->
         <div class="upload-card">
             <h3>1. Relatório de Movimentação (.xlsx / .pdf)</h3>
-            <p>Carregue um ou mais arquivos de relatório com as despesas e lançamentos.</p>
+            <p>Carregue os relatórios com os pagamentos individuais (ex: Carlos, Paula, Jaqueline).</p>
             <label class="btn-file" for="relatorioFile">Selecionar Arquivos</label>
             <input type="file" id="relatorioFile" accept=".xlsx, .xls, .pdf" multiple>
             <span class="file-name" id="relatorioName"></span>
         </div>
 
-        <!-- Input Extrato / Resgates -->
         <div class="upload-card">
             <h3>2. Extrato / Resgates (.xlsx / .csv / .pdf)</h3>
-            <p>Carregue os extratos bancários ou resgates de aplicação em Excel ou PDF.</p>
+            <p>Carregue os extratos com os débitos aglutinados e número de borderô.</p>
             <label class="btn-file" for="extratoFile">Selecionar Arquivos</label>
             <input type="file" id="extratoFile" accept=".xlsx, .xls, .csv, .pdf" multiple>
             <span class="file-name" id="extratoName"></span>
@@ -227,12 +223,11 @@
         <button class="btn-export" id="btnExport" onclick="exportarExcel()">Baixar Planilha Gerada (.xlsx)</button>
     </div>
 
-    <!-- Tabela de Pré-visualização -->
     <div class="table-container" id="tableContainer" style="display: none;">
         <table id="conciliacaoTable">
             <thead>
                 <tr>
-                    <th>CH/OB</th>
+                    <th>CH/OB (Borderô)</th>
                     <th>Data</th>
                     <th>Rubrica</th>
                     <th>Histórico</th>
@@ -249,38 +244,25 @@
 </div>
 
 <script>
-    // Configurar o worker do PDF.js
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    let relatorioData = [];
     let conciliacaoResult = [];
 
-    // Exibição da quantidade e nomes dos arquivos selecionados
     document.getElementById('relatorioFile').addEventListener('change', function(e) {
         const files = e.target.files;
-        if (files.length === 1) {
-            document.getElementById('relatorioName').innerText = files[0].name;
-        } else if (files.length > 1) {
-            document.getElementById('relatorioName').innerText = `${files.length} arquivos selecionados`;
-        }
+        document.getElementById('relatorioName').innerText = files.length === 1 ? files[0].name : `${files.length} arquivos selecionados`;
     });
 
     document.getElementById('extratoFile').addEventListener('change', function(e) {
         const files = e.target.files;
-        if (files.length === 1) {
-            document.getElementById('extratoName').innerText = files[0].name;
-        } else if (files.length > 1) {
-            document.getElementById('extratoName').innerText = `${files.length} arquivos selecionados`;
-        }
+        document.getElementById('extratoName').innerText = files.length === 1 ? files[0].name : `${files.length} arquivos selecionados`;
     });
 
     function parseDate(dateStr) {
         if (!dateStr) return null;
         if (dateStr instanceof Date) return dateStr;
         const parts = dateStr.toString().trim().split('/');
-        if (parts.length === 3) {
-            return new Date(parts[2], parts[1] - 1, parts[0]);
-        }
+        if (parts.length === 3) return new Date(parts[2], parts[1] - 1, parts[0]);
         return new Date(dateStr);
     }
 
@@ -290,20 +272,16 @@
         if (isNaN(d.getTime())) return date;
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}/${month}/${year}`;
+        return `${day}/${month}/${d.getFullYear()}`;
     }
 
-    // Leitura de arquivos Excel
     function readExcel(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheet];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                 resolve(json);
             };
             reader.onerror = reject;
@@ -311,68 +289,79 @@
         });
     }
 
-    // Leitura de arquivos PDF com extração de texto por linhas
     async function readPDF(file) {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let lines = [];
-
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
             const page = await pdf.getPage(pageNum);
             const textContent = await page.getTextContent();
-            
-            // Agrupar itens de texto por coordenada vertical (linha)
             let lineMap = {};
             textContent.items.forEach(item => {
                 let y = Math.round(item.transform[5]);
                 if (!lineMap[y]) lineMap[y] = [];
                 lineMap[y].push(item.str);
             });
-
-            // Ordenar da parte superior para a inferior da página
-            let sortedY = Object.keys(lineMap).sort((a, b) => b - a);
-            sortedY.forEach(y => {
+            Object.keys(lineMap).sort((a, b) => b - a).forEach(y => {
                 lines.push(lineMap[y].join(' ').trim());
             });
         }
         return lines;
     }
 
+    // Função para encontrar a combinação de lançamentos que somam o valor total do borderô no extrato
+    function findSubsetSum(numbers, target, maxCombo = 8) {
+        target = Math.round(target * 100);
+        const cents = numbers.map(n => Math.round(Math.abs(n.valor) * 100));
+
+        function helper(start, currentTarget, currentCombo) {
+            if (currentTarget === 0) return currentCombo;
+            if (currentTarget < 0 || currentCombo.length >= maxCombo) return null;
+
+            for (let i = start; i < cents.length; i++) {
+                if (numbers[i]._matched) continue;
+                const result = helper(i + 1, currentTarget - cents[i], [...currentCombo, i]);
+                if (result) return result;
+            }
+            return null;
+        }
+
+        return helper(0, target, []);
+    }
+
     async function processarConciliacao() {
         const relatorioFiles = document.getElementById('relatorioFile').files;
-        
+        const extratoFiles = document.getElementById('extratoFile').files;
+
         if (relatorioFiles.length === 0) {
-            alert('Por favor, selecione pelo menos um arquivo de Relatório.');
+            alert('Por favor, selecione os arquivos do Relatório.');
             return;
         }
 
         let txs = [];
+        let borderosExtrato = [];
 
-        // Iterar sobre todos os arquivos selecionados
+        // 1. Extrair Lançamentos do Relatório
         for (let i = 0; i < relatorioFiles.length; i++) {
             const file = relatorioFiles[i];
-            const fileExt = file.name.split('.').pop().toLowerCase();
+            const ext = file.name.split('.').pop().toLowerCase();
 
-            if (fileExt === 'pdf') {
+            if (ext === 'pdf') {
                 const pdfLines = await readPDF(file);
-                // Extrair lançamentos a partir das linhas do PDF usando regex para datas e valores
                 pdfLines.forEach(line => {
                     const match = line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d+[\d.,]*)/);
                     if (match) {
                         const dt = formatDate(match[1]);
-                        const historico = match[2].trim();
-                        let rawVal = match[3].replace(/\./g, '').replace(',', '.');
-                        let valor = parseFloat(rawVal);
+                        let valor = parseFloat(match[3].replace(/\./g, '').replace(',', '.'));
                         if (dt && !isNaN(valor)) {
-                            txs.push({ dt, doc: '', rubrica: '', nome: historico, cpf_cnpj: '', valor });
+                            txs.push({ dt, doc: '', rubrica: '', nome: match[2].trim(), cpf_cnpj: '', valor, _matched: false });
                         }
                     }
                 });
             } else {
-                const dataRelatorio = await readExcel(file);
-                dataRelatorio.forEach((row, idx) => {
+                const data = await readExcel(file);
+                data.forEach((row, idx) => {
                     if (idx < 5) return;
-                    
                     const dt = formatDate(row[1]);
                     const doc = row[3] ? String(row[3]).trim() : '';
                     const rubrica = row[6] ? String(row[6]).trim() : (row[4] ? String(row[4]).trim() : '');
@@ -382,13 +371,49 @@
 
                     if (dt && !isNaN(valor)) {
                         let nome = historico.includes(' - ') ? historico.split(' - ')[0].trim() : historico;
-                        txs.push({ dt, doc, rubrica, nome, cpf_cnpj, valor });
+                        txs.push({ dt, doc, rubrica, nome, cpf_cnpj, valor, _matched: false });
                     }
                 });
             }
         }
 
-        // Agrupar lançamentos por data
+        // 2. Extrair Débitos do Extrato (procurando Número do Borderô)
+        for (let i = 0; i < extratoFiles.length; i++) {
+            const file = extratoFiles[i];
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (ext === 'pdf') {
+                const lines = await readPDF(file);
+                lines.forEach(line => {
+                    const match = line.match(/(?:BORDERO|BORDERÔ|OB|CH)?\s*(\d+)\s+.*?(-?\d+[\d.,]*)/i);
+                    if (match) {
+                        let borderoNum = match[1];
+                        let val = parseFloat(match[2].replace(/\./g, '').replace(',', '.'));
+                        if (!isNaN(val) && val > 0) borderosExtrato.push({ num: borderoNum, total: val });
+                    }
+                });
+            } else {
+                const data = await readExcel(file);
+                data.forEach(row => {
+                    let borderoNum = row[0] ? String(row[0]).trim() : '';
+                    let val = parseFloat(row[1] || row[6] || row[8]);
+                    if (borderoNum && !isNaN(val)) borderosExtrato.push({ num: borderoNum, total: Math.abs(val) });
+                });
+            }
+        }
+
+        // 3. Vincular o número do Borderô às linhas individuais cujos valores somados equivalem ao valor do extrato
+        borderosExtrato.forEach(ext => {
+            const matchIndices = findSubsetSum(txs, ext.total);
+            if (matchIndices) {
+                matchIndices.forEach(idx => {
+                    txs[idx].doc = ext.num;
+                    txs[idx]._matched = true;
+                });
+            }
+        });
+
+        // 4. Agrupar por data e gerar visualização final
         let dateGroups = {};
         txs.forEach(tx => {
             if (!dateGroups[tx.dt]) dateGroups[tx.dt] = [];
@@ -397,21 +422,12 @@
 
         let sortedDates = Object.keys(dateGroups).sort((a, b) => parseDate(a) - parseDate(b));
 
-        // Construir resultado com Saldo Anterior e Resgates
         conciliacaoResult = [];
-        
         const dataInicial = sortedDates.length > 0 ? getDiaAnterior(sortedDates[0]) : '31/10/2025';
+
         conciliacaoResult.push({
-            ch_ob: '000',
-            data: dataInicial,
-            rubrica: '',
-            historico: 'Saldo Anterior',
-            doc: '00000',
-            cpf_cnpj: '',
-            valor: '',
-            credito: '0.00',
-            saldo: '0.00',
-            type: 'saldo-anterior'
+            ch_ob: '000', data: dataInicial, rubrica: '', historico: 'Saldo Anterior',
+            doc: '00000', cpf_cnpj: '', valor: '', credito: '0.00', saldo: '0.00', type: 'saldo-anterior'
         });
 
         let runningBalance = 0.0;
@@ -421,14 +437,14 @@
             let dayTotalDebit = 0.0;
 
             group.forEach(tx => {
-                let valStr = tx.valor < 0 ? tx.valor.toFixed(2) : '';
+                let valStr = tx.valor < 0 ? Math.abs(tx.valor).toFixed(2) : '';
                 let credStr = tx.valor > 0 ? tx.valor.toFixed(2) : '';
-                
+
                 runningBalance += tx.valor;
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
 
                 conciliacaoResult.push({
-                    ch_ob: tx.doc,
+                    ch_ob: tx.doc || 'SEM BORDERÔ',
                     data: tx.dt,
                     rubrica: tx.rubrica,
                     historico: tx.nome,
@@ -449,16 +465,9 @@
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
 
                 conciliacaoResult.push({
-                    ch_ob: '32',
-                    data: dt,
-                    rubrica: '',
-                    historico: 'Resgate',
-                    doc: '',
-                    cpf_cnpj: '',
-                    valor: '',
-                    credito: dayTotalDebit.toFixed(2),
-                    saldo: runningBalance.toFixed(2),
-                    type: 'resgate'
+                    ch_ob: '32', data: dt, rubrica: '', historico: 'Resgate',
+                    doc: '', cpf_cnpj: '', valor: '', credito: dayTotalDebit.toFixed(2),
+                    saldo: runningBalance.toFixed(2), type: 'resgate'
                 });
             }
         });
