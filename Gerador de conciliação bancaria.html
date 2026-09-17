@@ -6,6 +6,8 @@
     <title>Conciliação Bancária Automática - RCGI / PETRONAS</title>
     <!-- SheetJS para processamento de arquivos Excel em navegador -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PDF.js para leitura e extração de texto de arquivos PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -203,19 +205,19 @@
     <div class="upload-grid">
         <!-- Input Relatório -->
         <div class="upload-card">
-            <h3>1. Relatório de Movimentação (.xlsx)</h3>
-            <p>Carregue a planilha contendo as despesas e lançamentos do projeto.</p>
-            <label class="btn-file" for="relatorioFile">Selecionar Arquivo</label>
-            <input type="file" id="relatorioFile" accept=".xlsx, .xls">
+            <h3>1. Relatório de Movimentação (.xlsx / .pdf)</h3>
+            <p>Carregue um ou mais arquivos de relatório com as despesas e lançamentos.</p>
+            <label class="btn-file" for="relatorioFile">Selecionar Arquivos</label>
+            <input type="file" id="relatorioFile" accept=".xlsx, .xls, .pdf" multiple>
             <span class="file-name" id="relatorioName"></span>
         </div>
 
         <!-- Input Extrato / Resgates -->
         <div class="upload-card">
-            <h3>2. Extrato / Resgates (.xlsx / .csv)</h3>
-            <p>Carregue o extrato bancário ou tabela de resgates de aplicação (Lote 32).</p>
-            <label class="btn-file" for="extratoFile">Selecionar Arquivo</label>
-            <input type="file" id="extratoFile" accept=".xlsx, .xls, .csv">
+            <h3>2. Extrato / Resgates (.xlsx / .csv / .pdf)</h3>
+            <p>Carregue os extratos bancários ou resgates de aplicação em Excel ou PDF.</p>
+            <label class="btn-file" for="extratoFile">Selecionar Arquivos</label>
+            <input type="file" id="extratoFile" accept=".xlsx, .xls, .csv, .pdf" multiple>
             <span class="file-name" id="extratoName"></span>
         </div>
     </div>
@@ -247,19 +249,28 @@
 </div>
 
 <script>
+    // Configurar o worker do PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     let relatorioData = [];
     let conciliacaoResult = [];
 
-    // Exibição do nome do arquivo selecionado
+    // Exibição da quantidade e nomes dos arquivos selecionados
     document.getElementById('relatorioFile').addEventListener('change', function(e) {
-        if (e.target.files[0]) {
-            document.getElementById('relatorioName').innerText = e.target.files[0].name;
+        const files = e.target.files;
+        if (files.length === 1) {
+            document.getElementById('relatorioName').innerText = files[0].name;
+        } else if (files.length > 1) {
+            document.getElementById('relatorioName').innerText = `${files.length} arquivos selecionados`;
         }
     });
 
     document.getElementById('extratoFile').addEventListener('change', function(e) {
-        if (e.target.files[0]) {
-            document.getElementById('extratoName').innerText = e.target.files[0].name;
+        const files = e.target.files;
+        if (files.length === 1) {
+            document.getElementById('extratoName').innerText = files[0].name;
+        } else if (files.length > 1) {
+            document.getElementById('extratoName').innerText = `${files.length} arquivos selecionados`;
         }
     });
 
@@ -283,35 +294,101 @@
         return `${day}/${month}/${year}`;
     }
 
+    // Leitura de arquivos Excel
+    function readExcel(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheet];
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                resolve(json);
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // Leitura de arquivos PDF com extração de texto por linhas
+    async function readPDF(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let lines = [];
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            
+            // Agrupar itens de texto por coordenada vertical (linha)
+            let lineMap = {};
+            textContent.items.forEach(item => {
+                let y = Math.round(item.transform[5]);
+                if (!lineMap[y]) lineMap[y] = [];
+                lineMap[y].push(item.str);
+            });
+
+            // Ordenar da parte superior para a inferior da página
+            let sortedY = Object.keys(lineMap).sort((a, b) => b - a);
+            sortedY.forEach(y => {
+                lines.push(lineMap[y].join(' ').trim());
+            });
+        }
+        return lines;
+    }
+
     async function processarConciliacao() {
-        const relatorioInput = document.getElementById('relatorioFile').files[0];
+        const relatorioFiles = document.getElementById('relatorioFile').files;
         
-        if (!relatorioInput) {
-            alert('Por favor, selecione pelo menos o Relatório de Movimentação do Projeto.');
+        if (relatorioFiles.length === 0) {
+            alert('Por favor, selecione pelo menos um arquivo de Relatório.');
             return;
         }
 
-        const dataRelatorio = await readExcel(relatorioInput);
-        
-        // Extrair Lançamentos do Relatório
         let txs = [];
-        dataRelatorio.forEach((row, idx) => {
-            if (idx < 5) return;
-            
-            const dt = formatDate(row[1]);
-            const doc = row[3] ? String(row[3]).trim() : '';
-            const rubrica = row[6] ? String(row[6]).trim() : (row[4] ? String(row[4]).trim() : '');
-            const historico = row[8] ? String(row[8]).trim() : (row[6] ? String(row[6]).trim() : '');
-            const cpf_cnpj = row[12] ? String(row[12]).trim() : (row[10] ? String(row[10]).trim() : '');
-            let valor = row[13] !== undefined ? parseFloat(row[13]) : (row[11] !== undefined ? parseFloat(row[11]) : NaN);
 
-            if (dt && !isNaN(valor)) {
-                let nome = historico.includes(' - ') ? historico.split(' - ')[0].trim() : historico;
-                txs.push({ dt, doc, rubrica, nome, cpf_cnpj, valor });
+        // Iterar sobre todos os arquivos selecionados
+        for (let i = 0; i < relatorioFiles.length; i++) {
+            const file = relatorioFiles[i];
+            const fileExt = file.name.split('.').pop().toLowerCase();
+
+            if (fileExt === 'pdf') {
+                const pdfLines = await readPDF(file);
+                // Extrair lançamentos a partir das linhas do PDF usando regex para datas e valores
+                pdfLines.forEach(line => {
+                    const match = line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(-?\d+[\d.,]*)/);
+                    if (match) {
+                        const dt = formatDate(match[1]);
+                        const historico = match[2].trim();
+                        let rawVal = match[3].replace(/\./g, '').replace(',', '.');
+                        let valor = parseFloat(rawVal);
+                        if (dt && !isNaN(valor)) {
+                            txs.push({ dt, doc: '', rubrica: '', nome: historico, cpf_cnpj: '', valor });
+                        }
+                    }
+                });
+            } else {
+                const dataRelatorio = await readExcel(file);
+                dataRelatorio.forEach((row, idx) => {
+                    if (idx < 5) return;
+                    
+                    const dt = formatDate(row[1]);
+                    const doc = row[3] ? String(row[3]).trim() : '';
+                    const rubrica = row[6] ? String(row[6]).trim() : (row[4] ? String(row[4]).trim() : '');
+                    const historico = row[8] ? String(row[8]).trim() : (row[6] ? String(row[6]).trim() : '');
+                    const cpf_cnpj = row[12] ? String(row[12]).trim() : (row[10] ? String(row[10]).trim() : '');
+                    let valor = row[13] !== undefined ? parseFloat(row[13]) : (row[11] !== undefined ? parseFloat(row[11]) : NaN);
+
+                    if (dt && !isNaN(valor)) {
+                        let nome = historico.includes(' - ') ? historico.split(' - ')[0].trim() : historico;
+                        txs.push({ dt, doc, rubrica, nome, cpf_cnpj, valor });
+                    }
+                });
             }
-        });
+        }
 
-        // Agrupar por data
+        // Agrupar lançamentos por data
         let dateGroups = {};
         txs.forEach(tx => {
             if (!dateGroups[tx.dt]) dateGroups[tx.dt] = [];
@@ -320,10 +397,9 @@
 
         let sortedDates = Object.keys(dateGroups).sort((a, b) => parseDate(a) - parseDate(b));
 
-        // Construir conciliação com Saldo Anterior e Resgates
+        // Construir resultado com Saldo Anterior e Resgates
         conciliacaoResult = [];
         
-        // Saldo Anterior Inicial
         const dataInicial = sortedDates.length > 0 ? getDiaAnterior(sortedDates[0]) : '31/10/2025';
         conciliacaoResult.push({
             ch_ob: '000',
@@ -368,7 +444,6 @@
                 else dayTotalDebit -= tx.valor;
             });
 
-            // Resgate Diário de Cobertura (Lote 32)
             if (dayTotalDebit > 0) {
                 runningBalance += dayTotalDebit;
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
@@ -395,22 +470,6 @@
         let d = parseDate(dateStr);
         d.setDate(d.getDate() - 1);
         return formatDate(d);
-    }
-
-    function readExcel(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheet];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                resolve(json);
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
     }
 
     function renderTable() {
