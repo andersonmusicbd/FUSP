@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conciliação Bancária Automática - RCGI / PETRONAS</title>
-    <!-- Substituído para ExcelJS (permite estilos no .xlsx) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <!-- Lib XLSX com suporte nativo a estilos visuais no Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
@@ -368,91 +368,115 @@
         document.getElementById('btnExport').style.display = 'inline-block';
     }
 
-    async function exportarExcelEstilizado() {
+    function exportarExcelEstilizado() {
         if (conciliacaoResult.length === 0) return;
 
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Conciliação Bancária');
-
-        // Define Colunas e Larguras
-        worksheet.columns = [
-            { header: 'CH/OB (Borderô)', key: 'ch_ob', width: 18 },
-            { header: 'Data', key: 'data', width: 12 },
-            { header: 'Rubrica', key: 'rubrica', width: 18 },
-            { header: 'Histórico', key: 'historico', width: 45 },
-            { header: 'NF/DOC.FISCAL', key: 'doc', width: 15 },
-            { header: 'CPF/CNPJ', key: 'cpf_cnpj', width: 18 },
-            { header: 'Valor (D)', key: 'valor', width: 16 },
-            { header: 'Crédito (C)', key: 'credito', width: 16 },
-            { header: 'Saldo Parcial', key: 'saldo', width: 18 }
+        // Estrutura de dados com formatação para a lib XLSX-Style
+        const headers = [
+            'CH/OB (Borderô)', 'Data', 'Rubrica', 'Histórico', 
+            'NF/DOC.FISCAL', 'CPF/CNPJ', 'Valor (D)', 'Crédito (C)', 'Saldo Parcial'
         ];
 
-        // 1. Estilizar Cabeçalho (Azul Escuro com texto Branco em Negrito)
-        const headerRow = worksheet.getRow(1);
-        headerRow.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
-        headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
-        headerRow.height = 28;
+        let ws_data = [headers];
 
-        // Alinhamento à direita nos cabeçalhos de valor
-        headerRow.getCell('valor').alignment = { vertical: 'middle', horizontal: 'right' };
-        headerRow.getCell('credito').alignment = { vertical: 'middle', horizontal: 'right' };
-        headerRow.getCell('saldo').alignment = { vertical: 'middle', horizontal: 'right' };
-
-        // Formatação Monetária BR
-        const currencyFormat = '"R$" #,##0.00;[Red]"R$" -#,##0.00;"R$" 0.00';
-
-        // 2. Preencher Dados e Estilizar Linhas
-        conciliacaoResult.forEach((item, index) => {
-            const row = worksheet.addRow({
-                ch_ob: item.ch_ob,
-                data: item.data,
-                rubrica: item.rubrica,
-                historico: item.historico,
-                doc: item.doc,
-                cpf_cnpj: item.cpf_cnpj,
-                valor: item.valor,
-                credito: item.credito,
-                saldo: item.saldo
-            });
-
-            row.font = { name: 'Segoe UI', size: 10 };
-
-            // Formatação de Números
-            row.getCell('valor').numberFormat = currencyFormat;
-            row.getCell('credito').numberFormat = currencyFormat;
-            row.getCell('saldo').numberFormat = currencyFormat;
-
-            // Cores das Letras de Valores
-            row.getCell('valor').font = { color: { argb: 'DC2626' } }; // Vermelho
-            row.getCell('credito').font = { color: { argb: '2563EB' }, bold: true }; // Azul
-            row.getCell('saldo').font = { bold: true }; // Saldo em Negrito
-
-            // Alinhamentos
-            row.getCell('valor').alignment = { horizontal: 'right' };
-            row.getCell('credito').alignment = { horizontal: 'right' };
-            row.getCell('saldo').alignment = { horizontal: 'right' };
-
-            // Cor de Fundo das Linhas
-            if (item.type === 'devolucao') {
-                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'EFF6FF' } }; // Azul Claro
-                row.getCell('ch_ob').font = { bold: true };
-                row.getCell('rubrica').font = { bold: true };
-            } else if (item.type === 'resgate') {
-                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FEF3C7' } }; // Amarelo Destaque
-                row.font = { name: 'Segoe UI', size: 10, bold: true };
-            } else if (index % 2 === 1) {
-                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8FAFC' } }; // Zebrado suave
-            }
+        conciliacaoResult.forEach(r => {
+            ws_data.push([
+                r.ch_ob, r.data, r.rubrica, r.historico,
+                r.doc, r.cpf_cnpj,
+                r.valor !== null ? r.valor : '',
+                r.credito !== null ? r.credito : '',
+                r.saldo
+            ]);
         });
 
-        // Gerar Arquivo XLSX e Baixar
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'CONCILIACAO_BANCARIA_ESTILIZADA.xlsx';
-        link.click();
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+        // Estilo do Cabeçalho (Azul Escuro, Letra Branca)
+        const headerStyle = {
+            fill: { fgColor: { rgb: "1E3A8A" } },
+            font: { name: "Segoe UI", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+            alignment: { vertical: "center", horizontal: "left" }
+        };
+
+        const headerRightStyle = {
+            ...headerStyle,
+            alignment: { vertical: "center", horizontal: "right" }
+        };
+
+        // Aplica Estilo ao Cabeçalho (Linha 0)
+        for (let col = 0; col < headers.length; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+            if (!ws[cellAddress]) continue;
+            ws[cellAddress].s = (col >= 6) ? headerRightStyle : headerStyle;
+        }
+
+        // Estilizar Linhas de Dados
+        for (let row = 1; row < ws_data.length; row++) {
+            const item = conciliacaoResult[row - 1];
+            
+            // Definição de Cores por Linha
+            let rowFill = null;
+            if (item.type === 'devolucao') {
+                rowFill = { fgColor: { rgb: "EFF6FF" } }; // Azul claro
+            } else if (item.type === 'resgate') {
+                rowFill = { fgColor: { rgb: "FEF3C7" } }; // Amarelo
+            } else if (row % 2 === 0) {
+                rowFill = { fgColor: { rgb: "F8FAFC" } }; // Zebrado
+            }
+
+            for (let col = 0; col < headers.length; col++) {
+                const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                if (!ws[cellAddress]) continue;
+
+                let cellStyle = {
+                    font: { name: "Segoe UI", sz: 10 },
+                    alignment: { vertical: "center" }
+                };
+
+                if (rowFill) cellStyle.fill = rowFill;
+
+                // Formatação por Coluna
+                if (col === 6) { // Valor (D)
+                    cellStyle.font.color = { rgb: "DC2626" }; // Vermelho
+                    cellStyle.alignment.horizontal = "right";
+                    ws[cellAddress].z = '"R$" #,##0.00;[Red]"R$" -#,##0.00;"R$" 0.00';
+                } else if (col === 7) { // Crédito (C)
+                    cellStyle.font.color = { rgb: "2563EB" }; // Azul
+                    cellStyle.font.bold = true;
+                    cellStyle.alignment.horizontal = "right";
+                    ws[cellAddress].z = '"R$" #,##0.00;"R$" 0.00';
+                } else if (col === 8) { // Saldo
+                    cellStyle.font.bold = true;
+                    cellStyle.alignment.horizontal = "right";
+                    ws[cellAddress].z = '"R$" #,##0.00;[Red]"R$" -#,##0.00;"R$" 0.00';
+                }
+
+                if (item.type === 'devolucao' || item.type === 'resgate') {
+                    cellStyle.font.bold = true;
+                }
+
+                ws[cellAddress].s = cellStyle;
+            }
+        }
+
+        // Definir Larguras de Colunas Nativas no Excel
+        ws['!cols'] = [
+            { wch: 18 }, // CH/OB
+            { wch: 12 }, // Data
+            { wch: 18 }, // Rubrica
+            { wch: 48 }, // Histórico
+            { wch: 15 }, // NF
+            { wch: 18 }, // CPF/CNPJ
+            { wch: 16 }, // Valor D
+            { wch: 16 }, // Crédito C
+            { wch: 18 }  // Saldo
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Conciliação Bancária");
+
+        // Fazer download do arquivo formatado
+        XLSX.writeFile(wb, "CONCILIACAO_BANCARIA_ESTILIZADA.xlsx");
     }
 </script>
 
