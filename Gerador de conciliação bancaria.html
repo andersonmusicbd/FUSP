@@ -122,6 +122,7 @@
         td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
         tr:nth-child(even) { background-color: #f8fafc; }
         tr.row-resgate { background-color: #fef3c7; font-weight: bold; }
+        tr.row-devolucao { background-color: #eff6ff; font-weight: bold; }
         tr.row-saldo-anterior { background-color: #e0f2fe; font-weight: bold; }
         .numeric { text-align: right; }
         .debit { color: #dc2626; }
@@ -137,7 +138,7 @@
     <div class="upload-grid">
         <div class="upload-card">
             <h3>1. Relatório de Movimentação (.xlsx / .pdf)</h3>
-            <p>Carregue os relatórios com os pagamentos individuais.</p>
+            <p>Carregue os relatórios com os pagamentos e devoluções.</p>
             <label class="btn-file" for="relatorioFile">Selecionar Arquivos</label>
             <input type="file" id="relatorioFile" accept=".xlsx, .xls, .pdf" multiple>
             <span class="file-name" id="relatorioName"></span>
@@ -221,18 +222,23 @@
         return `${day}/${month}/${d.getFullYear()}`;
     }
 
-    function parseNumber(val) {
+    function parseRawNumber(val) {
         if (val === null || val === undefined || val === '') return null;
         if (typeof val === 'number') return isNaN(val) ? null : val;
 
         let str = val.toString().replace('R$', '').replace(/\s/g, '').trim();
+        let isNegative = str.includes('-');
+        
+        str = str.replace('-', '');
         if (str.includes(',') && str.includes('.')) {
             str = str.replace(/\./g, '').replace(',', '.');
         } else if (str.includes(',')) {
             str = str.replace(',', '.');
         }
+
         const num = parseFloat(str);
-        return isNaN(num) ? null : num;
+        if (isNaN(num)) return null;
+        return isNegative ? -num : num;
     }
 
     function readExcel(file) {
@@ -269,35 +275,6 @@
         return lines;
     }
 
-    function findSubsetSum(items, target) {
-        const targetCents = Math.round(target * 100);
-        const availableItems = items.map((item, idx) => ({
-            index: idx,
-            cents: Math.round(Math.abs(item.valor) * 100),
-            matched: item._matched
-        })).filter(i => !i.matched);
-
-        for (let item of availableItems) {
-            if (Math.abs(item.cents - targetCents) <= 1) {
-                return [item.index];
-            }
-        }
-
-        function helper(start, currentTarget, currentCombo) {
-            if (Math.abs(currentTarget) <= 1 && currentCombo.length > 0) return currentCombo;
-            if (currentTarget < -1 || currentCombo.length >= 20) return null;
-
-            for (let i = start; i < availableItems.length; i++) {
-                const item = availableItems[i];
-                const res = helper(i + 1, currentTarget - item.cents, [...currentCombo, item.index]);
-                if (res) return res;
-            }
-            return null;
-        }
-
-        return helper(0, targetCents, []);
-    }
-
     async function processarConciliacao() {
         const relatorioFiles = document.getElementById('relatorioFile').files;
         const extratoFiles = document.getElementById('extratoFile').files;
@@ -316,7 +293,7 @@
             'MATERIAL DE CONSUMO', 'EQUIPAMENTOS', 'PASSAGENS'
         ];
 
-        // 1. Processar Relatórios (Extraindo apenas o valor da despesa real)
+        // 1. Processar Relatórios (Diferenciando Despesas '-' vs Devoluções/Entradas '+')
         for (let i = 0; i < relatorioFiles.length; i++) {
             const file = relatorioFiles[i];
             const ext = file.name.split('.').pop().toLowerCase();
@@ -324,15 +301,24 @@
             if (ext === 'pdf') {
                 const pdfLines = await readPDF(file);
                 pdfLines.forEach(line => {
-                    const matches = [...line.matchAll(/(-?\d+[\d.,]*)/g)];
+                    const matches = [...line.matchAll(/(-?\s*R\$\s*[\d.,]+|[\d.,]+)/g)];
                     if (matches.length >= 2) {
-                        const valorDespesaStr = matches[matches.length - 2][0]; // Pega o penúltimo valor (Despesa), ignorando o último (Saldo)
-                        const valorReal = parseNumber(valorDespesaStr);
+                        const valorStr = matches[matches.length - 2][0]; // Penúltima coluna (Valor Real)
+                        const valorReal = parseRawNumber(valorStr);
                         const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{4})/);
                         const dt = dateMatch ? formatDate(dateMatch[1]) : null;
 
                         if (dt && valorReal !== null && valorReal !== 0) {
-                            txs.push({ dt, doc: '', rubrica: 'Despesa', nome: line, cpf_cnpj: '', valor: -Math.abs(valorReal), _matched: false });
+                            let isDevolucao = valorReal > 0;
+                            txs.push({
+                                dt: dt,
+                                doc: '',
+                                rubrica: isDevolucao ? 'DEVOLUÇÃO' : 'Despesa',
+                                nome: line,
+                                cpf_cnpj: '',
+                                valor: valorReal,
+                                isDevolucao: isDevolucao
+                            });
                         }
                     }
                 });
@@ -354,7 +340,7 @@
                             if (parsed) dt = formatDate(parsed);
                         }
 
-                        let parsedNum = parseNumber(cell);
+                        let parsedNum = parseRawNumber(cell);
                         if (parsedNum !== null && parsedNum !== 0) {
                             numerosEncontrados.push(parsedNum);
                         }
@@ -372,10 +358,9 @@
                         }
                     });
 
-                    // Pega o penúltimo número se houver mais de um (para evitar o Saldo Acumulado da última coluna)
                     let valorReal = null;
                     if (numerosEncontrados.length >= 2) {
-                        valorReal = numerosEncontrados[numerosEncontrados.length - 2];
+                        valorReal = numerosEncontrados[numerosEncontrados.length - 2]; // Pega o valor unitário
                     } else if (numerosEncontrados.length === 1) {
                         valorReal = numerosEncontrados[0];
                     }
@@ -383,7 +368,8 @@
                     if (dt && valorReal !== null) {
                         textosEncontrados.sort((a, b) => b.length - a.length);
                         let historicoFinal = textosEncontrados.length > 0 ? textosEncontrados[0] : (rubricaEncontrada || 'Lançamento');
-                        let rubricaFinal = rubricaEncontrada || (textosEncontrados.length > 1 ? textosEncontrados[1] : 'Outros');
+                        let isDevolucao = valorReal > 0;
+                        let rubricaFinal = isDevolucao ? 'DEVOLUÇÃO' : (rubricaEncontrada || 'Outros');
 
                         txs.push({
                             dt: dt,
@@ -391,8 +377,8 @@
                             rubrica: rubricaFinal,
                             nome: historicoFinal,
                             cpf_cnpj: '',
-                            valor: -Math.abs(valorReal),
-                            _matched: false
+                            valor: valorReal,
+                            isDevolucao: isDevolucao
                         });
                     }
                 });
@@ -404,74 +390,26 @@
             const file = extratoFiles[i];
             const ext = file.name.split('.').pop().toLowerCase();
 
-            if (ext === 'pdf') {
-                const lines = await readPDF(file);
-                lines.forEach(line => {
-                    const match = line.match(/(\d{2}\/\d{2}\/\d{4})?\s*(?:BORDERO|BORDERÔ|OB|CH|LOTE)?\s*([\d.]+)\s+.*?(-?\d+[\d.,]*)/i);
-                    if (match) {
-                        let dt = formatDate(match[1]);
-                        let borderoNum = match[2].replace(/\./g, '').trim();
-                        let val = parseNumber(match[3]);
-                        if (val !== null && val > 0 && borderoNum !== '32' && borderoNum.length >= 3) {
-                            borderosExtrato.push({ dt: dt, num: borderoNum, total: Math.abs(val) });
-                        }
-                    }
-                });
-            } else {
+            if (ext === 'excel' || ext === 'xlsx' || ext === 'xls') {
                 const rows = await readExcel(file);
                 rows.forEach(row => {
                     if (!row || row.length === 0) return;
-
-                    let dt = null;
-                    let borderoNum = '';
-                    let val = null;
+                    let dt = null, borderoNum = '', val = null;
 
                     row.forEach(cell => {
-                        if (cell === null || cell === undefined) return;
-
-                        if (!dt) {
-                            let parsedDt = parseDate(cell);
-                            if (parsedDt) dt = formatDate(parsedDt);
-                        }
-
-                        let rawStr = cell.toString().trim();
-                        let cleanNumStr = rawStr.replace(/\./g, '');
-
-                        if (!borderoNum && /^\d{3,10}$/.test(cleanNumStr) && cleanNumStr !== '32') {
-                            borderoNum = cleanNumStr;
-                        }
-
-                        let parsedVal = parseNumber(cell);
-                        if (parsedVal !== null && parsedVal > 0) {
-                            val = parsedVal;
-                        }
+                        if (!dt) { let p = parseDate(cell); if (p) dt = formatDate(p); }
+                        let rawStr = cell ? cell.toString().trim().replace(/\./g, '') : '';
+                        if (!borderoNum && /^\d{3,10}$/.test(rawStr) && rawStr !== '32') borderoNum = rawStr;
+                        let pVal = parseRawNumber(cell);
+                        if (pVal !== null && Math.abs(pVal) > 0) val = Math.abs(pVal);
                     });
 
-                    if (borderoNum && val !== null) {
-                        borderosExtrato.push({ dt: dt, num: borderoNum, total: Math.abs(val) });
-                    }
+                    if (borderoNum && val !== null) borderosExtrato.push({ dt, num: borderoNum, total: val });
                 });
             }
         }
 
-        // 3. Vincular borderôs por soma de débitos
-        borderosExtrato.forEach(ext => {
-            let candidates = txs;
-            if (ext.dt) {
-                let sameDateCandidates = txs.filter(t => t.dt === ext.dt);
-                if (sameDateCandidates.length > 0) candidates = sameDateCandidates;
-            }
-
-            const matchIndices = findSubsetSum(candidates, ext.total);
-            if (matchIndices && matchIndices.length > 0) {
-                matchIndices.forEach(idx => {
-                    candidates[idx].doc = ext.num;
-                    candidates[idx]._matched = true;
-                });
-            }
-        });
-
-        // 4. Agrupar por data e aplicar a fórmula contábil exata da imagem (J + I + K_anterior)
+        // 3. Agrupar Lançamentos e Calcular Saldos Parciais
         let dateGroups = {};
         txs.forEach(tx => {
             if (!dateGroups[tx.dt]) dateGroups[tx.dt] = [];
@@ -479,8 +417,8 @@
         });
 
         let sortedDates = Object.keys(dateGroups).sort((a, b) => parseDate(a) - parseDate(b));
-
         conciliacaoResult = [];
+        
         const dataInicial = sortedDates.length > 0 ? getDiaAnterior(sortedDates[0]) : '31/10/2025';
 
         // Linha inicial: Saldo Anterior
@@ -496,27 +434,44 @@
             let batchDebitSum = 0.0;
 
             group.forEach(tx => {
-                let debitVal = -Math.abs(tx.valor); // Valor negativo na coluna Débito (I)
-                runningBalance += debitVal;         // Aplica a soma da fórmula K17 + I18
-                if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
+                let valorAbs = Math.abs(tx.valor);
 
-                batchDebitSum += Math.abs(tx.valor);
+                if (tx.isDevolucao) {
+                    // Se for devolução (+), entra na coluna CRÉDITO (C)
+                    runningBalance += valorAbs;
+                    conciliacaoResult.push({
+                        ch_ob: 'DEVOLUÇÃO',
+                        data: tx.dt,
+                        rubrica: tx.rubrica,
+                        historico: tx.nome,
+                        doc: tx.doc,
+                        cpf_cnpj: tx.cpf_cnpj,
+                        valor: '',
+                        credito: valorAbs.toFixed(2),
+                        saldo: runningBalance.toFixed(2),
+                        type: 'devolucao'
+                    });
+                } else {
+                    // Se for despesa (-), entra na coluna VALOR / DÉBITO (D)
+                    runningBalance -= valorAbs;
+                    batchDebitSum += valorAbs;
 
-                conciliacaoResult.push({
-                    ch_ob: tx.doc || 'SEM BORDERÔ',
-                    data: tx.dt,
-                    rubrica: tx.rubrica,
-                    historico: tx.nome,
-                    doc: tx.doc,
-                    cpf_cnpj: tx.cpf_cnpj,
-                    valor: debitVal.toFixed(2),
-                    credito: '',
-                    saldo: runningBalance.toFixed(2),
-                    type: 'tx'
-                });
+                    conciliacaoResult.push({
+                        ch_ob: tx.doc || 'SEM BORDERÔ',
+                        data: tx.dt,
+                        rubrica: tx.rubrica,
+                        historico: tx.nome,
+                        doc: tx.doc,
+                        cpf_cnpj: tx.cpf_cnpj,
+                        valor: (-valorAbs).toFixed(2),
+                        credito: '',
+                        saldo: runningBalance.toFixed(2),
+                        type: 'tx'
+                    });
+                }
             });
 
-            // Adiciona a linha de Resgate (Crédito = J) zerando a pendência acumulada (Fórmula: J18 + I18 + K17)
+            // Linha do Resgate (Crédito que zera o lote de despesas do dia)
             if (batchDebitSum > 0) {
                 runningBalance += batchDebitSum;
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
@@ -553,6 +508,7 @@
         conciliacaoResult.forEach(row => {
             const tr = document.createElement('tr');
             if (row.type === 'resgate') tr.classList.add('row-resgate');
+            if (row.type === 'devolucao') tr.classList.add('row-devolucao');
             if (row.type === 'saldo-anterior') tr.classList.add('row-saldo-anterior');
 
             tr.innerHTML = `
