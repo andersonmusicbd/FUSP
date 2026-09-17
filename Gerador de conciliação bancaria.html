@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conciliação Bancária Automática - RCGI / PETRONAS</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Substituído para ExcelJS (permite estilos no .xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
@@ -155,7 +156,7 @@
 
     <div class="action-area">
         <button class="btn-process" onclick="processarConciliacao()">Gerar Conciliação Bancária</button>
-        <button class="btn-export" id="btnExport" onclick="exportarExcel()">Baixar Planilha Gerada (.xlsx)</button>
+        <button class="btn-export" id="btnExport" onclick="exportarExcelEstilizado()">Baixar Planilha Gerada (.xlsx)</button>
     </div>
 
     <div class="table-container" id="tableContainer" style="display: none;">
@@ -196,12 +197,6 @@
     function parseDate(val) {
         if (!val) return null;
         if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
-
-        if (typeof val === 'number') {
-            const parsed = XLSX.SSF.parse_date_code(val);
-            if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
-        }
-
         const str = val.toString().trim();
         const parts = str.split('/');
         if (parts.length === 3) {
@@ -209,7 +204,6 @@
             if (year < 100) year += 2000;
             return new Date(year, parseInt(parts[1]) - 1, parseInt(parts[0]));
         }
-
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
     }
@@ -241,20 +235,6 @@
         return isNegative ? -num : num;
     }
 
-    function readExcel(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: false, cellText: false });
-                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, raw: true });
-                resolve(json);
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
     async function readPDF(file) {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -277,139 +257,39 @@
 
     async function processarConciliacao() {
         const relatorioFiles = document.getElementById('relatorioFile').files;
-        const extratoFiles = document.getElementById('extratoFile').files;
-
         if (relatorioFiles.length === 0) {
             alert('Por favor, selecione pelo menos um arquivo de Relatório.');
             return;
         }
 
         let txs = [];
-        let borderosExtrato = [];
-
-        const rubricasConhecidas = [
-            'IRRF PF', 'IMPOSTOS E TAXAS', 'REMUNERAÇÃO DE PESSOAL', 
-            'DIARIAS', 'DIÁRIAS', 'BOLSA', 'BOLSAS', 'SERVIÇOS DE TERCEIROS',
-            'MATERIAL DE CONSUMO', 'EQUIPAMENTOS', 'PASSAGENS'
-        ];
-
-        // 1. Processar Relatórios (Diferenciando Despesas '-' vs Devoluções/Entradas '+')
         for (let i = 0; i < relatorioFiles.length; i++) {
             const file = relatorioFiles[i];
-            const ext = file.name.split('.').pop().toLowerCase();
+            const pdfLines = await readPDF(file);
+            pdfLines.forEach(line => {
+                const matches = [...line.matchAll(/(-?\s*R\$\s*[\d.,]+|[\d.,]+)/g)];
+                if (matches.length >= 2) {
+                    const valorStr = matches[matches.length - 2][0];
+                    const valorReal = parseRawNumber(valorStr);
+                    const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{4})/);
+                    const dt = dateMatch ? formatDate(dateMatch[1]) : null;
 
-            if (ext === 'pdf') {
-                const pdfLines = await readPDF(file);
-                pdfLines.forEach(line => {
-                    const matches = [...line.matchAll(/(-?\s*R\$\s*[\d.,]+|[\d.,]+)/g)];
-                    if (matches.length >= 2) {
-                        const valorStr = matches[matches.length - 2][0]; // Penúltima coluna (Valor Real)
-                        const valorReal = parseRawNumber(valorStr);
-                        const dateMatch = line.match(/(\d{2}\/\d{2}\/\d{4})/);
-                        const dt = dateMatch ? formatDate(dateMatch[1]) : null;
-
-                        if (dt && valorReal !== null && valorReal !== 0) {
-                            let isDevolucao = valorReal > 0;
-                            txs.push({
-                                dt: dt,
-                                doc: '',
-                                rubrica: isDevolucao ? 'DEVOLUÇÃO' : 'Despesa',
-                                nome: line,
-                                cpf_cnpj: '',
-                                valor: valorReal,
-                                isDevolucao: isDevolucao
-                            });
-                        }
-                    }
-                });
-            } else {
-                const rows = await readExcel(file);
-                rows.forEach(row => {
-                    if (!row || row.length === 0) return;
-
-                    let dt = null;
-                    let numerosEncontrados = [];
-                    let rubricaEncontrada = '';
-                    let textosEncontrados = [];
-
-                    row.forEach(cell => {
-                        if (cell === null || cell === undefined) return;
-
-                        if (!dt) {
-                            let parsed = parseDate(cell);
-                            if (parsed) dt = formatDate(parsed);
-                        }
-
-                        let parsedNum = parseRawNumber(cell);
-                        if (parsedNum !== null && parsedNum !== 0) {
-                            numerosEncontrados.push(parsedNum);
-                        }
-
-                        if (typeof cell === 'string') {
-                            let txt = cell.trim();
-                            if (txt.length > 2 && !txt.includes('/') && isNaN(txt) && !txt.toLowerCase().includes('saldo anterior')) {
-                                let matchRubrica = rubricasConhecidas.find(r => r.toLowerCase() === txt.toLowerCase());
-                                if (matchRubrica) {
-                                    rubricaEncontrada = matchRubrica;
-                                } else {
-                                    textosEncontrados.push(txt);
-                                }
-                            }
-                        }
-                    });
-
-                    let valorReal = null;
-                    if (numerosEncontrados.length >= 2) {
-                        valorReal = numerosEncontrados[numerosEncontrados.length - 2]; // Pega o valor unitário
-                    } else if (numerosEncontrados.length === 1) {
-                        valorReal = numerosEncontrados[0];
-                    }
-
-                    if (dt && valorReal !== null) {
-                        textosEncontrados.sort((a, b) => b.length - a.length);
-                        let historicoFinal = textosEncontrados.length > 0 ? textosEncontrados[0] : (rubricaEncontrada || 'Lançamento');
+                    if (dt && valorReal !== null && valorReal !== 0) {
                         let isDevolucao = valorReal > 0;
-                        let rubricaFinal = isDevolucao ? 'DEVOLUÇÃO' : (rubricaEncontrada || 'Outros');
-
                         txs.push({
                             dt: dt,
                             doc: '',
-                            rubrica: rubricaFinal,
-                            nome: historicoFinal,
+                            rubrica: isDevolucao ? 'DEVOLUÇÃO' : 'BOLSAS',
+                            nome: line,
                             cpf_cnpj: '',
                             valor: valorReal,
                             isDevolucao: isDevolucao
                         });
                     }
-                });
-            }
+                }
+            });
         }
 
-        // 2. Processar Extratos / Resgates
-        for (let i = 0; i < extratoFiles.length; i++) {
-            const file = extratoFiles[i];
-            const ext = file.name.split('.').pop().toLowerCase();
-
-            if (ext === 'excel' || ext === 'xlsx' || ext === 'xls') {
-                const rows = await readExcel(file);
-                rows.forEach(row => {
-                    if (!row || row.length === 0) return;
-                    let dt = null, borderoNum = '', val = null;
-
-                    row.forEach(cell => {
-                        if (!dt) { let p = parseDate(cell); if (p) dt = formatDate(p); }
-                        let rawStr = cell ? cell.toString().trim().replace(/\./g, '') : '';
-                        if (!borderoNum && /^\d{3,10}$/.test(rawStr) && rawStr !== '32') borderoNum = rawStr;
-                        let pVal = parseRawNumber(cell);
-                        if (pVal !== null && Math.abs(pVal) > 0) val = Math.abs(pVal);
-                    });
-
-                    if (borderoNum && val !== null) borderosExtrato.push({ dt, num: borderoNum, total: val });
-                });
-            }
-        }
-
-        // 3. Agrupar Lançamentos e Calcular Saldos Parciais
         let dateGroups = {};
         txs.forEach(tx => {
             if (!dateGroups[tx.dt]) dateGroups[tx.dt] = [];
@@ -418,15 +298,6 @@
 
         let sortedDates = Object.keys(dateGroups).sort((a, b) => parseDate(a) - parseDate(b));
         conciliacaoResult = [];
-        
-        const dataInicial = sortedDates.length > 0 ? getDiaAnterior(sortedDates[0]) : '31/10/2025';
-
-        // Linha inicial: Saldo Anterior
-        conciliacaoResult.push({
-            ch_ob: '000', data: dataInicial, rubrica: '', historico: 'Saldo Anterior',
-            doc: '00000', cpf_cnpj: '', valor: '', credito: '0.00', saldo: '0.00', type: 'saldo-anterior'
-        });
-
         let runningBalance = 0.0;
 
         sortedDates.forEach(dt => {
@@ -437,68 +308,37 @@
                 let valorAbs = Math.abs(tx.valor);
 
                 if (tx.isDevolucao) {
-                    // Se for devolução (+), entra na coluna CRÉDITO (C)
                     runningBalance += valorAbs;
                     conciliacaoResult.push({
-                        ch_ob: 'DEVOLUÇÃO',
-                        data: tx.dt,
-                        rubrica: tx.rubrica,
-                        historico: tx.nome,
-                        doc: tx.doc,
-                        cpf_cnpj: tx.cpf_cnpj,
-                        valor: '',
-                        credito: valorAbs.toFixed(2),
-                        saldo: runningBalance.toFixed(2),
-                        type: 'devolucao'
+                        ch_ob: 'DEVOLUÇÃO', data: tx.dt, rubrica: tx.rubrica,
+                        historico: tx.nome, doc: tx.doc, cpf_cnpj: tx.cpf_cnpj,
+                        valor: null, credito: valorAbs, saldo: runningBalance, type: 'devolucao'
                     });
                 } else {
-                    // Se for despesa (-), entra na coluna VALOR / DÉBITO (D)
                     runningBalance -= valorAbs;
                     batchDebitSum += valorAbs;
 
                     conciliacaoResult.push({
-                        ch_ob: tx.doc || 'SEM BORDERÔ',
-                        data: tx.dt,
-                        rubrica: tx.rubrica,
-                        historico: tx.nome,
-                        doc: tx.doc,
-                        cpf_cnpj: tx.cpf_cnpj,
-                        valor: (-valorAbs).toFixed(2),
-                        credito: '',
-                        saldo: runningBalance.toFixed(2),
-                        type: 'tx'
+                        ch_ob: 'SEM BORDERÔ', data: tx.dt, rubrica: tx.rubrica,
+                        historico: tx.nome, doc: tx.doc, cpf_cnpj: tx.cpf_cnpj,
+                        valor: -valorAbs, credito: null, saldo: runningBalance, type: 'tx'
                     });
                 }
             });
 
-            // Linha do Resgate (Crédito que zera o lote de despesas do dia)
             if (batchDebitSum > 0) {
                 runningBalance += batchDebitSum;
                 if (Math.abs(runningBalance) < 0.001) runningBalance = 0.0;
 
                 conciliacaoResult.push({
-                    ch_ob: '32',
-                    data: dt,
-                    rubrica: '',
-                    historico: '',
-                    doc: '',
-                    cpf_cnpj: '',
-                    valor: '',
-                    credito: batchDebitSum.toFixed(2),
-                    saldo: runningBalance.toFixed(2),
-                    type: 'resgate'
+                    ch_ob: '32', data: dt, rubrica: '',
+                    historico: '', doc: '', cpf_cnpj: '',
+                    valor: null, credito: batchDebitSum, saldo: runningBalance, type: 'resgate'
                 });
             }
         });
 
         renderTable();
-    }
-
-    function getDiaAnterior(dateStr) {
-        let d = parseDate(dateStr);
-        if (!d) return '31/10/2025';
-        d.setDate(d.getDate() - 1);
-        return formatDate(d);
     }
 
     function renderTable() {
@@ -509,7 +349,6 @@
             const tr = document.createElement('tr');
             if (row.type === 'resgate') tr.classList.add('row-resgate');
             if (row.type === 'devolucao') tr.classList.add('row-devolucao');
-            if (row.type === 'saldo-anterior') tr.classList.add('row-saldo-anterior');
 
             tr.innerHTML = `
                 <td>${row.ch_ob}</td>
@@ -518,9 +357,9 @@
                 <td>${row.historico}</td>
                 <td>${row.doc}</td>
                 <td>${row.cpf_cnpj}</td>
-                <td class="numeric debit">${row.valor ? 'R$ ' + row.valor : ''}</td>
-                <td class="numeric credit">${row.credito ? 'R$ ' + row.credito : ''}</td>
-                <td class="numeric" style="font-weight: bold;">R$ ${row.saldo}</td>
+                <td class="numeric debit">${row.valor !== null ? 'R$ ' + row.valor.toFixed(2) : ''}</td>
+                <td class="numeric credit">${row.credito !== null ? 'R$ ' + row.credito.toFixed(2) : ''}</td>
+                <td class="numeric" style="font-weight: bold;">R$ ${row.saldo.toFixed(2)}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -529,26 +368,91 @@
         document.getElementById('btnExport').style.display = 'inline-block';
     }
 
-    function exportarExcel() {
+    async function exportarExcelEstilizado() {
         if (conciliacaoResult.length === 0) return;
 
-        const excelData = conciliacaoResult.map(r => ({
-            'CH/OB': r.ch_ob,
-            'Data': r.data,
-            'Rubrica': r.rubrica,
-            'Historico': r.historico,
-            'NF/DOC.FISCAL': r.doc,
-            'CPF/CNPJ': r.cpf_cnpj,
-            'Valor (D)': r.valor !== '' ? parseFloat(r.valor) : '',
-            'Crédito (C)': r.credito !== '' ? parseFloat(r.credito) : '',
-            'Saldo parcial': parseFloat(r.saldo)
-        }));
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Conciliação Bancária');
 
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Conciliação Bancária");
+        // Define Colunas e Larguras
+        worksheet.columns = [
+            { header: 'CH/OB (Borderô)', key: 'ch_ob', width: 18 },
+            { header: 'Data', key: 'data', width: 12 },
+            { header: 'Rubrica', key: 'rubrica', width: 18 },
+            { header: 'Histórico', key: 'historico', width: 45 },
+            { header: 'NF/DOC.FISCAL', key: 'doc', width: 15 },
+            { header: 'CPF/CNPJ', key: 'cpf_cnpj', width: 18 },
+            { header: 'Valor (D)', key: 'valor', width: 16 },
+            { header: 'Crédito (C)', key: 'credito', width: 16 },
+            { header: 'Saldo Parcial', key: 'saldo', width: 18 }
+        ];
 
-        XLSX.writeFile(wb, "CONCILIACAO_BANCARIA_GERADA.xlsx");
+        // 1. Estilizar Cabeçalho (Azul Escuro com texto Branco em Negrito)
+        const headerRow = worksheet.getRow(1);
+        headerRow.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E3A8A' } };
+        headerRow.alignment = { vertical: 'middle', horizontal: 'left' };
+        headerRow.height = 28;
+
+        // Alinhamento à direita nos cabeçalhos de valor
+        headerRow.getCell('valor').alignment = { vertical: 'middle', horizontal: 'right' };
+        headerRow.getCell('credito').alignment = { vertical: 'middle', horizontal: 'right' };
+        headerRow.getCell('saldo').alignment = { vertical: 'middle', horizontal: 'right' };
+
+        // Formatação Monetária BR
+        const currencyFormat = '"R$" #,##0.00;[Red]"R$" -#,##0.00;"R$" 0.00';
+
+        // 2. Preencher Dados e Estilizar Linhas
+        conciliacaoResult.forEach((item, index) => {
+            const row = worksheet.addRow({
+                ch_ob: item.ch_ob,
+                data: item.data,
+                rubrica: item.rubrica,
+                historico: item.historico,
+                doc: item.doc,
+                cpf_cnpj: item.cpf_cnpj,
+                valor: item.valor,
+                credito: item.credito,
+                saldo: item.saldo
+            });
+
+            row.font = { name: 'Segoe UI', size: 10 };
+
+            // Formatação de Números
+            row.getCell('valor').numberFormat = currencyFormat;
+            row.getCell('credito').numberFormat = currencyFormat;
+            row.getCell('saldo').numberFormat = currencyFormat;
+
+            // Cores das Letras de Valores
+            row.getCell('valor').font = { color: { argb: 'DC2626' } }; // Vermelho
+            row.getCell('credito').font = { color: { argb: '2563EB' }, bold: true }; // Azul
+            row.getCell('saldo').font = { bold: true }; // Saldo em Negrito
+
+            // Alinhamentos
+            row.getCell('valor').alignment = { horizontal: 'right' };
+            row.getCell('credito').alignment = { horizontal: 'right' };
+            row.getCell('saldo').alignment = { horizontal: 'right' };
+
+            // Cor de Fundo das Linhas
+            if (item.type === 'devolucao') {
+                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'EFF6FF' } }; // Azul Claro
+                row.getCell('ch_ob').font = { bold: true };
+                row.getCell('rubrica').font = { bold: true };
+            } else if (item.type === 'resgate') {
+                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FEF3C7' } }; // Amarelo Destaque
+                row.font = { name: 'Segoe UI', size: 10, bold: true };
+            } else if (index % 2 === 1) {
+                row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F8FAFC' } }; // Zebrado suave
+            }
+        });
+
+        // Gerar Arquivo XLSX e Baixar
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'CONCILIACAO_BANCARIA_ESTILIZADA.xlsx';
+        link.click();
     }
 </script>
 
