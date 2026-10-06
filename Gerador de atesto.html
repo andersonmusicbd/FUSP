@@ -39,6 +39,82 @@
       margin: 0 auto;
     }
 
+    /* Estilos do Popup/Overlay de Aviso */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    .popup-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      border-top: 5px solid #f59e0b;
+      position: relative;
+      animation: popupFadeIn 0.3s ease-out;
+    }
+
+    @keyframes popupFadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .popup-close-btn {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #64748b;
+    }
+
+    .popup-close-btn:hover {
+      color: #000;
+    }
+
+    .popup-body {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+    }
+
+    .popup-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .popup-content h3 {
+      margin: 0 0 8px 0;
+      font-size: 17px;
+      color: #1e293b;
+    }
+
+    .popup-content p {
+      margin: 0 0 16px 0;
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    .popup-actions {
+      display: flex;
+      gap: 10px;
+    }
+
     .header {
       background: linear-gradient(135deg, #1e3a8a, #3b82f6);
       color: white;
@@ -113,6 +189,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      text-decoration: none;
     }
 
     .btn:hover { background-color: var(--primary-hover); }
@@ -254,6 +331,26 @@
 </head>
 <body>
 
+  <!-- Pop-up de Aviso -->
+  <div id="notice-popup" class="popup-overlay">
+    <div class="popup-card">
+      <button class="popup-close-btn" onclick="closeNoticePopup()" title="Fechar aviso">✕</button>
+      <div class="popup-body">
+        <span class="popup-icon">💡</span>
+        <div class="popup-content">
+          <h3>Aviso: O link de acesso mudou!</h3>
+          <p>O novo site foi criado em conjunto com a Regina, Isa e Alan. Acesse a nova versão através do botão abaixo:</p>
+          <div class="popup-actions">
+            <a href="https://fusp.org.br/doctos/assinatura.html" target="_blank" rel="noopener noreferrer" class="btn btn-success">
+              🚀 Acessar Novo Site
+            </a>
+            <button class="btn btn-secondary" onclick="closeNoticePopup()">Continuar Aqui</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="header">
       <h1>📑 Carimbador de Atestos (Atesto por Página Individual)</h1>
@@ -326,6 +423,11 @@
   </div>
 
   <script>
+    function closeNoticePopup() {
+      const popup = document.getElementById('notice-popup');
+      if (popup) popup.style.display = 'none';
+    }
+
     let signatureImgElement = null;
     let loadedFiles = [];
 
@@ -603,7 +705,7 @@
 
       function onMouseUp() {
         isDragging = false;
-        document.onmousemove = null;
+        document.mousemove = null;
         document.onmouseup = null;
       }
     }
