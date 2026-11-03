@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unificador de Extratos Bancários PDF</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- pdf-lib CDN -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .drag-over { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-xl shadow-md">
+                    <i data-lucide="files" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">Unificador de Extratos PDF</h1>
+                    <p class="text-xs text-slate-500">Agrupamento automático: Mês &rarr; Conta Corrente (CC) &rarr; Investimentos (INV)</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1"></i> 100% Local e Seguro
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Banner Informativo -->
+        <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-5 flex items-start space-x-4">
+            <div class="p-2 bg-blue-100 text-blue-700 rounded-lg shrink-0 mt-0.5">
+                <i data-lucide="info" class="w-5 h-5"></i>
+            </div>
+            <div class="text-sm text-blue-900 space-y-1">
+                <h2 class="font-semibold text-blue-950">Como funciona a ordenação automática?</h2>
+                <p class="text-blue-800 leading-relaxed">
+                    O sistema reconhece os nomes dos arquivos por ano, mês (01-12 ou Jan-Dez) e tipo de conta (<strong class="font-semibold">CC / Conta Corrente</strong> e <strong class="font-semibold">INV / Investimento</strong>). A sequência gerada será: 
+                    <span class="inline-block bg-white px-2 py-0.5 rounded border border-blue-200 font-mono text-xs text-blue-700 font-semibold shadow-sm">
+                        Jan CC &rarr; Jan INV &rarr; Fev CC &rarr; Fev INV ...
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Dropzone de Arquivos -->
+        <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-blue-500 bg-white rounded-2xl p-8 sm:p-10 text-center cursor-pointer transition-all duration-200 group shadow-sm hover:shadow-md">
+            <input type="file" id="fileInput" multiple accept="application/pdf" class="hidden">
+            <div class="max-w-md mx-auto space-y-4">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-200">
+                    <i data-lucide="upload-cloud" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <p class="text-base font-semibold text-slate-700">Clique para selecionar ou arraste seus arquivos PDF aqui</p>
+                    <p class="text-xs text-slate-500 mt-1">Suporta múltiplos extratos PDF (Ex: <code class="bg-slate-100 px-1 py-0.5 rounded">extrato_cc_janeiro.pdf</code>, <code class="bg-slate-100 px-1 py-0.5 rounded">2024-01_inv.pdf</code>)</p>
+                </div>
+                <button type="button" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl shadow transition-colors inline-flex items-center space-x-2">
+                    <i data-lucide="folder-open" class="w-4 h-4"></i>
+                    <span>Selecionar PDFs</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Seção de Ações e Lista de PDFs -->
+        <div id="fileSection" class="hidden space-y-4">
+            
+            <!-- Barra de Ações Sup. -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <span class="font-semibold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="list-ordered" class="w-5 h-5 text-blue-600"></i>
+                        Fila de Mesclagem (<span id="fileCount">0</span> arquivos)
+                    </span>
+                    <button id="btnClear" class="text-xs text-rose-600 hover:text-rose-700 hover:underline font-medium flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar Tudo
+                    </button>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="btnAddMore" class="px-3.5 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl transition-colors inline-flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Mais
+                    </button>
+                    <button id="btnMerge" class="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all inline-flex items-center justify-center space-x-2">
+                        <i data-lucide="combine" class="w-4 h-4"></i>
+                        <span>Juntar e Baixar PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Progresso / Processando -->
+            <div id="progressContainer" class="hidden bg-white p-5 rounded-2xl border border-blue-100 shadow-sm space-y-2">
+                <div class="flex justify-between text-xs font-semibold text-slate-700">
+                    <span id="progressStatus" class="flex items-center gap-2">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin text-blue-600"></i>
+                        Mesclando arquivos PDF...
+                    </span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-200"></div>
+                </div>
+            </div>
+
+            <!-- Tabela / Lista Ordenada -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="py-3 px-4 w-12 text-center">Ordem</th>
+                                <th class="py-3 px-4">Nome do Arquivo</th>
+                                <th class="py-3 px-4">Ano</th>
+                                <th class="py-3 px-4">Mês Detetado</th>
+                                <th class="py-3 px-4">Tipo de Conta</th>
+                                <th class="py-3 px-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListTable" class="divide-y divide-slate-100 text-sm">
+                            <!-- Inserido dinamicamente via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensagem quando estiver vazio -->
+        <div id="emptyState" class="text-center py-8 text-slate-400">
+            <p class="text-sm">Nenhum arquivo carregado até o momento.</p>
+        </div>
+
+    </main>
+
+    <!-- Modal Notificação / Alertas -->
+    <div id="toast" class="fixed bottom-5 right-5 max-w-md bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+        <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+        <p id="toastMessage" class="text-sm font-medium">Ação realizada com sucesso.</p>
+    </div>
+
+    <!-- Script de Lógica principal -->
+    <script>
+        // Mapeamento de Meses em PT-BR
+        const MONTHS = [
+            { id: 1, name: 'Janeiro', abbr: 'Jan', keys: ['janeiro', 'jan', '01', '1'] },
+            { id: 2, name: 'Fevereiro', abbr: 'Fev', keys: ['fevereiro', 'fev', '02', '2'] },
+            { id: 3, name: 'Março', abbr: 'Mar', keys: ['março', 'marco', 'mar', '03', '3'] },
+            { id: 4, name: 'Abril', abbr: 'Abr', keys: ['abril', 'abr', '04', '4'] },
+            { id: 5, name: 'Maio', abbr: 'Mai', keys: ['maio', 'mai', '05', '5'] },
+            { id: 6, name: 'Junho', abbr: 'Jun', keys: ['junho', 'jun', '06', '6'] },
+            { id: 7, name: 'Julho', abbr: 'Jul', keys: ['julho', 'jul', '07', '7'] },
+            { id: 8, name: 'Agosto', abbr: 'Ago', keys: ['agosto', 'ago', '08', '8'] },
+            { id: 9, name: 'Setembro', abbr: 'Set', keys: ['setembro', 'set', '09', '9'] },
+            { id: 10, name: 'Outubro', abbr: 'Out', keys: ['outubro', 'out', '10'] },
+            { id: 11, name: 'Novembro', abbr: 'Nov', keys: ['novembro', 'nov', '11'] },
+            { id: 12, name: 'Dezembro', abbr: 'Dez', keys: ['dezembro', 'dez', '12'] }
+        ];
+
+        // Tipos de Conta
+        const ACCOUNT_TYPES = {
+            CC: { id: 'CC', name: 'Conta Corrente', priority: 1, badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
+            INV: { id: 'INV', name: 'Investimento', priority: 2, badgeClass: 'bg-purple-100 text-purple-800 border-purple-200' }
+        };
+
+        // Estado da aplicação
+        let fileItems = []; // Array de objetos { id, file, name, year, month, accountType }
+
+        // Elementos DOM
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileSection = document.getElementById('fileSection');
+        const emptyState = document.getElementById('emptyState');
+        const fileListTable = document.getElementById('fileListTable');
+        const fileCountSpan = document.getElementById('fileCount');
+        const btnClear = document.getElementById('btnClear');
+        const btnAddMore = document.getElementById('btnAddMore');
+        const btnMerge = document.getElementById('btnMerge');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressStatus = document.getElementById('progressStatus');
+        const progressPercent = document.getElementById('progressPercent');
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Drag and Drop
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('drag-over');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('drag-over');
+                }, false);
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            });
+
+            dropzone.addEventListener('click', () => fileInput.click());
+            btnAddMore.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+                fileInput.value = ''; // Limpa para permitir subir os mesmos arquivos se necessário
+            });
+
+            btnClear.addEventListener('click', () => {
+                fileItems = [];
+                renderList();
+                showToast('Lista de arquivos limpa.', 'info');
+            });
+
+            btnMerge.addEventListener('click', processAndMergePDFs);
+        }
+
+        // Função para tratar arquivos enviados
+        function handleFiles(files) {
+            const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+
+            if (pdfFiles.length === 0) {
+                showToast('Por favor, selecione arquivos em formato PDF válidos.', 'error');
+                return;
+            }
+
+            pdfFiles.forEach(file => {
+                const parsed = parseFileName(file.name);
+                fileItems.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    file: file,
+                    name: file.name,
+                    year: parsed.year,
+                    month: parsed.month, // 1-12
+                    accountType: parsed.accountType // 'CC' ou 'INV'
+                });
+            });
+
+            sortFiles();
+            renderList();
+            showToast(`${pdfFiles.length} arquivo(s) adicionado(s) com sucesso!`);
+        }
+
+        // Analisador Inteligente de Nome de Arquivo (Parser)
+        function parseFileName(filename) {
+            const cleanName = filename.toLowerCase().replace(/[^a-z0-9à-ú\s_-]/g, ' ');
+
+            // 1. Identificar Ano (Ex: 2020 a 2039)
+            let year = new Date().getFullYear(); // Valor padrão: ano atual
+            const yearMatch = cleanName.match(/\b(20[2-3][0-9])\b/);
+            if (yearMatch) {
+                year = parseInt(yearMatch[1], 10);
+            }
+
+            // 2. Identificar Tipo de Conta (CC vs INV)
+            let accountType = 'CC'; // Padrão
+            
+            // Palavras-chave Investimento
+            const isInv = /\b(inv|invest|investimento|investimentos|aplicacao|corretora)\b/i.test(cleanName) || cleanName.includes('_inv');
+            // Palavras-chave Conta Corrente
+            const isCc = /\b(cc|corrente|extrato_cc|conta_corrente)\b/i.test(cleanName) || cleanName.includes('_cc');
+
+            if (isInv && !isCc) {
+                accountType = 'INV';
+            } else if (isCc) {
+                accountType = 'CC';
+            } else if (cleanName.includes('inv')) {
+                accountType = 'INV';
+            }
+
+            // 3. Identificar Mês
+            let month = 1; // Padrão: Janeiro
+
+            // Busca por extenso/abreviação
+            let monthFound = false;
+
+            // Primeiro tenta encontrar correspondência por texto (jan, fevereiro, etc.)
+            for (const m of MONTHS) {
+                const nameRegex = new RegExp(`\\b(${m.name.toLowerCase()}|${m.abbr.toLowerCase()})\\b`, 'i');
+                if (nameRegex.test(cleanName)) {
+                    month = m.id;
+                    monthFound = true;
+                    break;
+                }
+            }
+
+            // Se não achou por nome, busca números isolados de mês (ex: 01, 02, ..., 12)
+            if (!monthFound) {
+                // Tenta formato YYYY-MM ou MM-YYYY ou apenas MM solto
+                const dateNumMatch = cleanName.match(/(?:20[2-3][0-9][._-]?)(0[1-9]|1[0-2])\b/) || 
+                                     cleanName.match(/\b(0[1-9]|1[0-2])[._-]?(?:20[2-3][0-9])\b/) ||
+                                     cleanName.match(/\b(0[1-9]|1[0-2])\b/);
+                if (dateNumMatch) {
+                    month = parseInt(dateNumMatch[1], 10);
+                }
+            }
+
+            return { year, month, accountType };
+        }
+
+        // Ordenação Principal: Ano ASC -> Mês ASC -> Conta (CC primeiro, INV depois)
+        function sortFiles() {
+            fileItems.sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                if (a.month !== b.month) return a.month - b.month;
+                
+                const priorityA = ACCOUNT_TYPES[a.accountType]?.priority || 1;
+                const priorityB = ACCOUNT_TYPES[b.accountType]?.priority || 1;
+                return priorityA - priorityB;
+            });
+        }
+
+        // Renderiza a Tabela de Arquivos
+        function renderList() {
+            if (fileItems.length === 0) {
+                fileSection.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            fileSection.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            fileCountSpan.textContent = fileItems.length;
+
+            fileListTable.innerHTML = fileItems.map((item, index) => {
+                const account = ACCOUNT_TYPES[item.accountType] || ACCOUNT_TYPES.CC;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800 max-w-xs truncate" title="${escapeHtml(item.name)}">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="file-text" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                                <span class="truncate">${escapeHtml(item.name)}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600">
+                            <input type="number" min="2000" max="2099" value="${item.year}" 
+                                onchange="updateItem('${item.id}', 'year', this.value)"
+                                class="w-20 px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </td>
+                        <td class="py-3 px-4">
+                            <select onchange="updateItem('${item.id}', 'month', this.value)" 
+                                class="px-2 py-1 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                                ${MONTHS.map(m => `<option value="${m.id}" ${item.month === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="py-3 px-4">
+                            <select onchange="updateItem('${item.id}', 'accountType', this.value)" 
+                                class="px-2 py-1 text-xs font-semibold border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white ${account.badgeClass}">
+                                <option value="CC" ${item.accountType === 'CC' ? 'selected' : ''}>Conta Corrente (CC)</option>
+                                <option value="INV" ${item.accountType === 'INV' ? 'selected' : ''}>Investimento (INV)</option>
+                            </select>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="removeItem('${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Atualizar campos alterados manualmente na tabela
+        window.updateItem = function(id, field, value) {
+            const item = fileItems.find(i => i.id === id);
+            if (item) {
+                if (field === 'year') item.year = parseInt(value, 10) || new Date().getFullYear();
+                if (field === 'month') item.month = parseInt(value, 10);
+                if (field === 'accountType') item.accountType = value;
+                
+                sortFiles();
+                renderList();
+            }
+        };
+
+        // Remover item individual
+        window.removeItem = function(id) {
+            fileItems = fileItems.filter(i => i.id !== id);
+            renderList();
+            showToast('Arquivo removido.', 'info');
+        };
+
+        // Unir PDFs usando PDF-Lib
+        async function processAndMergePDFs() {
+            if (fileItems.length === 0) {
+                showToast('Nenhum arquivo para juntar.', 'error');
+                return;
+            }
+
+            btnMerge.disabled = true;
+            btnMerge.classList.add('opacity-50', 'cursor-not-allowed');
+            progressContainer.classList.remove('hidden');
+            updateProgress(0, 'Iniciando criação do PDF unificado...');
+
+            try {
+                // Criar um novo PDF em branco
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                const totalFiles = fileItems.length;
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const item = fileItems[i];
+                    const percent = Math.round(((i + 1) / totalFiles) * 100);
+                    
+                    updateProgress(percent, `Processando [${i + 1}/${totalFiles}]: ${item.name}`);
+
+                    // Ler arquivo em ArrayBuffer
+                    const arrayBuffer = await item.file.arrayBuffer();
+                    
+                    // Carregar o PDF de origem
+                    const srcPdf = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+                    
+                    // Copiar todas as páginas para o PDF final
+                    const copiedPages = await mergedPdf.copyPages(srcPdf, srcPdf.getPageIndices());
+                    copiedPages.forEach(page => mergedPdf.addPage(page));
+                }
+
+                updateProgress(100, 'Gerando arquivo PDF final...');
+
+                // Salvar o arquivo gerado
+                const mergedPdfBytes = await mergedPdf.save();
+
+                // Fazer o download do arquivo retornado
+                const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `extratos_unificados_${new Date().toISOString().slice(0, 10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                showToast('PDF unificado baixado com sucesso!');
+            } catch (err) {
+                console.error('Erro ao juntar PDFs:', err);
+                showToast('Ocorreu um erro ao processar os PDFs. Verifique se os arquivos não possuem senha.', 'error');
+            } finally {
+                btnMerge.disabled = false;
+                btnMerge.classList.remove('opacity-50', 'cursor-not-allowed');
+                setTimeout(() => {
+                    progressContainer.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // Atualizar visual da barra de progresso
+        function updateProgress(percent, message) {
+            progressBar.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+            progressStatus.innerHTML = `
+                <i data-lucide="loader" class="w-4 h-4 animate-spin text-blue-600"></i>
+                ${escapeHtml(message)}
+            `;
+            lucide.createIcons();
+        }
+
+        // Função utilitária para Toast Notificação
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+
+            if (type === 'error') {
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+                toastIcon.className = 'w-5 h-5 text-rose-400 shrink-0';
+            } else if (type === 'info') {
+                toastIcon.setAttribute('data-lucide', 'info');
+                toastIcon.className = 'w-5 h-5 text-blue-400 shrink-0';
+            } else {
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+                toastIcon.className = 'w-5 h-5 text-emerald-400 shrink-0';
+            }
+
+            lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Sanitize strings de nomes
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
