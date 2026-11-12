@@ -95,7 +95,7 @@
         </div>
       </div>
 
-      <!-- Ações Direitas -->
+      <!-- Ações Direitas (sem o botão da chave API) -->
       <div class="order-2 lg:order-3 flex items-center gap-2">
         <button onclick="openNewPcModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
           <i data-lucide="plus" class="w-4 h-4"></i>
@@ -110,10 +110,6 @@
 
         <button onclick="syncFromNotion(false)" id="syncNowBtn" title="Sincronizar com Notion agora" class="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 transition-colors">
           <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-        </button>
-
-        <button onclick="openNotionConfigModal()" title="Configurar API / Proxy CORS" class="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 transition-colors">
-          <i data-lucide="settings-2" class="w-4 h-4"></i>
         </button>
       </div>
     </div>
@@ -182,7 +178,7 @@
     </div>
   </header>
 
-  <!-- Banner de Diagnóstico / CORS -->
+  <!-- Banner de Diagnóstico / CORS (sem botão de abrir modal de chave) -->
   <div id="corsWarningBanner" class="hidden max-w-[1600px] w-full mx-auto px-4 sm:px-6 pt-3">
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
       <div class="flex items-center gap-2">
@@ -192,9 +188,6 @@
       <div class="flex items-center gap-2">
         <button onclick="copyLocalProxyCmd()" class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors">
           Copiar comando Proxy Local
-        </button>
-        <button onclick="openNotionConfigModal()" class="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-amber-900 font-semibold hover:bg-amber-100 transition-colors">
-          Configurar Proxy
         </button>
       </div>
     </div>
@@ -303,38 +296,8 @@
     </div>
   </div>
 
-  <!-- Modal de Configuração da API Notion -->
-  <div id="notionConfigModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="text-base font-bold text-slate-900">Conexão Notion API</h3>
-        <button onclick="closeNotionConfigModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <form onsubmit="saveNotionConfig(event)" class="p-5 space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Integration Token (Secret)</label>
-          <input id="cfgToken" type="password" required class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Database ID</label>
-          <input id="cfgDbId" type="text" required class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Proxy CORS (Opcional / Recomendado)</label>
-          <input id="cfgProxy" type="text" placeholder="Ex: http://localhost:8010/proxy/ ou https://corsproxy.io/?" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
-          <p class="text-[11px] text-slate-500 mt-1">Se rodar localmente sem proxy, rode no terminal: <code class="bg-slate-100 px-1 rounded">npx local-cors-proxy --proxyUrl https://api.notion.com --port 8010</code></p>
-        </div>
-        <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
-          <button type="button" onclick="closeNotionConfigModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">Cancelar</button>
-          <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Salvar e Conectar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
+    // Credenciais mantidas exclusivamente no código
     const DEFAULT_NOTION_CONFIG = {
       token: 'ntn_l55223251047LICPCBmz4VNltPrKopzmmUgbLSrqpvw9gu',
       databaseId: '31414927fe708075b758fa1fd59c2b1b',
@@ -375,7 +338,7 @@
       sourceMode: 'demo',
       notionConfig: { ...DEFAULT_NOTION_CONFIG },
       viewMode: 'overview',
-      selectedOverviewBlock: null, // null = exibe os 4 blocos | 'entregues' | 'entregas' | 'doa' | 'saldo'
+      selectedOverviewBlock: null,
       deliveryPeriod: 'view_window',
       schema: JSON.parse(JSON.stringify(DEMO_SCHEMA)),
       rows: JSON.parse(JSON.stringify(DEMO_ROWS)),
@@ -397,8 +360,7 @@
     };
 
     try {
-      const savedCfg = localStorage.getItem('notion_blocks_cfg_v1');
-      if (savedCfg) state.notionConfig = { ...DEFAULT_NOTION_CONFIG, ...JSON.parse(savedCfg) };
+      localStorage.removeItem('notion_blocks_cfg_v1');
       const savedRules = localStorage.getItem('notion_view_rules_v3');
       if (savedRules) state.viewRules = { ...state.viewRules, ...JSON.parse(savedRules) };
     } catch (e) {}
@@ -506,7 +468,6 @@
       return null;
     }
 
-    // Regra do Bloco "Já Entregues": PC Atual com Status do Projeto = "Aprovada" ou "Submetida"
     function isPcApprovedOrSubmitted(pc, statusCol) {
       if (!statusCol) return false;
       const st = normalizeStr(pc.properties[statusCol.key]);
@@ -565,7 +526,6 @@
       return false;
     }
 
-    // Agrupamento Hierárquico: Projetos -> Subitens (PCs)
     function groupRowsByProject(rows) {
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
       const titleKey = titleCol ? titleCol.key : 'title';
@@ -765,7 +725,6 @@
           }
         }
 
-        // BLOCO 2 ("Já Entregues"): PCs atuais com Status do Projeto = Aprovada ou Submetida
         if (currentPc && isPcApprovedOrSubmitted(currentPc, statusCol)) {
           const curDate = extractPcDeliveryDate(currentPc);
           const curAnp = anpCol ? (currentPc.properties[anpCol.key] || projAnp || '') : '';
@@ -801,7 +760,6 @@
             saldoNumeric: isNaN(pcSaldoNum) ? Infinity : pcSaldoNum
           };
 
-          // BLOCO 1: Tabela por data de entrega
           const isEmElaboracao = /em\s*elaboracao/.test(pcStatusNorm);
           if (isEmElaboracao && deliveryDate) {
             let matchesPeriod = false;
@@ -815,7 +773,6 @@
             if (matchesPeriod) currentDeliveries.push(entry);
           }
 
-          // BLOCO 3: Visualização "Devolução de DOA" (Precisa devolver DOA = Sim)
           if (matchesCustomViewRule(pc, statusCol, state.viewRules.doa, autoDetectDevolucaoDoa)) {
             if (!seenDoaIds.has(pc.id)) {
               seenDoaIds.add(pc.id);
@@ -823,7 +780,6 @@
             }
           }
 
-          // BLOCO 4: Visualização "Por saldo"
           if (matchesCustomViewRule(pc, statusCol, state.viewRules.saldo, autoDetectPorSaldo)) {
             if (!seenSaldoIds.has(pc.id)) {
               seenSaldoIds.add(pc.id);
@@ -943,7 +899,6 @@
       const saldoStatusText = state.viewRules.saldo.statusFilter ? ` • Status: ${state.viewRules.saldo.statusFilter}` : '';
       const saldoSubtitle = `↑ ${saldoColLabel}${saldoStatusText}`;
 
-      // Configuração dos 4 Botões Grandes Selecionáveis
       const selectorCards = [
         {
           key: 'entregas',
@@ -1020,7 +975,6 @@
         </div>
       `;
 
-      // Seletor de blocos individuais
       const blockSections = {
         entregas: `
           <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col w-full">
@@ -2026,33 +1980,10 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }
 
-    function openNotionConfigModal() {
-      document.getElementById('cfgToken').value = state.notionConfig.token || '';
-      document.getElementById('cfgDbId').value = state.notionConfig.databaseId || '';
-      document.getElementById('cfgProxy').value = state.notionConfig.corsProxy || '';
-      document.getElementById('notionConfigModal').classList.remove('hidden');
-    }
-
-    function closeNotionConfigModal() {
-      document.getElementById('notionConfigModal').classList.add('hidden');
-    }
-
-    function saveNotionConfig(e) {
-      e.preventDefault();
-      state.notionConfig = {
-        token: document.getElementById('cfgToken').value.trim(),
-        databaseId: document.getElementById('cfgDbId').value.trim(),
-        corsProxy: document.getElementById('cfgProxy').value.trim()
-      };
-      localStorage.setItem('notion_blocks_cfg_v1', JSON.stringify(state.notionConfig));
-      closeNotionConfigModal();
-      syncFromNotion(false);
-    }
-
     function copyLocalProxyCmd() {
       const cmd = 'npx local-cors-proxy --proxyUrl https://api.notion.com --port 8010';
       navigator.clipboard?.writeText(cmd);
-      alert('Comando copiado! Cole no seu terminal e depois configure http://localhost:8010/proxy/ na engrenagem.');
+      alert('Comando copiado! Cole no seu terminal e defina corsProxy: "http://localhost:8010/proxy/" no código se necessário.');
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
