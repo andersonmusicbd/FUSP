@@ -63,7 +63,7 @@
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h1 id="pageTitle" class="text-base font-bold text-slate-900 truncate">Projetos &amp; PCs</h1>
+            <h1 id="pageTitle" class="text-base font-bold text-slate-900 truncate">Planilha de Acompanhamento Projetos</h1>
             <span id="connectionBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
               <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
               Conectando...
@@ -80,7 +80,7 @@
           <input
             id="globalSearchInput"
             type="text"
-            placeholder="Buscar nº do projeto (ex: 420424), PC, DOA ou saldo...  (atalho /)"
+            placeholder="Buscar nº do projeto (ex: 420402), ANP, PC, DOA ou saldo...  (atalho /)"
             class="w-full text-sm bg-transparent border-none focus:outline-none text-slate-800 placeholder:text-slate-400"
           />
           <button
@@ -118,7 +118,7 @@
       </div>
     </div>
 
-    <!-- Barra Secundária: Navegação de Modos + Agrupamento -->
+    <!-- Barra Secundária: Navegação de Modos + Período da Tabela por Data de Entrega -->
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70">
       <!-- Abas de Visualização -->
       <div class="inline-flex p-1 rounded-xl bg-slate-200/70 border border-slate-200/80">
@@ -142,13 +142,13 @@
 
       <!-- Controles de Período / Agrupamento / Expansão -->
       <div class="flex flex-wrap items-center gap-2">
-        <div id="periodSelectorWrap" class="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
-          <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-blue-600"></i>
-          <span class="text-slate-500 font-medium">Período Atuais:</span>
-          <select id="deliveryPeriodSelect" onchange="changeDeliveryPeriod(this.value)" class="font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer">
-            <option value="month">Este Mês</option>
-            <option value="quarter">Próximos 90 dias</option>
-            <option value="all_pending">Todas as Pendentes</option>
+        <div id="periodSelectorWrap" class="inline-flex items-center gap-1.5 bg-white border border-blue-200 rounded-xl px-2.5 py-1 text-xs shadow-2xs">
+          <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span class="text-slate-500 font-medium">Data de Entrega:</span>
+          <select id="deliveryPeriodSelect" onchange="changeDeliveryPeriod(this.value)" class="font-semibold text-blue-700 bg-transparent focus:outline-none cursor-pointer">
+            <option value="view_window">Janela da Tabela (Ago &rarr; Nov)</option>
+            <option value="month">Somente Mês Atual</option>
+            <option value="all_elaboracao">Todas em Elaboração (com Data)</option>
           </select>
         </div>
 
@@ -234,6 +234,45 @@
     </div>
   </div>
 
+  <!-- Modal de Mapeamento de Aba do Notion (Devolução de DOA / Por Saldo) -->
+  <div id="viewRuleModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="viewRuleModalTitle" class="text-base font-bold text-slate-900">Regra da Visualização Notion</h3>
+        <button onclick="closeViewRuleModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form onsubmit="saveViewRuleModal(event)" class="p-5 space-y-3.5">
+        <p class="text-xs text-slate-500">Configure abaixo qual coluna e filtros correspondem à sua visualização do Notion:</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Coluna Principal da Visualização</label>
+          <select id="ruleColSelect" onchange="populateRuleValueSuggestions()" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Valores incluídos (deixe vazio para qualquer valor preenchido / &gt; 0)</label>
+          <input id="ruleValuesInput" type="text" placeholder="Ex: Sim" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
+          <div id="ruleOptionsChips" class="flex flex-wrap gap-1.5 mt-2"></div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Filtrar também por Status do Projeto (opcional)</label>
+          <input id="ruleStatusFilterInput" type="text" placeholder="Ex: Em Andamento (ou deixe vazio para todos)" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500" />
+        </div>
+        <div class="flex items-center gap-2 pt-1">
+          <input id="ruleIncludeParentsCheck" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+          <label for="ruleIncludeParentsCheck" class="text-xs text-slate-700">Incluir Projetos Pais (além das PCs)</label>
+        </div>
+        <div class="pt-3 border-t border-slate-100 flex justify-between gap-2">
+          <button type="button" onclick="resetViewRuleToAuto()" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800">Padrão Notion</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeViewRuleModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600">Cancelar</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Aplicar Regra</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal de Anotações Internas da PC -->
   <div id="notesDrawerModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[85vh]">
@@ -305,30 +344,38 @@
     const DEMO_SCHEMA = [
       { key: 'title', label: 'Nome do Projeto', type: 'title', visible: true },
       { key: 'status', label: 'Status do Projeto', type: 'status', visible: true, options: ['Em elaboração', 'Submetida', 'Aprovada', 'Em Andamento', 'Encerrado'] },
+      { key: 'dataEntrega', label: 'Data de Entrega', type: 'date', visible: true },
+      { key: 'prioridade', label: 'Prioridade', type: 'select', visible: true, options: ['Alta', 'Média', 'Baixa'] },
+      { key: 'anp', label: 'Número ANP', type: 'rich_text', visible: true },
+      { key: 'financiador', label: 'Financiador', type: 'rich_text', visible: true },
+      { key: 'saldo3009', label: 'Saldo (30/09/2026)', type: 'number', visible: true },
       { key: 'proforma', label: 'Proforma', type: 'status', visible: true, options: ['Não iniciada', 'Em andamento', 'Emitida'] },
-      { key: 'doa', label: 'Devolução de DOA', type: 'select', visible: true, options: ['Não se aplica', 'Pendente', 'Solicitada', 'Devolvida'] },
-      { key: 'saldo', label: 'Por Saldo', type: 'checkbox', visible: true },
-      { key: 'codigo', label: 'Código', type: 'rich_text', visible: true },
-      { key: 'cliente', label: 'Cliente', type: 'rich_text', visible: true }
+      { key: 'precisaDevolverDoa', label: 'Precisa devolver DOA', type: 'multi_select', visible: true, options: ['Sim', 'Não'] }
     ];
 
     const DEMO_ROWS = [
-      { id: 'proj_4525', parentId: null, properties: { title: '4525 - Unidade de Separação de Ar Baseada em Chemical Looping (CLAS)', status: 'Em Andamento', proforma: 'Não iniciada', doa: 'Não se aplica', saldo: 'Não', codigo: '24398-0', cliente: 'Shell Brasil' } },
-      { id: 'pc_4525_4', parentId: 'proj_4525', notes: [{ type: 'bullet', text: 'Aguardando fechamento de HH para submeter' }], properties: { title: 'PC 4 - 01/08/2026 a 31/10/2026', status: 'Em elaboração', proforma: 'Não iniciada', doa: 'Não se aplica', saldo: 'Não', codigo: '24398-0', cliente: 'Shell Brasil' } },
+      { id: 'proj_420402', parentId: null, properties: { title: '420402 - SHELL/EP/OTIC_DGT2', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: 'Sim' } },
 
-      { id: 'proj_420408', parentId: null, properties: { title: '420408 - SHELL/EP/OTIC_HSE1', status: 'Em Andamento', proforma: 'Não iniciada', doa: 'Pendente', saldo: 'Não', codigo: '24378-2', cliente: 'Shell Brasil' } },
-      { id: 'pc_420408_19', parentId: 'proj_420408', notes: [{ type: 'bullet', text: 'Assinar DOA e solicitar devolução após submissão' }], properties: { title: 'PC 19 - 01/05/2026 a 31/10/2026 (Lançado até 10, assinar doa, solicitar devolução)', status: 'Em elaboração', proforma: 'Não iniciada', doa: 'Pendente', saldo: 'Não', codigo: '24378-2', cliente: 'Shell Brasil' } },
+      { id: 'proj_420419', parentId: null, properties: { title: '420419 - SHELL/EP/OTIC_MNT2', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '6721.93', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420419_1', parentId: 'proj_420419', notes: [{ type: 'bullet', text: 'PC atual submetida à Shell' }], properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026', status: 'Submetida', dataEntrega: '2026-10-30', prioridade: 'Média', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
 
-      { id: 'proj_420402', parentId: null, properties: { title: '420402 - SHELL/EP/OTIC_DGT2', status: 'Em Andamento', proforma: 'Emitida', doa: 'Devolvida', saldo: 'Sim', codigo: '24398-1', cliente: 'Shell Brasil' } },
-      { id: 'pc_420402_5', parentId: 'proj_420402', notes: [{ type: 'bullet', text: 'PC aprovada e proforma emitida' }], properties: { title: 'PC#5 01/11/2024 à 30/04/2025', status: 'Aprovada', proforma: 'Emitida', doa: 'Devolvida', saldo: 'Não', codigo: '24398-1', cliente: 'Shell Brasil' } },
-      { id: 'pc_420402_saldo', parentId: 'proj_420402', notes: [{ type: 'bullet', text: 'Apuração de saldo remanescente do projeto' }], properties: { title: 'PC Saldo Final - 01/06/2026 a 30/11/2026', status: 'Submetida', proforma: 'Em andamento', doa: 'Não se aplica', saldo: 'Sim', codigo: '24398-1', cliente: 'Shell Brasil' } }
+      { id: 'proj_420420', parentId: null, properties: { title: '420420 - SHELL/EP/OTIC_MNT4', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '8462.42', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420420_1', parentId: 'proj_420420', notes: [{ type: 'bullet', text: 'PC atual aprovada' }], properties: { title: 'PC 1 - 01/04/2026 a 30/09/2026', status: 'Aprovada', dataEntrega: '2026-10-15', prioridade: 'Baixa', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Emitida', precisaDevolverDoa: '' } },
+
+      { id: 'proj_420418', parentId: null, properties: { title: '420418 - SHELL/EP/OTIC_MNT1', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24369-1', financiador: 'Shell Brasil', saldo3009: '31232.38', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420422', parentId: null, properties: { title: '420422 - SHELL/EP/OTIC_NPO2 (ainda não lançado a partir do mês 7)', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24367-5', financiador: 'Shell Brasil', saldo3009: '38085.3', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420404', parentId: null, properties: { title: '420404 - SHELL/EP/OTIC_DGT4', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '67862.34', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420404_1', parentId: 'proj_420404', notes: [{ type: 'bullet', text: 'Solicitar assinatura recibo DOA e fechar medição' }], properties: { title: 'PC - 01/05/2026 a 31/10/2026 (lançado até 10/2026, solicitar assinatura recibo doa)', status: 'Em elaboração', dataEntrega: '2026-11-30', prioridade: 'Alta', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420413', parentId: null, properties: { title: '420413 - SHELL/EP/OTIC_HSE6', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24380-8', financiador: 'Shell Brasil', saldo3009: '68675.63', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420403', parentId: null, properties: { title: '420403 - SHELL/EP/OTIC_DGT3', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24379-0', financiador: 'Shell Brasil', saldo3009: '69591.91', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420403_19', parentId: 'proj_420403', notes: [{ type: 'bullet', text: 'Separado até 10/2026' }], properties: { title: 'PC 19 - 01/06/2026 a 31/10/2026 - Separado até 10', status: 'Em elaboração', dataEntrega: '2026-11-30', prioridade: 'Alta', anp: '48675-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } }
     ];
 
     const state = {
       sourceMode: 'demo',
       notionConfig: { ...DEFAULT_NOTION_CONFIG },
       viewMode: 'overview',
-      deliveryPeriod: 'month', // 'month' | 'quarter' | 'all_pending'
+      deliveryPeriod: 'view_window',
       schema: JSON.parse(JSON.stringify(DEMO_SCHEMA)),
       rows: JSON.parse(JSON.stringify(DEMO_ROWS)),
       projectFieldKey: '__notion_hierarchy__',
@@ -340,14 +387,21 @@
       allHistoryExpanded: false,
       editingRowId: null,
       presetParentId: null,
-      activeNotesRowId: null
+      activeNotesRowId: null,
+      editingViewRuleTarget: null,
+      viewRules: {
+        // Espelha exatamente a aba "Devolução de DOA": propriedade "Precisa devolver DOA" = "Sim"
+        doa: { colKey: 'auto', values: ['Sim'], statusFilter: '', includeParents: true },
+        // Espelha exatamente a aba "Por saldo": Saldo (30/09/2026) preenchido + Status do Projeto = "Em Andamento"
+        saldo: { colKey: 'auto', values: [], statusFilter: 'Em Andamento', includeParents: true }
+      }
     };
 
     try {
       const savedCfg = localStorage.getItem('notion_blocks_cfg_v1');
-      if (savedCfg) {
-        state.notionConfig = { ...DEFAULT_NOTION_CONFIG, ...JSON.parse(savedCfg) };
-      }
+      if (savedCfg) state.notionConfig = { ...DEFAULT_NOTION_CONFIG, ...JSON.parse(savedCfg) };
+      const savedRules = localStorage.getItem('notion_view_rules_v3');
+      if (savedRules) state.viewRules = { ...state.viewRules, ...JSON.parse(savedRules) };
     } catch (e) {}
 
     function escapeHtml(str) {
@@ -360,21 +414,45 @@
         .replace(/'/g, '&#39;');
     }
 
+    function normalizeStr(s) {
+      return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    }
+
+    function parseNumericValue(raw) {
+      if (raw === null || raw === undefined || raw === '') return NaN;
+      const str = String(raw).trim();
+      if (/^-?\d+(\.\d+)?$/.test(str)) return parseFloat(str);
+      const cleaned = str.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+      return parseFloat(cleaned);
+    }
+
+    function formatCurrencyBRL(raw) {
+      const num = parseNumericValue(raw);
+      if (isNaN(num)) return String(raw || '');
+      return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
     function getStatusBadgeClasses(val) {
-      const s = String(val || '').toLowerCase();
-      if (/aprovad|conclu[íi]d|emitida|encerrad|done|devolvid/.test(s)) {
+      const s = normalizeStr(val);
+      if (/aprovad|concluid|emitida|encerrad|done|devolvid/.test(s)) {
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       }
-      if (/submetid|andamento|progress|enviad|an[áa]lise|solicitad/.test(s)) {
+      if (/submetid|andamento|progress|enviad|analise|solicitad/.test(s)) {
         return 'bg-blue-50 text-blue-700 border-blue-200';
       }
-      if (/pend[êe]ncia|pendente|atras|cancel|rejeit|devolu[çc][ãa]o/.test(s)) {
+      if (/pendencia|pendente|atras|cancel|rejeit|devolucao/.test(s)) {
         return 'bg-amber-50 text-amber-800 border-amber-200';
       }
       return 'bg-slate-100 text-slate-700 border-slate-200';
     }
 
-    // Extrai SOMENTE o número do projeto (ex: "4525", "403901", "420424")
+    function getPriorityBadgeClasses(val) {
+      const s = normalizeStr(val);
+      if (/alta|urgent|critic/.test(s)) return 'bg-rose-50 text-rose-700 border-rose-200';
+      if (/media/.test(s)) return 'bg-amber-50 text-amber-700 border-amber-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
+    }
+
     function extractProjectNumberOnly(projectTitle, fallbackCode) {
       const str = String(projectTitle || '').trim();
       const leadingNum = str.match(/^(\d{3,10})\b/);
@@ -399,70 +477,94 @@
       });
     }
 
-    function extractPcDeliveryDate(row, titleKey) {
-      const dateCol = state.schema.find(c => c.type === 'date' && !/created|edit/i.test(c.label));
-      if (dateCol && row.properties[dateCol.key]) {
-        const raw = String(row.properties[dateCol.key]).split('T')[0];
-        const parts = raw.split('-');
-        if (parts.length === 3) {
-          return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        }
-      }
-      const titleStr = String(row.properties[titleKey] || '');
-      const matches = [...titleStr.matchAll(/(\d{2})\/(\d{2})\/(\d{4})/g)];
-      if (matches.length > 0) {
-        const last = matches[matches.length - 1];
-        const day = Number(last[1]);
-        const month = Number(last[2]) - 1;
-        const year = Number(last[3]);
-        if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
-          return new Date(year, month, day);
-        }
+    function findDeliveryDateColumn() {
+      return state.schema.find(c => c.type === 'date' && /data\s*de\s*entrega/i.test(c.label))
+        || state.schema.find(c => c.type === 'date' && /entrega/i.test(c.label))
+        || state.schema.find(c => c.type === 'date' && !/created|edit/i.test(c.label));
+    }
+
+    function findDoaColumn() {
+      return state.schema.find(c => /precisa\s*devolver\s*doa/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => /devolucao\s*(de\s*|do\s*)?doa/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => /\bdoa\b/.test(normalizeStr(c.label)));
+    }
+
+    function parseNotionDateOnly(rawDate) {
+      if (!rawDate) return null;
+      const raw = String(rawDate).split('T')[0];
+      const parts = raw.split('-');
+      if (parts.length === 3) {
+        return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
       }
       return null;
     }
 
-    // Classificadores para os 4 blocos solicitados
-    function isPcDelivered(pc, statusCol, proformaCol) {
-      const st = statusCol ? String(pc.properties[statusCol.key] || '').toLowerCase() : '';
-      const pf = proformaCol ? String(pc.properties[proformaCol.key] || '').toLowerCase() : '';
-      return /aprovad|conclu[íi]d|encerrad|done|finalizad/.test(st) || /emitida/.test(pf);
+    function extractPcDeliveryDate(row) {
+      const dateCol = findDeliveryDateColumn();
+      if (dateCol && row.properties[dateCol.key]) {
+        return parseNotionDateOnly(row.properties[dateCol.key]);
+      }
+      return null;
     }
 
-    function isPcPendingDoa(pc, parentRow, titleKey) {
-      const doaCol = state.schema.find(c => /doa|devolu[çc][ãa]o/i.test(c.label));
-      if (doaCol) {
-        const val = String(pc.properties[doaCol.key] || parentRow?.properties[doaCol.key] || '').toLowerCase();
-        if (val && !/n[ãa]o se aplica|devolvid|conclu[íi]d|ok|não|nao/.test(val)) {
-          return true;
-        }
-      }
-      const allText = (
-        String(pc.properties[titleKey] || '') + ' ' +
-        Object.values(pc.properties || {}).join(' ') + ' ' +
-        (pc.notes || []).map(n => n.text).join(' ')
-      ).toLowerCase();
+    // Regra do Bloco "Já Entregues": PC Atual com Status do Projeto = "Aprovada" ou "Submetida"
+    function isPcApprovedOrSubmitted(pc, statusCol) {
+      if (!statusCol) return false;
+      const st = normalizeStr(pc.properties[statusCol.key]);
+      return /\baprovad[ao]?\b|\bsubmetid[ao]?\b/.test(st);
+    }
 
-      if (/devolu[çc][ãa]o\s*(de\s*)?doa|solicitar\s*devolu[çc][ãa]o|assinar\s*doa|pendente\s*doa|doa\s*pendente/.test(allText)) {
-        return !/doa\s*devolvid/.test(allText);
+    function matchesCustomViewRule(row, statusCol, ruleObj, autoDetectorFn) {
+      if (ruleObj && ruleObj.statusFilter && ruleObj.statusFilter.trim() !== '' && statusCol) {
+        const rowStatusNorm = normalizeStr(row.properties[statusCol.key]);
+        const expectedStatusNorm = normalizeStr(ruleObj.statusFilter);
+        if (rowStatusNorm !== expectedStatusNorm) return false;
+      }
+
+      if (ruleObj && ruleObj.colKey && ruleObj.colKey !== 'auto') {
+        const rawVal = String(row.properties[ruleObj.colKey] || '').trim();
+        if (!rawVal) return false;
+        const normVal = normalizeStr(rawVal);
+
+        if (ruleObj.values && ruleObj.values.length > 0) {
+          const tokens = normVal.split(',').map(t => t.trim());
+          return ruleObj.values.some(v => {
+            const nv = normalizeStr(v);
+            return tokens.includes(nv) || normVal === nv;
+          });
+        }
+        const num = parseNumericValue(rawVal);
+        if (!isNaN(num)) return num !== 0;
+        if (/^(nao|false|0|nao se aplica|sem saldo|-)$/i.test(normVal)) return false;
+        return true;
+      }
+      return autoDetectorFn(row);
+    }
+
+    // Detecção exata da aba "Devolução de DOA": propriedade "Precisa devolver DOA" marcada como "Sim"
+    function autoDetectDevolucaoDoa(row) {
+      const doaCol = findDoaColumn();
+      if (!doaCol) return false;
+      const rawVal = String(row.properties[doaCol.key] || '').trim();
+      if (!rawVal) return false;
+      const tokens = normalizeStr(rawVal).split(',').map(t => t.trim());
+      return tokens.includes('sim') || tokens.includes('true') || tokens.includes('pendente');
+    }
+
+    function autoDetectPorSaldo(row) {
+      const saldoCols = state.schema.filter(c => /saldo/.test(normalizeStr(c.label)));
+      for (const col of saldoCols) {
+        const raw = String(row.properties[col.key] || '').trim();
+        if (!raw) continue;
+        const num = parseNumericValue(raw);
+        if (!isNaN(num)) {
+          if (num !== 0) return true;
+        } else {
+          const norm = normalizeStr(raw);
+          if (!/^(nao|false|0|nao se aplica|sem saldo|-)$/.test(norm)) return true;
+        }
       }
       return false;
-    }
-
-    function isPcByBalance(pc, parentRow, titleKey) {
-      const saldoCol = state.schema.find(c => /saldo/i.test(c.label));
-      if (saldoCol) {
-        const val = String(pc.properties[saldoCol.key] || parentRow?.properties[saldoCol.key] || '').toLowerCase();
-        if (val && !/n[ãa]o|nao|false|0|não se aplica/.test(val)) {
-          return true;
-        }
-      }
-      const allText = (
-        String(pc.properties[titleKey] || '') + ' ' +
-        Object.values(pc.properties || {}).join(' ')
-      ).toLowerCase();
-
-      return /\bsaldo\b|por\s*saldo/.test(allText);
     }
 
     // Agrupamento Hierárquico: Projetos -> Subitens (PCs)
@@ -487,7 +589,7 @@
 
       const projectMap = new Map();
       const codeToProjectId = new Map();
-      const codeCol = state.schema.find(c => /c[óo]digo|code/i.test(c.label));
+      const codeCol = state.schema.find(c => /codigo|anp|code/.test(normalizeStr(c.label)));
 
       state.rows.forEach(r => {
         const title = String(r.properties[titleKey] || '');
@@ -542,14 +644,14 @@
     function getProcessedRows() {
       return state.rows.filter(row => {
         if (state.searchQuery.trim()) {
-          const q = state.searchQuery.toLowerCase();
-          const haystack = Object.values(row.properties || {}).join(' ').toLowerCase();
+          const q = normalizeStr(state.searchQuery);
+          const haystack = normalizeStr(Object.values(row.properties || {}).join(' '));
           if (!haystack.includes(q)) return false;
         }
         for (const rule of state.filters) {
           if (!rule.value) continue;
-          const cellVal = String(row.properties[rule.field] || '').toLowerCase();
-          const targetVal = rule.value.toLowerCase();
+          const cellVal = normalizeStr(row.properties[rule.field]);
+          const targetVal = normalizeStr(rule.value);
           if (rule.op === 'contains' && !cellVal.includes(targetVal)) return false;
           if (rule.op === 'equals' && cellVal !== targetVal) return false;
           if (rule.op === 'not_equals' && cellVal === targetVal) return false;
@@ -571,14 +673,10 @@
       }
 
       const toggleAllBtn = document.getElementById('toggleAllProjectsBtn');
-      if (toggleAllBtn) {
-        toggleAllBtn.classList.toggle('hidden', state.viewMode !== 'blocks');
-      }
+      if (toggleAllBtn) toggleAllBtn.classList.toggle('hidden', state.viewMode !== 'blocks');
 
       const periodWrap = document.getElementById('periodSelectorWrap');
-      if (periodWrap) {
-        periodWrap.classList.toggle('hidden', state.viewMode !== 'overview');
-      }
+      if (periodWrap) periodWrap.classList.toggle('hidden', state.viewMode !== 'overview');
 
       if (state.viewMode === 'overview') {
         renderExecutiveOverview(viewport, processedRows);
@@ -595,110 +693,189 @@
       lucide.createIcons();
     }
 
-    // 1. PÁGINA INICIAL: 4 Blocos Operacionais (Somente Nº do Projeto + Todas as PCs do Período)
+    // 1. PÁGINA INICIAL: 4 Blocos Sincronizados com as Visualizações do Notion
     function renderExecutiveOverview(container, rows) {
       const projectGroups = groupRowsByProject(rows);
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
-      const statusCol = state.schema.find(c => (c.type === 'status' || c.type === 'select') && c.key !== state.projectFieldKey);
-      const proformaCol = state.schema.find(c => /proforma/i.test(c.label));
-      const codeCol = state.schema.find(c => /c[óo]digo|code/i.test(c.label));
+      const statusCol = state.schema.find(c => /status\s*do\s*projeto/i.test(c.label))
+        || state.schema.find(c => (c.type === 'status' || c.type === 'select') && c.key !== state.projectFieldKey);
+      const priorityCol = state.schema.find(c => /prioridade/i.test(c.label));
+      const anpCol = state.schema.find(c => /anp|codigo/.test(normalizeStr(c.label)));
+      const detectedSaldoCol = state.schema.find(c => /saldo/.test(normalizeStr(c.label)));
+      const detectedDoaCol = findDoaColumn();
+
+      const effectiveSaldoColKey = state.viewRules.saldo.colKey !== 'auto'
+        ? state.viewRules.saldo.colKey
+        : (detectedSaldoCol ? detectedSaldoCol.key : null);
+
+      const effectiveDoaColKey = state.viewRules.doa.colKey !== 'auto'
+        ? state.viewRules.doa.colKey
+        : (detectedDoaCol ? detectedDoaCol.key : null);
 
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
-      const in90Days = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 90);
-      const monthLabel = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      const capitalizedMonth = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+      const windowStart = new Date(currentYear, 7, 1);
+      const windowEnd = new Date(currentYear, 10, 30, 23, 59, 59);
 
       const currentDeliveries = [];
       const alreadyDelivered = [];
       const pendingDoaList = [];
       const balancePcsList = [];
 
+      const seenDoaIds = new Set();
+      const seenSaldoIds = new Set();
+
       projectGroups.forEach(group => {
-        const projCode = codeCol ? (group.projectRow?.properties[codeCol.key] || '') : '';
-        const projectNumber = extractProjectNumberOnly(group.title, projCode);
+        const projAnp = anpCol ? (group.projectRow?.properties[anpCol.key] || '') : '';
+        const projectNumber = extractProjectNumberOnly(group.title, projAnp);
         const orderedPcs = sortPcsNewestFirst(group.items, titleCol.key);
+        const currentPc = orderedPcs[0] || null;
+
+        if (group.projectRow) {
+          const pRow = group.projectRow;
+          const pDeliveryDate = extractPcDeliveryDate(pRow);
+          const pSaldoNum = effectiveSaldoColKey ? parseNumericValue(pRow.properties[effectiveSaldoColKey]) : NaN;
+          const pEntry = {
+            projectNumber,
+            fullProjectTitle: group.title,
+            pc: pRow,
+            isProjectLevel: true,
+            deliveryDate: pDeliveryDate,
+            pcAnp: projAnp,
+            pcPriority: priorityCol ? (pRow.properties[priorityCol.key] || '') : '',
+            saldoNumeric: isNaN(pSaldoNum) ? Infinity : pSaldoNum
+          };
+
+          if (state.viewRules.doa.includeParents && matchesCustomViewRule(pRow, statusCol, state.viewRules.doa, autoDetectDevolucaoDoa)) {
+            if (!seenDoaIds.has(pRow.id)) {
+              seenDoaIds.add(pRow.id);
+              pendingDoaList.push(pEntry);
+            }
+          }
+
+          if (state.viewRules.saldo.includeParents && matchesCustomViewRule(pRow, statusCol, state.viewRules.saldo, autoDetectPorSaldo)) {
+            if (!seenSaldoIds.has(pRow.id)) {
+              seenSaldoIds.add(pRow.id);
+              balancePcsList.push(pEntry);
+            }
+          }
+        }
+
+        // BLOCO 2 ("Já Entregues"): PCs atuais com Status do Projeto = Aprovada ou Submetida
+        if (currentPc && isPcApprovedOrSubmitted(currentPc, statusCol)) {
+          const curDate = extractPcDeliveryDate(currentPc);
+          const curAnp = anpCol ? (currentPc.properties[anpCol.key] || projAnp || '') : '';
+          const curPriority = priorityCol ? (currentPc.properties[priorityCol.key] || '') : '';
+          alreadyDelivered.push({
+            projectNumber,
+            fullProjectTitle: group.title,
+            pc: currentPc,
+            isProjectLevel: false,
+            deliveryDate: curDate,
+            pcAnp: curAnp,
+            pcPriority: curPriority
+          });
+        }
 
         orderedPcs.forEach(pc => {
-          const deliveryDate = extractPcDeliveryDate(pc, titleCol.key);
-          const delivered = isPcDelivered(pc, statusCol, proformaCol);
-          const pendingDoa = isPcPendingDoa(pc, group.projectRow, titleCol.key);
-          const byBalance = isPcByBalance(pc, group.projectRow, titleCol.key);
+          const deliveryDate = extractPcDeliveryDate(pc);
+          const pcStatusRaw = statusCol ? String(pc.properties[statusCol.key] || '').trim() : '';
+          const pcStatusNorm = normalizeStr(pcStatusRaw);
+
+          const pcAnp = anpCol ? (pc.properties[anpCol.key] || projAnp || '') : '';
+          const pcPriority = priorityCol ? (pc.properties[priorityCol.key] || '') : '';
+          const pcSaldoNum = effectiveSaldoColKey ? parseNumericValue(pc.properties[effectiveSaldoColKey]) : NaN;
 
           const entry = {
             projectNumber,
             fullProjectTitle: group.title,
             pc,
+            isProjectLevel: false,
             deliveryDate,
-            delivered
+            pcAnp,
+            pcPriority,
+            saldoNumeric: isNaN(pcSaldoNum) ? Infinity : pcSaldoNum
           };
 
-          // Bloco 1: Entregas Atuais (de acordo com o período selecionado)
-          if (!delivered) {
+          // BLOCO 1: Tabela por data de entrega
+          const isEmElaboracao = /em\s*elaboracao/.test(pcStatusNorm);
+          if (isEmElaboracao && deliveryDate) {
             let matchesPeriod = false;
-            if (state.deliveryPeriod === 'all_pending') {
+            if (state.deliveryPeriod === 'all_elaboracao') {
               matchesPeriod = true;
-            } else if (state.deliveryPeriod === 'quarter') {
-              matchesPeriod = Boolean(deliveryDate && deliveryDate <= in90Days);
+            } else if (state.deliveryPeriod === 'month') {
+              matchesPeriod = deliveryDate.getMonth() === currentMonth && deliveryDate.getFullYear() === currentYear;
             } else {
-              // 'month' -> Mês atual (ou vencidas até o mês atual)
-              if (deliveryDate) {
-                const isThisMonth = deliveryDate.getMonth() === currentMonth && deliveryDate.getFullYear() === currentYear;
-                const isOverdue = deliveryDate < new Date(currentYear, currentMonth, 1);
-                matchesPeriod = isThisMonth || isOverdue;
-              }
+              matchesPeriod = deliveryDate >= windowStart && deliveryDate <= windowEnd;
             }
-            if (matchesPeriod) {
-              currentDeliveries.push(entry);
+            if (matchesPeriod) currentDeliveries.push(entry);
+          }
+
+          // BLOCO 3: Visualização "Devolução de DOA" (Precisa devolver DOA = Sim)
+          if (matchesCustomViewRule(pc, statusCol, state.viewRules.doa, autoDetectDevolucaoDoa)) {
+            if (!seenDoaIds.has(pc.id)) {
+              seenDoaIds.add(pc.id);
+              pendingDoaList.push(entry);
             }
           }
 
-          // Bloco 2: Já Entregues
-          if (delivered) {
-            alreadyDelivered.push(entry);
-          }
-
-          // Bloco 3: Pendente de Devolução de DOA
-          if (pendingDoa) {
-            pendingDoaList.push(entry);
-          }
-
-          // Bloco 4: PC por Saldo do Projeto
-          if (byBalance) {
-            balancePcsList.push(entry);
+          // BLOCO 4: Visualização "Por saldo"
+          if (matchesCustomViewRule(pc, statusCol, state.viewRules.saldo, autoDetectPorSaldo)) {
+            if (!seenSaldoIds.has(pc.id)) {
+              seenSaldoIds.add(pc.id);
+              balancePcsList.push(entry);
+            }
           }
         });
       });
 
-      // Ordenar listas por data / número do projeto
-      const sortByDateAndProj = (a, b) => {
+      const sortAscendingByDeliveryDate = (a, b) => {
         if (a.deliveryDate && b.deliveryDate && a.deliveryDate.getTime() !== b.deliveryDate.getTime()) {
           return a.deliveryDate - b.deliveryDate;
         }
+        if (a.deliveryDate && !b.deliveryDate) return -1;
+        if (!a.deliveryDate && b.deliveryDate) return 1;
         return String(a.projectNumber).localeCompare(String(b.projectNumber), 'pt-BR', { numeric: true });
       };
 
-      currentDeliveries.sort(sortByDateAndProj);
+      currentDeliveries.sort(sortAscendingByDeliveryDate);
       alreadyDelivered.sort((a, b) => (b.deliveryDate || 0) - (a.deliveryDate || 0));
-      pendingDoaList.sort(sortByDateAndProj);
-      balancePcsList.sort(sortByDateAndProj);
+      pendingDoaList.sort(sortAscendingByDeliveryDate);
+      balancePcsList.sort((a, b) => a.saldoNumeric - b.saldoNumeric);
 
       const statusOptions = (statusCol && statusCol.options && statusCol.options.length > 0)
         ? statusCol.options
         : ['Em elaboração', 'Submetida', 'Aprovada', 'Em Andamento', 'Encerrado'];
 
-      const renderBlockItems = (items, emptyMsg, badgeTheme) => {
+      const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none') => {
         if (items.length === 0) {
           return `<div class="p-8 text-center text-xs text-slate-400">${escapeHtml(emptyMsg)}</div>`;
         }
         return `
-          <div class="divide-y divide-slate-100 max-h-[430px] overflow-y-auto custom-scrollbar">
+          <div class="divide-y divide-slate-100 max-h-[440px] overflow-y-auto custom-scrollbar">
             ${items.map(item => {
               const pc = item.pc;
               const pcTitle = pc.properties[titleCol.key] || 'Sem título';
               const pcStatus = statusCol ? (pc.properties[statusCol.key] || 'Sem status') : '';
-              const dateStr = item.deliveryDate ? item.deliveryDate.toLocaleDateString('pt-BR') : 'Sem data';
+              const dateStr = item.deliveryDate
+                ? item.deliveryDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                : '';
+              const rawExtraVal = (extraColKey && extraColKey !== 'auto') ? (pc.properties[extraColKey] || '') : '';
+              let displayExtraVal = '';
+              if (rawExtraVal) {
+                if (formatMode === 'currency') {
+                  displayExtraVal = formatCurrencyBRL(rawExtraVal);
+                } else if (formatMode === 'doa') {
+                  displayExtraVal = `Precisa devolver DOA: ${rawExtraVal}`;
+                } else {
+                  displayExtraVal = rawExtraVal;
+                }
+              }
+
+              const extraBadgeClasses = formatMode === 'doa'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-indigo-50 text-indigo-800 border-indigo-200 font-mono';
 
               return `
                 <div class="px-4 py-3 hover:bg-slate-50/90 transition-colors flex items-center justify-between gap-3">
@@ -711,11 +888,16 @@
                       <button onclick="openRowModal('${pc.id}')" class="text-xs font-bold text-slate-900 hover:text-blue-600 text-left block truncate max-w-full">
                         ${escapeHtml(pcTitle)}
                       </button>
-                      <div class="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
-                        <span class="inline-flex items-center gap-1">
-                          <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
-                          ${dateStr}
-                        </span>
+                      <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
+                        ${dateStr ? `
+                          <span class="inline-flex items-center gap-1 font-medium text-slate-700">
+                            <i data-lucide="calendar" class="w-3 h-3 text-blue-600"></i>
+                            ${dateStr}
+                          </span>
+                        ` : ''}
+                        ${item.pcAnp ? `<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">ANP ${escapeHtml(item.pcAnp)}</span>` : ''}
+                        ${item.pcPriority ? `<span class="px-1.5 py-0.2 rounded border text-[10px] font-bold ${getPriorityBadgeClasses(item.pcPriority)}">${escapeHtml(item.pcPriority)}</span>` : ''}
+                        ${displayExtraVal ? `<span class="px-2 py-0.5 rounded border font-bold text-[11px] ${extraBadgeClasses}">${escapeHtml(displayExtraVal)}</span>` : ''}
                       </div>
                     </div>
                   </div>
@@ -739,20 +921,31 @@
         `;
       };
 
-      const periodTitleSuffix = state.deliveryPeriod === 'month'
-        ? capitalizedMonth
-        : state.deliveryPeriod === 'quarter'
-          ? 'Próximos 90 dias'
-          : 'Todas Pendentes';
+      const periodLabelMap = {
+        view_window: '1 de ago. → 30 de nov. • Em elaboração',
+        month: 'Mês Atual • Em elaboração',
+        all_elaboracao: 'Todas em elaboração com Data'
+      };
+      const periodSubtitle = periodLabelMap[state.deliveryPeriod] || 'Tabela por data de entrega';
+
+      const doaColLabel = effectiveDoaColKey || 'Precisa devolver DOA';
+      const doaValsText = (state.viewRules.doa.values && state.viewRules.doa.values.length)
+        ? state.viewRules.doa.values.join(', ')
+        : 'Sim';
+      const doaSubtitle = `Aba Devolução de DOA • ${doaColLabel}: ${doaValsText}`;
+
+      const saldoColLabel = effectiveSaldoColKey || 'Saldo (30/09/2026)';
+      const saldoStatusText = state.viewRules.saldo.statusFilter ? ` • Status: ${state.viewRules.saldo.statusFilter}` : '';
+      const saldoSubtitle = `↑ ${saldoColLabel}${saldoStatusText}`;
 
       container.innerHTML = `
-        <!-- Resumo Numérico Superior (Clicável para filtrar/focar) -->
+        <!-- Resumo Numérico Superior -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
           <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-2xs flex items-center justify-between">
             <div>
               <p class="text-xs font-semibold text-blue-700">Entregas Atuais</p>
               <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${currentDeliveries.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(periodTitleSuffix)}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Tabela por data de entrega</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
               <i data-lucide="calendar-clock" class="w-5 h-5"></i>
@@ -763,7 +956,7 @@
             <div>
               <p class="text-xs font-semibold text-emerald-700">Já Entregues</p>
               <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${alreadyDelivered.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Aprovadas / Emitidas</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">PCs atuais Aprovadas / Submetidas</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
               <i data-lucide="check-circle-2" class="w-5 h-5"></i>
@@ -774,7 +967,7 @@
             <div>
               <p class="text-xs font-semibold text-amber-700">Devolução de DOA</p>
               <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${pendingDoaList.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Pendentes de devolução</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Precisa devolver DOA: Sim</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center">
               <i data-lucide="file-warning" class="w-5 h-5"></i>
@@ -785,7 +978,7 @@
             <div>
               <p class="text-xs font-semibold text-indigo-700">PC por Saldo</p>
               <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${balancePcsList.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Vinculadas a saldo</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Aba Por saldo • Em Andamento</p>
             </div>
             <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
               <i data-lucide="wallet" class="w-5 h-5"></i>
@@ -799,53 +992,164 @@
           <!-- BLOCO 1: ENTREGAS ATUAIS -->
           <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                <h2 class="text-sm font-bold text-slate-900">Entregas Atuais (${escapeHtml(periodTitleSuffix)})</h2>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <h2 class="text-sm font-bold text-slate-900">Entregas Atuais (Tabela por Data de Entrega)</h2>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5">${escapeHtml(periodSubtitle)} &bull; ↑ Data de Entrega</p>
               </div>
               <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-600 text-white">${currentDeliveries.length}</span>
             </div>
-            ${renderBlockItems(currentDeliveries, 'Nenhuma entrega pendente neste período.', 'bg-blue-600 text-white shadow-2xs')}
+            ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs')}
           </section>
 
-          <!-- BLOCO 2: JÁ ENTREGUES -->
+          <!-- BLOCO 2: JÁ ENTREGUES (Somente PCs Atuais Aprovadas ou Submetidas) -->
           <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-emerald-50/50 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                <h2 class="text-sm font-bold text-slate-900">Já Entregues</h2>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                  <h2 class="text-sm font-bold text-slate-900">Já Entregues</h2>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5">PCs Atuais com Status do Projeto: Aprovada ou Submetida</p>
               </div>
               <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-600 text-white">${alreadyDelivered.length}</span>
             </div>
-            ${renderBlockItems(alreadyDelivered, 'Nenhuma PC marcada como aprovada/emitida.', 'bg-emerald-50 text-emerald-800 border border-emerald-200')}
+            ${renderBlockItems(alreadyDelivered, 'Nenhuma PC atual marcada como Aprovada ou Submetida.', 'bg-emerald-50 text-emerald-800 border border-emerald-200')}
           </section>
 
-          <!-- BLOCO 3: PENDENTE DE DEVOLUÇÃO DE DOA -->
+          <!-- BLOCO 3: PENDENTE DE DEVOLUÇÃO DE DOA (Precisa devolver DOA = Sim) -->
           <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-amber-50/60 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <h2 class="text-sm font-bold text-slate-900">Pendente de Devolução de DOA</h2>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <h2 class="text-sm font-bold text-slate-900 truncate">Pendente de Devolução de DOA</h2>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5 truncate">${escapeHtml(doaSubtitle)}</p>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500 text-white">${pendingDoaList.length}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="openViewRuleModal('doa')" title="Configurar coluna/filtro da aba Devolução de DOA" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-semibold transition-colors">
+                  <i data-lucide="sliders" class="w-3 h-3"></i>
+                  <span>Regra</span>
+                </button>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-500 text-white">${pendingDoaList.length}</span>
+              </div>
             </div>
-            ${renderBlockItems(pendingDoaList, 'Nenhum projeto pendente de devolução de DOA.', 'bg-amber-100 text-amber-900 border border-amber-300')}
+            ${renderBlockItems(pendingDoaList, 'Nenhum projeto com "Precisa devolver DOA = Sim" encontrado.', 'bg-amber-100 text-amber-900 border border-amber-300', effectiveDoaColKey, 'doa')}
           </section>
 
-          <!-- BLOCO 4: PC POR SALDO DO PROJETO -->
+          <!-- BLOCO 4: PC POR SALDO DO PROJETO (Visualização Por saldo) -->
           <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-indigo-50/50 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                <h2 class="text-sm font-bold text-slate-900">PC por Saldo do Projeto</h2>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                  <h2 class="text-sm font-bold text-slate-900 truncate">PC por Saldo do Projeto (Por saldo)</h2>
+                </div>
+                <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5 truncate">${escapeHtml(saldoSubtitle)}</p>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-600 text-white">${balancePcsList.length}</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="openViewRuleModal('saldo')" title="Ajustar regra da aba Por saldo" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-200 text-[11px] font-semibold transition-colors">
+                  <i data-lucide="sliders" class="w-3 h-3"></i>
+                  <span>Regra</span>
+                </button>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-600 text-white">${balancePcsList.length}</span>
+              </div>
             </div>
-            ${renderBlockItems(balancePcsList, 'Nenhuma PC por saldo identificada.', 'bg-indigo-100 text-indigo-900 border border-indigo-200')}
+            ${renderBlockItems(balancePcsList, 'Nenhum projeto em andamento com saldo encontrado.', 'bg-indigo-100 text-indigo-900 border border-indigo-200', effectiveSaldoColKey, 'currency')}
           </section>
 
         </div>
       `;
+    }
+
+    // Modal de Regra das Visualizações ("Devolução de DOA" e "Por saldo")
+    function openViewRuleModal(target) {
+      state.editingViewRuleTarget = target;
+      const rule = state.viewRules[target];
+      document.getElementById('viewRuleModalTitle').textContent = target === 'doa'
+        ? 'Regra da Visualização: Devolução de DOA'
+        : 'Regra da Visualização: Por saldo';
+
+      const colSelect = document.getElementById('ruleColSelect');
+      colSelect.innerHTML = `<option value="auto">Detecção Automática (Precisa devolver DOA / Saldo)</option>` +
+        state.schema.filter(c => c.type !== 'relation').map(c => {
+          const filledCount = state.rows.filter(r => String(r.properties[c.key] || '').trim() !== '').length;
+          return `<option value="${escapeHtml(c.key)}" ${c.key === rule.colKey ? 'selected' : ''}>${escapeHtml(c.label)} (${c.type} • ${filledCount} preenchidos)</option>`;
+        }).join('');
+
+      document.getElementById('ruleValuesInput').value = (rule.values || []).join(', ');
+      document.getElementById('ruleStatusFilterInput').value = rule.statusFilter || '';
+      document.getElementById('ruleIncludeParentsCheck').checked = Boolean(rule.includeParents);
+      populateRuleValueSuggestions();
+      document.getElementById('viewRuleModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function populateRuleValueSuggestions() {
+      const colKey = document.getElementById('ruleColSelect').value;
+      const chipsWrap = document.getElementById('ruleOptionsChips');
+      if (colKey === 'auto') {
+        chipsWrap.innerHTML = '';
+        return;
+      }
+      const col = state.schema.find(c => c.key === colKey);
+      const uniqueVals = new Set(col?.options || []);
+      state.rows.forEach(r => {
+        const v = String(r.properties[colKey] || '').trim();
+        if (v) uniqueVals.add(v);
+      });
+
+      chipsWrap.innerHTML = Array.from(uniqueVals).slice(0, 16).map(opt => `
+        <button type="button" onclick="toggleRuleChipValue('${escapeHtml(opt)}')" class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 text-[11px] font-medium border border-slate-200">
+          + ${escapeHtml(opt)}
+        </button>
+      `).join('');
+    }
+
+    function toggleRuleChipValue(val) {
+      const inp = document.getElementById('ruleValuesInput');
+      const current = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+      if (!current.includes(val)) {
+        current.push(val);
+        inp.value = current.join(', ');
+      }
+    }
+
+    function saveViewRuleModal(e) {
+      e.preventDefault();
+      const target = state.editingViewRuleTarget;
+      if (!target) return;
+      state.viewRules[target] = {
+        colKey: document.getElementById('ruleColSelect').value,
+        values: document.getElementById('ruleValuesInput').value.split(',').map(s => s.trim()).filter(Boolean),
+        statusFilter: document.getElementById('ruleStatusFilterInput').value.trim(),
+        includeParents: document.getElementById('ruleIncludeParentsCheck').checked
+      };
+      localStorage.setItem('notion_view_rules_v3', JSON.stringify(state.viewRules));
+      closeViewRuleModal();
+      renderAll();
+    }
+
+    function resetViewRuleToAuto() {
+      const target = state.editingViewRuleTarget;
+      if (!target) return;
+      state.viewRules[target] = {
+        colKey: 'auto',
+        values: target === 'doa' ? ['Sim'] : [],
+        statusFilter: target === 'saldo' ? 'Em Andamento' : '',
+        includeParents: true
+      };
+      localStorage.setItem('notion_view_rules_v3', JSON.stringify(state.viewRules));
+      closeViewRuleModal();
+      renderAll();
+    }
+
+    function closeViewRuleModal() {
+      document.getElementById('viewRuleModal').classList.add('hidden');
+      state.editingViewRuleTarget = null;
     }
 
     // 2. GALERIA EM QUADRADINHOS
@@ -853,8 +1157,8 @@
       const groups = groupRowsByProject(rows);
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
       const statusCol = state.schema.find(c => (c.type === 'status' || c.type === 'select') && c.key !== state.projectFieldKey);
-      const codeCol = state.schema.find(c => /c[óo]digo|code/i.test(c.label));
-      const clientCol = state.schema.find(c => /cliente|client/i.test(c.label));
+      const codeCol = state.schema.find(c => /codigo|anp|code/.test(normalizeStr(c.label)));
+      const clientCol = state.schema.find(c => /cliente|financiador|client/.test(normalizeStr(c.label)));
 
       if (groups.length === 0) {
         container.innerHTML = `<div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-500">Nenhum projeto encontrado para os filtros aplicados.</div>`;
@@ -868,8 +1172,8 @@
         const isExpanded = Boolean(state.expandedProjects[group.id]);
 
         const approvedCount = orderedPcs.filter(pc => {
-          const st = statusCol ? String(pc.properties[statusCol.key] || '').toLowerCase() : '';
-          return /aprovad|conclu[íi]d|encerrad|done/.test(st);
+          const st = statusCol ? normalizeStr(pc.properties[statusCol.key]) : '';
+          return /aprovad|concluid|encerrad|done/.test(st);
         }).length;
         const progressPct = orderedPcs.length > 0 ? Math.round((approvedCount / orderedPcs.length) * 100) : 0;
 
@@ -1186,8 +1490,8 @@
       state.presetParentId = projectId;
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
       const proj = state.rows.find(r => r.id === projectId);
-      const codeCol = state.schema.find(c => /c[óo]digo|code/i.test(c.label));
-      const clientCol = state.schema.find(c => /cliente|client/i.test(c.label));
+      const codeCol = state.schema.find(c => /codigo|anp|code/.test(normalizeStr(c.label)));
+      const clientCol = state.schema.find(c => /cliente|financiador|client/.test(normalizeStr(c.label)));
 
       const preset = {};
       preset[titleCol.key] = `PC#${nextPcNum} - `;
@@ -1431,6 +1735,8 @@
             options = propDef.select.options.map(o => o.name);
           } else if (propDef.type === 'status' && propDef.status?.options) {
             options = propDef.status.options.map(o => o.name);
+          } else if (propDef.type === 'multi_select' && propDef.multi_select?.options) {
+            options = propDef.multi_select.options.map(o => o.name);
           }
 
           newSchema.push({
@@ -1528,8 +1834,10 @@
         case 'formula':
           if (prop.formula?.type === 'string') return prop.formula.string || '';
           if (prop.formula?.type === 'number') return String(prop.formula.number ?? '');
+          if (prop.formula?.type === 'boolean') return prop.formula.boolean ? 'Sim' : 'Não';
           return '';
         case 'rollup':
+          if (prop.rollup?.type === 'number') return String(prop.rollup.number ?? '');
           if (prop.rollup?.type === 'array') return prop.rollup.array.map(extractNotionPropertyValue).join(', ');
           return '';
         default: return '';
@@ -1549,6 +1857,9 @@
           notionProps[key] = { status: { name: String(val) } };
         } else if (col.type === 'select' && val) {
           notionProps[key] = { select: { name: String(val) } };
+        } else if (col.type === 'multi_select') {
+          const items = String(val).split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name }));
+          notionProps[key] = { multi_select: items };
         } else if (col.type === 'date') {
           notionProps[key] = { date: val ? { start: String(val) } : null };
         } else if (col.type === 'number') {
