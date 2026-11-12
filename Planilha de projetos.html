@@ -43,7 +43,7 @@
   </script>
 
   <style>
-    /* Custom scrollbar minimalista estilo Notion */
+    /* Custom scrollbar moderna */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -52,17 +52,17 @@
       background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(120, 119, 116, 0.25);
+      background: rgba(100, 116, 139, 0.25);
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(120, 119, 116, 0.45);
+      background: rgba(100, 116, 139, 0.45);
     }
 
     /* Variáveis dinâmicas de cor de destaque */
     :root {
-      --accent-color: #2383e2;
-      --accent-soft: rgba(35, 131, 226, 0.12);
+      --accent-color: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.1);
     }
 
     .accent-bg { background-color: var(--accent-color); }
@@ -70,28 +70,28 @@
     .accent-border { border-color: var(--accent-color); }
     .accent-soft-bg { background-color: var(--accent-soft); }
 
-    /* Cores pastéis oficiais do Notion */
-    .badge-default { background: #e3e2e0; color: #32302c; }
-    .badge-gray    { background: #e3e2e0; color: #32302c; }
-    .badge-brown   { background: #eee0da; color: #442a1e; }
-    .badge-orange  { background: #fadec9; color: #49290e; }
-    .badge-yellow  { background: #fdecc8; color: #402c1b; }
-    .badge-green   { background: #dbeddb; color: #1c3829; }
-    .badge-blue    { background: #d3e5ef; color: #183347; }
-    .badge-purple  { background: #e8deee; color: #412454; }
-    .badge-pink    { background: #f5e0e9; color: #4c2337; }
-    .badge-red     { background: #ffe2dd; color: #5d1715; }
+    /* Badges modernos com borda sutil */
+    .badge-default { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+    .badge-gray    { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+    .badge-brown   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-orange  { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+    .badge-yellow  { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .badge-green   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-blue    { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-purple  { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .badge-pink    { background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8; }
+    .badge-red     { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
-    .dark .badge-default { background: #373737; color: #e3e2e0; }
-    .dark .badge-gray    { background: #373737; color: #e3e2e0; }
-    .dark .badge-brown   { background: #4a3228; color: #e6cfc5; }
-    .dark .badge-orange  { background: #5c3b23; color: #f6d5bc; }
-    .dark .badge-yellow  { background: #564328; color: #f7e4be; }
-    .dark .badge-green   { background: #243d30; color: #cde5d5; }
-    .dark .badge-blue    { background: #1f394a; color: #c7dfed; }
-    .dark .badge-purple  { background: #3c2949; color: #dfd1ea; }
-    .dark .badge-pink    { background: #4e2c3c; color: #efd2df; }
-    .dark .badge-red     { background: #522624; color: #f7cfc9; }
+    .dark .badge-default { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+    .dark .badge-gray    { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+    .dark .badge-brown   { background: #451a03; color: #fcd34d; border-color: #78350f; }
+    .dark .badge-orange  { background: #431407; color: #fdba74; border-color: #7c2d12; }
+    .dark .badge-yellow  { background: #422006; color: #fde047; border-color: #713f12; }
+    .dark .badge-green   { background: #052e16; color: #86efac; border-color: #14532d; }
+    .dark .badge-blue    { background: #172554; color: #93c5fd; border-color: #1e3a8a; }
+    .dark .badge-purple  { background: #3b0764; color: #d8b4fe; border-color: #581c87; }
+    .dark .badge-pink    { background: #500724; color: #f9a8d4; border-color: #831843; }
+    .dark .badge-red     { background: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
 
     /* Animações suaves */
     @keyframes fadeIn {
@@ -103,7 +103,7 @@
     }
   </style>
 </head>
-<body class="bg-notion-bg text-notion-text dark:bg-notion-darkBg dark:text-notion-darkText font-sans antialiased transition-colors duration-200 selection:bg-blue-500/20">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased transition-colors duration-200 selection:bg-blue-500/20">
 
   <!-- Toast / Notificações Não-Intrusivas -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -111,17 +111,22 @@
   <!-- Layout Principal -->
   <div class="min-h-screen flex flex-col">
 
-    <!-- Topbar Minimalista Estilo Notion -->
-    <header class="sticky top-0 z-30 h-12 px-4 border-b border-notion-border dark:border-notion-darkBorder bg-notion-bg/90 dark:bg-notion-darkBg/90 backdrop-blur-md flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-7 h-7 rounded-md accent-bg text-white flex items-center justify-center shadow-sm shrink-0">
-          <i data-lucide="boxes" class="w-4 h-4"></i>
+    <!-- Topbar Moderna Flutuante -->
+    <header class="sticky top-0 z-30 h-14 px-4 sm:px-8 border-b border-slate-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-8 h-8 rounded-xl accent-bg text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+          <i data-lucide="layers" class="w-4 h-4"></i>
         </div>
-        <div class="flex items-center gap-1.5 text-sm truncate">
-          <span class="font-medium text-notion-muted dark:text-notion-darkMuted hidden sm:inline">Workspace</span>
-          <span class="text-notion-muted/50 hidden sm:inline">/</span>
-          <span id="headerDbTitle" class="font-semibold truncate">Gestão de Projetos & PCs</span>
-          <span id="connectionBadge" class="ml-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <input
+            id="pageTitleInput"
+            type="text"
+            value="Gestão de Projetos & PCs"
+            onchange="updateDbTitle(this.value)"
+            class="font-bold text-sm sm:text-base tracking-tight bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded-lg px-1.5 -ml-1.5 truncate max-w-[210px] sm:max-w-xs"
+          />
+          <span id="headerDbTitle" class="hidden">Gestão de Projetos & PCs</span>
+          <span id="connectionBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
             Modo Demo
           </span>
@@ -130,9 +135,9 @@
 
       <!-- Ações Rápidas da Topbar -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <div class="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border border-notion-border dark:border-notion-darkBorder text-xs">
-          <i data-lucide="clock" class="w-3.5 h-3.5 text-notion-muted"></i>
-          <select id="autoRefreshSelect" onchange="setAutoRefresh(this.value)" class="bg-transparent focus:outline-none text-xs cursor-pointer dark:bg-notion-darkBg">
+        <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 text-xs">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+          <select id="autoRefreshSelect" onchange="setAutoRefresh(this.value)" class="bg-transparent focus:outline-none text-xs cursor-pointer dark:bg-slate-900">
             <option value="0">Auto-Sync: Off</option>
             <option value="15000">A cada 15s</option>
             <option value="30000">A cada 30s</option>
@@ -140,38 +145,36 @@
           </select>
         </div>
 
-        <button onclick="fetchFromNotionAPI(true)" title="Sincronizar agora com o Notion" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+        <button onclick="fetchFromNotionAPI(true)" title="Sincronizar agora" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
           <i id="quickSyncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-          <span class="hidden md:inline">Atualizar</span>
+          <span class="hidden md:inline">Sincronizar</span>
         </button>
 
-        <button onclick="openConnectModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium accent-bg text-white hover:opacity-90 transition shadow-sm cursor-pointer">
+        <button onclick="openConnectModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold accent-bg text-white hover:opacity-90 transition shadow-sm shadow-blue-500/20 cursor-pointer">
           <i data-lucide="plug-zap" class="w-3.5 h-3.5"></i>
-          <span>Conectar Notion</span>
+          <span class="hidden sm:inline">API Notion</span>
         </button>
 
         <div class="relative">
-          <button onclick="toggleExportMenu()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+          <button onclick="toggleExportMenu()" title="Exportar dados" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
-            <span class="hidden md:inline">Exportar</span>
           </button>
-          <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-44 rounded-xl bg-white dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder shadow-lg py-1 z-40 text-xs">
-            <button onclick="exportData('csv')" class="w-full px-3 py-2 text-left hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2 cursor-pointer">
+          <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-44 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 z-40 text-xs">
+            <button onclick="exportData('csv')" class="w-full px-3.5 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i> Exportar CSV
             </button>
-            <button onclick="exportData('json')" class="w-full px-3 py-2 text-left hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2 cursor-pointer">
+            <button onclick="exportData('json')" class="w-full px-3.5 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer">
               <i data-lucide="file-json" class="w-3.5 h-3.5 text-blue-600"></i> Exportar JSON
             </button>
           </div>
         </div>
 
-        <button onclick="toggleCustomizeDrawer()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+        <button onclick="toggleCustomizeDrawer()" title="Personalizar layout" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
           <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Customizar</span>
         </button>
 
-        <button onclick="toggleDarkMode()" title="Alternar Tema Claro/Escuro" class="p-1.5 rounded-lg border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-          <i data-lucide="sun-moon" class="w-4 h-4"></i>
+        <button onclick="toggleDarkMode()" title="Alternar Tema Claro/Escuro" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+          <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
         </button>
       </div>
     </header>
@@ -182,14 +185,14 @@
         <div class="flex items-center gap-2">
           <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
           <span>
-            <strong>Conexão automática aguardando Proxy CORS:</strong> Seu navegador bloqueou a chamada direta para <code>api.notion.com</code>. Rode um proxy local ou informe uma URL de proxy em <strong>Conectar Notion</strong>.
+            <strong>Conexão automática aguardando Proxy CORS:</strong> Rode um proxy local ou configure em <strong>API Notion</strong>.
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="copyLocalProxyCmd()" class="px-2.5 py-1 rounded-md bg-amber-600 text-white font-medium hover:bg-amber-700 transition cursor-pointer">
-            Copiar Comando Proxy Local
+          <button onclick="copyLocalProxyCmd()" class="px-2.5 py-1 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700 transition cursor-pointer">
+            Copiar Comando Proxy
           </button>
-          <button onclick="fetchFromNotionAPI(true)" class="px-2.5 py-1 rounded-md border border-amber-400 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 font-medium cursor-pointer">
+          <button onclick="fetchFromNotionAPI(true)" class="px-2.5 py-1 rounded-lg border border-amber-400 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 font-medium cursor-pointer">
             Tentar Novamente
           </button>
           <button onclick="document.getElementById('corsAlertBanner').classList.add('hidden')" class="p-1 opacity-70 hover:opacity-100 cursor-pointer">
@@ -199,149 +202,131 @@
       </div>
     </div>
 
-    <!-- Cabeçalho da Página (Título + Ícone + Métricas de Projetos & PCs) -->
-    <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-2">
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div class="flex items-start gap-3.5">
-          <button onclick="cyclePageIcon()" title="Clique para trocar o ícone" class="text-4xl sm:text-5xl hover:scale-105 transition-transform select-none cursor-pointer" id="pageIcon">🏗️</button>
-          <div>
-            <input
-              id="pageTitleInput"
-              type="text"
-              value="Gestão de Projetos & PCs"
-              onchange="updateDbTitle(this.value)"
-              class="text-2xl sm:text-3xl font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded px-1 -ml-1 w-full"
-            />
-            <p id="pageSubtitle" class="text-xs sm:text-sm text-notion-muted dark:text-notion-darkMuted mt-1 px-1">
-              Organização hierárquica em blocos: cada Projeto agrupa automaticamente suas PCs (PC 1, PC 2, PC 3...) e métricas consolidadas.
-            </p>
-          </div>
-        </div>
+    <!-- Hero Compacto com Barra de Busca Estilo Google + KPIs em Linha -->
+    <section class="bg-white dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800/80">
+      <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-4 space-y-3.5">
 
-        <!-- Mini KPIs Dinâmicos Calculados Automaticamente -->
-        <div id="kpiStrip" class="flex flex-wrap items-center gap-2 sm:gap-3">
-          <!-- Preenchido via JS -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Barra de Controle das Views (Blocos de Projeto + Mapeamento Projeto/PC + Busca + Filtros) -->
-    <section class="max-w-7xl w-full mx-auto px-4 sm:px-8 mt-4">
-      <div class="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-notion-border dark:border-notion-darkBorder">
-        
-        <!-- Abas de Visualização Focadas em Projetos & PCs -->
-        <div class="flex items-center gap-1 overflow-x-auto">
-          <button onclick="setViewMode('blocks')" id="tab-blocks" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
-            <i data-lucide="boxes" class="w-3.5 h-3.5"></i>
-            <span>Blocos de Projetos (PCs)</span>
-          </button>
-          <button onclick="setViewMode('kanban')" id="tab-kanban" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
-            <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
-            <span>Fluxo de PCs</span>
-          </button>
-          <button onclick="setViewMode('table')" id="tab-table" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
-            <i data-lucide="list-tree" class="w-3.5 h-3.5"></i>
-            <span>Lista Geral</span>
-          </button>
-        </div>
-
-        <!-- Controles Dinâmicos à Direita -->
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Seletor de Modo de Agrupamento (Subitens Nativos do Notion ou por Coluna) -->
-          <div class="flex items-center gap-1.5 border border-notion-border dark:border-notion-darkBorder rounded-lg px-2.5 py-1 text-xs bg-notion-sidebar/60 dark:bg-notion-darkSidebar/60" title="Escolha como os blocos de Projeto são formados">
-            <i data-lucide="git-fork" class="w-3.5 h-3.5 accent-text"></i>
-            <span class="text-notion-muted hidden sm:inline">Agrupar Blocos por:</span>
-            <select id="projectFieldSelect" onchange="updateProjectGroupingField(this.value)" class="bg-transparent font-medium focus:outline-none text-xs cursor-pointer pr-1 dark:bg-notion-darkBg">
-              <!-- Preenchido via JS -->
-            </select>
+        <!-- Linha 1: Barra de Busca Central Estilo Google + Botão Nova PC -->
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div class="relative flex-1 group">
+            <div class="flex items-center w-full h-11 px-4 rounded-full bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700 shadow-xs group-focus-within:bg-white dark:group-focus-within:bg-slate-900 group-focus-within:border-blue-500 group-focus-within:shadow-md group-focus-within:shadow-blue-500/10 transition-all">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 shrink-0 mr-3 transition-colors"></i>
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Pesquisar projeto, código (ex: 420402), PC#19, status ou cliente..."
+                oninput="handleSearch(this.value)"
+                class="w-full bg-transparent text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none"
+              />
+              <button
+                id="clearSearchBtn"
+                onclick="clearSearchInput()"
+                title="Limpar pesquisa"
+                class="hidden p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition cursor-pointer mr-1"
+              >
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              </button>
+              <kbd class="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-semibold text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shrink-0">
+                /
+              </kbd>
+            </div>
           </div>
 
-          <!-- Busca Instantânea -->
-          <div class="relative">
-            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-notion-muted"></i>
-            <input
-              id="searchInput"
-              type="text"
-              placeholder="Buscar projeto ou PC..."
-              oninput="handleSearch(this.value)"
-              class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-notion-border dark:border-notion-darkBorder bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-40 sm:w-48 transition"
-            />
-          </div>
-
-          <!-- Botão Filtros -->
-          <button onclick="toggleFilterBar()" id="btnToggleFilters" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-            <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-            <span>Filtrar</span>
-            <span id="filterCountBadge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] accent-bg text-white">0</span>
-          </button>
-
-          <!-- Botão Expandir / Recolher Todos os Blocos -->
-          <button onclick="toggleAllProjectBlocks()" id="btnToggleAllBlocks" title="Expandir ou recolher todos os blocos" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-            <i data-lucide="chevrons-down-up" class="w-3.5 h-3.5"></i>
-          </button>
-
-          <!-- Botão Nova PC -->
-          <button onclick="openRowModal()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium accent-bg text-white hover:opacity-90 transition shadow-sm cursor-pointer">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Nova PC</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Barra Expansível de Filtros Combináveis -->
-      <div id="filterBar" class="hidden py-3 px-3 mt-2 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder animate-fade">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2 text-xs font-medium text-notion-muted">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 accent-text"></i>
-            <span>Regras de Filtro Dinâmico</span>
-            <select id="filterLogicSelect" onchange="state.filterLogic = this.value; renderAll()" class="px-2 py-0.5 rounded border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkBg text-xs">
-              <option value="AND">Todas as condições (E)</option>
-              <option value="OR">Qualquer condição (OU)</option>
-            </select>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="addFilterRule()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium accent-soft-bg accent-text hover:opacity-80 transition cursor-pointer">
-              <i data-lucide="plus" class="w-3 h-3"></i> Adicionar Regra
+          <!-- Ações Principais -->
+          <div class="flex items-center justify-between md:justify-end gap-2 shrink-0">
+            <button onclick="openRowModal()" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs font-semibold accent-bg text-white hover:opacity-95 transition shadow-sm shadow-blue-500/20 cursor-pointer">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Nova PC</span>
             </button>
-            <button onclick="clearFilters()" class="text-xs text-notion-muted hover:text-red-500 transition cursor-pointer">Limpar tudo</button>
+
+            <button onclick="toggleFilterBar()" id="btnToggleFilters" class="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer">
+              <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+              <span>Filtros</span>
+              <span id="filterCountBadge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] accent-bg text-white">0</span>
+            </button>
+
+            <button onclick="toggleAllProjectBlocks()" id="btnToggleAllBlocks" title="Expandir ou recolher todos os blocos" class="inline-flex items-center justify-center w-10 h-10 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer">
+              <i data-lucide="chevrons-down-up" class="w-4 h-4"></i>
+            </button>
           </div>
         </div>
-        <div id="filterRulesList" class="flex flex-col gap-2">
-          <!-- Regras injetadas dinamicamente -->
+
+        <!-- Linha 2: Abas Modernas (Segment Control) + Agrupamento + KPIs Compactos -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Segment Control das Views -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/70 dark:border-slate-700/70">
+              <button onclick="setViewMode('blocks')" id="tab-blocks" class="view-tab inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition cursor-pointer">
+                <i data-lucide="grid-3x3" class="w-3.5 h-3.5"></i>
+                <span>Galeria de Projetos</span>
+              </button>
+              <button onclick="setViewMode('kanban')" id="tab-kanban" class="view-tab inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer">
+                <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+                <span>Kanban PCs</span>
+              </button>
+              <button onclick="setViewMode('table')" id="tab-table" class="view-tab inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer">
+                <i data-lucide="list-tree" class="w-3.5 h-3.5"></i>
+                <span>Lista</span>
+              </button>
+            </div>
+
+            <!-- Seletor de Agrupamento -->
+            <div class="inline-flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs bg-white dark:bg-slate-800/70">
+              <i data-lucide="git-fork" class="w-3.5 h-3.5 accent-text"></i>
+              <span class="text-slate-400 hidden sm:inline">Agrupar:</span>
+              <select id="projectFieldSelect" onchange="updateProjectGroupingField(this.value)" class="bg-transparent font-semibold focus:outline-none text-xs cursor-pointer pr-1 dark:bg-slate-800">
+                <!-- Preenchido via JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- KPIs Compactos à Direita -->
+          <div id="kpiStrip" class="flex flex-wrap items-center gap-2">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+
+        <!-- Barra Expansível de Filtros Combináveis (Sem espaço fantasma quando oculta) -->
+        <div id="filterBar" class="hidden p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 animate-fade">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 accent-text"></i>
+              <span>Filtros Avançados</span>
+              <select id="filterLogicSelect" onchange="state.filterLogic = this.value; renderAll()" class="px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium">
+                <option value="AND">Todas as condições (E)</option>
+                <option value="OR">Qualquer condição (OU)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="addFilterRule()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold accent-soft-bg accent-text hover:opacity-80 transition cursor-pointer">
+                <i data-lucide="plus" class="w-3 h-3"></i> Adicionar Regra
+              </button>
+              <button onclick="clearFilters()" class="text-xs text-slate-400 hover:text-red-500 transition cursor-pointer">Limpar tudo</button>
+            </div>
+          </div>
+          <div id="filterRulesList" class="flex flex-col gap-2">
+            <!-- Regras injetadas dinamicamente -->
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Área Principal de Conteúdo (Blocos de Projetos / Kanban / Lista) -->
-          <div class="flex items-center gap-2">
-            <button onclick="addFilterRule()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium accent-soft-bg accent-text hover:opacity-80 transition cursor-pointer">
-              <i data-lucide="plus" class="w-3 h-3"></i> Adicionar Regra
-            </button>
-            <button onclick="clearFilters()" class="text-xs text-notion-muted hover:text-red-500 transition cursor-pointer">Limpar tudo</button>
-          </div>
-        </div>
-        <div id="filterRulesList" class="flex flex-col gap-2">
-          <!-- Regras injetadas dinamicamente -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Área Principal de Conteúdo (Tabela / Kanban / Galeria) -->
     <main id="mainViewport" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-5 overflow-x-hidden">
       <!-- Renderizado dinamicamente via JS -->
     </main>
 
     <!-- Rodapé Discreto -->
-    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-4 border-t border-notion-border dark:border-notion-darkBorder flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-notion-muted dark:text-notion-darkMuted">
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
       <div class="flex items-center gap-2">
         <span id="footerStats">0 blocos de projeto • 0 PCs exibidas</span>
         <span>•</span>
-        <button onclick="loadDemoDataset('projects')" class="hover:underline cursor-pointer">Exemplo: Projetos & PCs</button>
+        <button onclick="loadDemoDataset('projects')" class="hover:text-slate-600 dark:hover:text-slate-200 hover:underline cursor-pointer">Exemplo: Projetos & PCs</button>
         <span>•</span>
-        <button onclick="loadDemoDataset('crm')" class="hover:underline cursor-pointer">Exemplo: Clientes & Entregas</button>
+        <button onclick="loadDemoDataset('crm')" class="hover:text-slate-600 dark:hover:text-slate-200 hover:underline cursor-pointer">Exemplo: Clientes & Entregas</button>
       </div>
       <div>
-        Organização Hierárquica Projeto &rarr; PC 1, PC 2, PC 3 • Notion API v2022-06-28
+        Painel Dinâmico de Projetos & PCs • Sincronização Notion
       </div>
     </footer>
   </div>
@@ -546,6 +531,53 @@
   </div>
 
   <!-- ===================================================================== -->
+  <!-- MODAL: ANOTAÇÕES INTERNAS DA PÁGINA DO NOTION (BLOCKS + COMENTÁRIOS)  -->
+  <!-- ===================================================================== -->
+  <div id="notesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden animate-fade">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-950/40">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl accent-soft-bg accent-text flex items-center justify-center shrink-0">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Anotações da Página</span>
+            <h3 id="notesModalTitle" class="font-bold text-sm text-slate-900 dark:text-white truncate">PC</h3>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <a id="notesOpenNotionLink" href="#" target="_blank" class="hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <span>Abrir no Notion</span>
+            <i data-lucide="external-link" class="w-3 h-3"></i>
+          </a>
+          <button onclick="closeNotesModal()" class="p-1.5 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-800 cursor-pointer">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Conteúdo das Anotações -->
+      <div id="notesModalBody" class="p-5 overflow-y-auto flex-1 space-y-3 text-xs">
+        <!-- Renderizado dinamicamente -->
+      </div>
+
+      <!-- Adicionar Nova Anotação (Bullet) -->
+      <form onsubmit="appendNoteBulletToNotion(event)" class="p-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-center gap-2">
+        <input
+          id="newNoteInput"
+          type="text"
+          placeholder="Adicionar nova anotação em tópico (ex: 12/11/2026 - PC aprovada)..."
+          class="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+        <button type="submit" id="btnAddNoteSubmit" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold accent-bg text-white hover:opacity-90 transition shrink-0 cursor-pointer">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Adicionar</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- JAVASCRIPT: MOTOR DINÂMICO DO NOTION VIEWER                           -->
   <!-- ===================================================================== -->
   <script>
@@ -578,7 +610,7 @@
       sort: { field: '', direction: 'asc' },
       projectFieldKey: '__notion_subitems__', // '__notion_subitems__' = Hierarquia nativa de Subitens do Notion (setinha) ou chave de coluna
       pcFieldKey: 'title',
-      collapsedProjects: {}, // { [projectIdOrName]: boolean }
+      expandedHistoryProjects: {}, // { [projectIdOrName]: boolean } - controla se as PCs anteriores estão expandidas
       editingRowId: null,
       schema: [],
       rows: []
@@ -670,6 +702,12 @@
           {
             id: 'pc_420402_19',
             parentId: 'proj_420402',
+            notes: [
+              { type: 'bullet', text: 'DOA e RCI ajustados' },
+              { type: 'bullet', text: 'Pendências recebidas do OTIC - COM SM' },
+              { type: 'bullet', text: '10/02/2026 - PC submetida' },
+              { type: 'bullet', text: '24/02/2026 - PC aprovada - proforma solicitada' }
+            ],
             properties: {
               title: 'PC#19 - 01/12/2025 a 31/08/2026',
               status: 'Submetida',
@@ -837,6 +875,7 @@
         parsedRows.push({
           id: page.id || `notion_${idx}`,
           notionPageId: page.id || null,
+          notionUrl: page.url || null,
           parentId: null,
           _relations: relationFields,
           properties: rowData
@@ -863,7 +902,7 @@
       state.sourceMode = mode;
       state.filters = [];
       state.sort = { field: '', direction: 'asc' };
-      state.collapsedProjects = {};
+      state.expandedHistoryProjects = {};
 
       detectProjectAndPcFields();
 
@@ -1005,6 +1044,15 @@
 
       // Auto-Sync imediato ao abrir a página
       await fetchFromNotionAPI(false);
+
+      // Atalho de teclado "/" estilo Google para focar rapidamente na barra de pesquisa
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          const searchEl = document.getElementById('searchInput');
+          if (searchEl) searchEl.focus();
+        }
+      });
     });
 
     function extractNotionId(input) {
@@ -1059,12 +1107,15 @@
       state.sort = { field: '', direction: 'asc' };
       state.projectFieldKey = ds.projectFieldKey || 'projeto';
       state.pcFieldKey = ds.pcFieldKey || 'title';
-      state.collapsedProjects = {};
+      state.expandedHistoryProjects = {};
 
-      document.getElementById('pageIcon').textContent = ds.icon;
+      const pageIconEl = document.getElementById('pageIcon');
+      if (pageIconEl) pageIconEl.textContent = ds.icon;
       document.getElementById('pageTitleInput').value = ds.title;
       document.getElementById('headerDbTitle').textContent = ds.title;
       document.getElementById('searchInput').value = '';
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn) clearBtn.classList.add('hidden');
 
       updateConnectionBadge('demo');
       syncControlSelectors();
@@ -1668,24 +1719,124 @@
       });
     }
 
-    function toggleProjectBlock(projectKey) {
-      state.collapsedProjects[projectKey] = !state.collapsedProjects[projectKey];
+    // Extrai o número da PC (ex: PC#19 -> 19, PC 6 -> 6) para identificar a mais recente
+    function extractPcSequenceNumber(titleStr) {
+      const str = String(titleStr || '');
+      const pcMatch = str.match(/pc\s*#?\s*(\d+)/i);
+      if (pcMatch) return parseInt(pcMatch[1], 10);
+      return -1;
+    }
+
+    // Ordena PCs da mais recente para a mais antiga
+    function sortPcsNewestFirst(items, titleKey) {
+      return [...items].sort((a, b) => {
+        const titleA = String(a.properties[titleKey] ?? '');
+        const titleB = String(b.properties[titleKey] ?? '');
+        const numA = extractPcSequenceNumber(titleA);
+        const numB = extractPcSequenceNumber(titleB);
+        if (numA !== -1 && numB !== -1 && numA !== numB) {
+          return numB - numA; // Maior número de PC primeiro (ex: PC#19 antes de PC#9)
+        }
+        return titleB.localeCompare(titleA, 'pt-BR', { numeric: true });
+      });
+    }
+
+    function toggleProjectHistory(projectKey) {
+      state.expandedHistoryProjects[projectKey] = !state.expandedHistoryProjects[projectKey];
       renderAll();
     }
 
     function toggleAllProjectBlocks() {
       const groups = groupRowsByProject(getProcessedRows());
-      const anyExpanded = groups.some(g => !state.collapsedProjects[g.projectId]);
+      const anyExpanded = groups.some(g => Boolean(state.expandedHistoryProjects[g.projectId]));
       groups.forEach(g => {
-        state.collapsedProjects[g.projectId] = anyExpanded;
+        state.expandedHistoryProjects[g.projectId] = !anyExpanded;
       });
       renderAll();
     }
 
     function updateProjectGroupingField(newKey) {
       state.projectFieldKey = newKey;
-      state.collapsedProjects = {};
+      state.expandedHistoryProjects = {};
       renderAll();
+    }
+
+    // Abre o modal de criação já pré-vinculado ao Projeto Pai selecionado
+    function openNewPcForProject(projectId, projectName, suggestedTitle) {
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      if (state.projectFieldKey === '__notion_subitems__' && projectId && !projectId.startsWith('__')) {
+        openRowModal(null, '__parent_id__', projectId);
+      } else {
+        openRowModal(null, state.projectFieldKey, projectName);
+      }
+      const titleInput = document.querySelector(`#rowFormFields input[name="${titleCol.key}"]`);
+      if (titleInput && suggestedTitle) {
+        titleInput.value = `${suggestedTitle} — `;
+        titleInput.focus();
+      }
+    }
+
+    function renderSinglePcCard(row, options = {}) {
+      const { isLatest = false, titleCol, statusCol, progressCol, extraCols } = options;
+      const pcTitle = row.properties[titleCol.key] || 'PC sem título';
+      const statusVal = statusCol ? row.properties[statusCol.key] : '';
+      const statusColor = statusCol ? getOptionColor(statusCol.key, statusVal) : 'gray';
+      const rowPct = progressCol ? Math.max(0, Math.min(100, Number(row.properties[progressCol.key]) || 0)) : null;
+
+      return `
+        <div
+          onclick="openRowModal('${row.id}')"
+          class="group relative p-2.5 rounded-xl border ${isLatest ? 'border-blue-500/35 bg-blue-50/40 dark:bg-blue-950/25' : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/70'} hover:border-blue-500/60 hover:shadow-xs transition-all cursor-pointer"
+        >
+          <div class="flex items-center justify-between gap-2 mb-1">
+            ${isLatest ? `
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider accent-soft-bg accent-text">
+                <i data-lucide="sparkles" class="w-2.5 h-2.5"></i> Mais Recente
+              </span>
+            ` : `<span class="text-[10px] font-medium text-slate-400">Histórico</span>`}
+
+            <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+              <button
+                onclick="openPageNotesModal('${row.id}')"
+                title="Ver anotações internas desta PC"
+                class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-blue-500 hover:accent-text transition cursor-pointer"
+              >
+                <i data-lucide="file-text" class="w-2.5 h-2.5"></i>
+                <span>Notas</span>
+              </button>
+              ${statusCol ? `
+                <select
+                  onchange="updateInlineSelect('${row.id}', '${statusCol.key}', this.value)"
+                  class="appearance-none cursor-pointer focus:outline-none rounded-md px-2 py-0.5 text-[10px] font-semibold badge-${statusColor}"
+                >
+                  <option value="">Status...</option>
+                  ${(statusCol.options || []).map(o => `<option value="${escapeHtml(o.name)}" ${statusVal === o.name ? 'selected' : ''}>${escapeHtml(o.name)}</option>`).join('')}
+                  ${statusVal && !(statusCol.options || []).some(o => o.name === statusVal) ? `<option value="${escapeHtml(statusVal)}" selected>${escapeHtml(statusVal)}</option>` : ''}
+                </select>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="font-semibold text-xs text-slate-800 dark:text-slate-100 group-hover:accent-text transition line-clamp-2 leading-snug" title="${escapeHtml(pcTitle)}">
+            ${escapeHtml(pcTitle)}
+          </div>
+
+          ${extraCols.length > 0 ? `
+            <div class="flex flex-wrap items-center gap-1 mt-1.5">
+              ${extraCols.slice(0, 2).map(col => renderCompactCardProp(row, col)).filter(Boolean).join('')}
+            </div>
+          ` : ''}
+
+          ${rowPct !== null ? `
+            <div class="mt-2 pt-1.5 border-t border-slate-200/50 dark:border-slate-800 flex items-center gap-2">
+              <div class="flex-1 h-1 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full ${rowPct >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full" style="width: ${rowPct}%"></div>
+              </div>
+              <span class="text-[10px] font-medium text-slate-400 tabular-nums">${rowPct}%</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
     }
 
     function renderProjectBlocksView(container, rows) {
@@ -1706,20 +1857,23 @@
         c.key !== statusCol?.key
       );
 
-      let html = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">`;
+      // Grid estilo Galeria com vários quadradinhos responsivos (1 a 4 colunas)
+      let html = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">`;
 
       projectGroups.forEach(group => {
         const { projectId, projectRow, projectName, items } = group;
-        const isCollapsed = Boolean(state.collapsedProjects[projectId]);
+        const isHistoryExpanded = Boolean(state.expandedHistoryProjects[projectId]);
 
-        // Status e metadados do próprio Projeto Pai (quando vindo da linha pai do Notion)
+        const orderedPcs = sortPcsNewestFirst(items, titleCol.key);
+        const latestPc = orderedPcs[0] || null;
+        const previousPcs = orderedPcs.slice(1);
+
         const parentStatusVal = projectRow && statusCol ? projectRow.properties[statusCol.key] : '';
         const parentStatusColor = statusCol && parentStatusVal ? getOptionColor(statusCol.key, parentStatusVal) : 'blue';
         const parentBadges = projectRow
-          ? extraCols.slice(0, 3).map(col => renderCompactCardProp(projectRow, col)).filter(Boolean).join('')
+          ? extraCols.slice(0, 2).map(col => renderCompactCardProp(projectRow, col)).filter(Boolean).join('')
           : '';
 
-        // Cálculo de progresso consolidado das PCs do Projeto
         let projectProgress = 0;
         if (progressCol && items.length > 0) {
           const sumPct = items.reduce((acc, r) => acc + (Number(r.properties[progressCol.key]) || 0), 0);
@@ -1733,151 +1887,103 @@
           ? items.reduce((acc, r) => acc + (Number(r.properties[currencyCol.key]) || 0), 0)
           : null;
 
-        const nextPcNumber = items.length + 1;
+        const maxPcNum = orderedPcs.reduce((max, r) => Math.max(max, extractPcSequenceNumber(r.properties[titleCol.key])), 0);
+        const nextPcNumber = maxPcNum > 0 ? maxPcNum + 1 : items.length + 1;
         const suggestedPcTitle = `PC#${nextPcNumber}`;
         const safeProjectId = escapeHtml(projectId);
         const safeProjectName = escapeHtml(projectName);
 
         html += `
-          <div class="rounded-2xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar/80 shadow-sm hover:shadow-md transition-all overflow-hidden animate-fade flex flex-col">
+          <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden animate-fade flex flex-col justify-between">
             
-            <!-- Cabeçalho do Bloco de Projeto -->
-            <div class="p-4 sm:p-5 bg-gradient-to-r from-notion-sidebar to-white dark:from-notion-darkSidebar dark:to-notion-darkBg border-b border-notion-border dark:border-notion-darkBorder">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex items-start gap-3 min-w-0">
-                  <button
-                    onclick="toggleProjectBlock('${safeProjectId}')"
-                    class="mt-0.5 p-1.5 rounded-lg border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkBg hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer shrink-0"
-                    title="${isCollapsed ? 'Expandir PCs do Projeto' : 'Recolher PCs do Projeto'}"
-                  >
-                    <i data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-4 h-4"></i>
-                  </button>
-                  <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                      ${parentStatusVal ? renderBadge(parentStatusVal, parentStatusColor) : `
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold badge-blue">
-                          <i data-lucide="folder" class="w-3 h-3"></i> Projeto
-                        </span>
-                      `}
-                      <span class="text-xs font-medium text-notion-muted">
-                        ${items.length} ${items.length === 1 ? 'PC (subitem)' : 'PCs (subitens)'}
+            <!-- Topo do Quadradinho (Projeto) -->
+            <div>
+              <!-- Faixa visual superior -->
+              <div class="h-1.5 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-400"></div>
+
+              <div class="p-3.5 border-b border-slate-100 dark:border-slate-800/80">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    ${parentStatusVal ? renderBadge(parentStatusVal, parentStatusColor) : `
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold badge-blue">
+                        Projeto
                       </span>
-                      ${parentBadges}
-                    </div>
-                    <h3
-                      ${projectRow ? `onclick="openRowModal('${projectRow.id}')"` : ''}
-                      class="font-bold text-base sm:text-lg tracking-tight text-notion-text dark:text-notion-darkText truncate ${projectRow ? 'hover:accent-text cursor-pointer' : ''}"
-                      title="${safeProjectName}"
-                    >
-                      ${safeProjectName}
-                    </h3>
+                    `}
+                    <span class="text-[11px] font-medium text-slate-400 shrink-0">
+                      • ${items.length} ${items.length === 1 ? 'PC' : 'PCs'}
+                    </span>
                   </div>
+
+                  <button
+                    onclick="openNewPcForProject('${safeProjectId}', '${safeProjectName}', '${escapeHtml(suggestedPcTitle)}')"
+                    class="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-semibold accent-soft-bg accent-text hover:opacity-85 transition shrink-0 cursor-pointer"
+                    title="Adicionar ${suggestedPcTitle}"
+                  >
+                    <i data-lucide="plus" class="w-3 h-3"></i>
+                    <span>${suggestedPcTitle}</span>
+                  </button>
                 </div>
 
-                <!-- Botão rápido para adicionar novo subitem (PC) dentro deste projeto -->
-                <button
-                  onclick="openNewPcForProject('${safeProjectId}', '${safeProjectName}', '${escapeHtml(suggestedPcTitle)}')"
-                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium accent-soft-bg accent-text hover:opacity-85 transition shrink-0 cursor-pointer"
-                  title="Adicionar nova PC neste projeto"
+                <h3
+                  ${projectRow ? `onclick="openRowModal('${projectRow.id}')"` : ''}
+                  class="font-bold text-sm tracking-tight text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] ${projectRow ? 'hover:accent-text cursor-pointer' : ''}"
+                  title="${safeProjectName}"
                 >
-                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                  <span>${suggestedPcTitle}</span>
-                </button>
-              </div>
+                  ${safeProjectName}
+                </h3>
 
-              <!-- Barra de Progresso Consolidada & Resumo do Projeto -->
-              <div class="mt-4 pt-3 border-t border-notion-border/60 dark:border-notion-darkBorder/60 flex flex-wrap items-center justify-between gap-4 text-xs">
-                <div class="flex items-center gap-2.5 flex-1 min-w-[160px]">
-                  <span class="text-notion-muted whitespace-nowrap">PCs Aprovadas:</span>
-                  <div class="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    <div class="h-full ${projectProgress >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full transition-all duration-300" style="width: ${projectProgress}%"></div>
-                  </div>
-                  <strong class="font-semibold tabular-nums">${projectProgress}%</strong>
-                </div>
-
-                ${totalBudget !== null && totalBudget > 0 ? `
-                  <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-notion-darkBg border border-notion-border dark:border-notion-darkBorder">
-                    <span class="text-notion-muted">Total:</span>
-                    <strong class="font-mono font-semibold text-notion-text dark:text-notion-darkText">
-                      ${totalBudget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-                    </strong>
+                ${parentBadges ? `
+                  <div class="flex flex-wrap items-center gap-1 mt-2">
+                    ${parentBadges}
                   </div>
                 ` : ''}
+
+                <!-- Mini barra de progresso -->
+                <div class="mt-2.5 flex items-center gap-2 text-[11px]">
+                  <div class="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div class="h-full ${projectProgress >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full transition-all duration-300" style="width: ${projectProgress}%"></div>
+                  </div>
+                  <span class="font-semibold text-slate-500 dark:text-slate-400 tabular-nums">${projectProgress}%</span>
+                </div>
+              </div>
+
+              <!-- Corpo do Quadradinho: PC Mais Recente -->
+              <div class="p-3 bg-slate-50/60 dark:bg-slate-950/30 space-y-2">
+                ${!latestPc ? `
+                  <div class="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">
+                    Sem PCs vinculadas.
+                  </div>
+                ` : `
+                  ${renderSinglePcCard(latestPc, { isLatest: true, titleCol, statusCol, progressCol, extraCols })}
+
+                  ${previousPcs.length > 0 && isHistoryExpanded ? `
+                    <div class="pt-1 space-y-1.5 max-h-56 overflow-y-auto pr-0.5 animate-fade">
+                      ${previousPcs.map(oldPc => renderSinglePcCard(oldPc, { isLatest: false, titleCol, statusCol, progressCol, extraCols })).join('')}
+                    </div>
+                  ` : ''}
+                `}
               </div>
             </div>
 
-            <!-- Lista de Subitens (PC#1, PC#5, PC#9...) dentro do Bloco -->
-            ${!isCollapsed ? `
-              <div class="p-3 sm:p-4 space-y-2.5 bg-notion-bg/50 dark:bg-notion-darkBg/40">
-                ${items.length === 0 ? `
-                  <div class="p-4 rounded-xl border border-dashed border-notion-border dark:border-notion-darkBorder text-center text-xs text-notion-muted">
-                    Nenhuma PC vinculada a este projeto ainda. Clique em <strong>+ ${suggestedPcTitle}</strong> acima para criar.
-                  </div>
-                ` : items.map((row, idx) => {
-                  const pcTitle = row.properties[titleCol.key] || `PC ${idx + 1}`;
-                  const statusVal = statusCol ? row.properties[statusCol.key] : '';
-                  const statusColor = statusCol ? getOptionColor(statusCol.key, statusVal) : 'gray';
-                  const rowPct = progressCol ? Math.max(0, Math.min(100, Number(row.properties[progressCol.key]) || 0)) : null;
+            <!-- Rodapé do Quadradinho: Expandir PCs anteriores / Valor -->
+            <div class="px-3 py-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 text-[11px]">
+              ${previousPcs.length > 0 ? `
+                <button
+                  onclick="toggleProjectHistory('${safeProjectId}')"
+                  class="inline-flex items-center gap-1 font-medium text-slate-500 hover:accent-text transition cursor-pointer"
+                >
+                  <i data-lucide="history" class="w-3 h-3"></i>
+                  <span>${isHistoryExpanded ? 'Ocultar' : `+${previousPcs.length} ${previousPcs.length === 1 ? 'anterior' : 'anteriores'}`}</span>
+                  <i data-lucide="${isHistoryExpanded ? 'chevron-up' : 'chevron-down'}" class="w-3 h-3"></i>
+                </button>
+              ` : `<span class="text-slate-400">Somente 1 PC</span>`}
 
-                  return `
-                    <div
-                      onclick="openRowModal('${row.id}')"
-                      class="group relative p-3 rounded-xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar hover:border-blue-500/50 hover:shadow-xs transition-all cursor-pointer"
-                    >
-                      <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-start gap-2.5 min-w-0">
-                          <!-- Indicador numérico sequencial da PC -->
-                          <div class="w-6 h-6 rounded-lg accent-soft-bg accent-text font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
-                            ${idx + 1}
-                          </div>
-                          <div class="min-w-0">
-                            <div class="font-semibold text-xs sm:text-sm text-notion-text dark:text-notion-darkText group-hover:accent-text transition truncate" title="${escapeHtml(pcTitle)}">
-                              ${escapeHtml(pcTitle)}
-                            </div>
-
-                            <!-- Metadados secundários da PC (Proforma, Código, Cliente, etc.) -->
-                            <div class="flex flex-wrap items-center gap-2 mt-1.5">
-                              ${extraCols.map(col => renderCompactCardProp(row, col)).filter(Boolean).join('')}
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Seletor rápido de Status da PC (sem abrir modal) -->
-                        <div class="flex items-center gap-2 shrink-0" onclick="event.stopPropagation()">
-                          ${statusCol ? `
-                            <select
-                              onchange="updateInlineSelect('${row.id}', '${statusCol.key}', this.value)"
-                              class="appearance-none cursor-pointer focus:outline-none rounded-lg px-2.5 py-1 text-[11px] font-semibold badge-${statusColor}"
-                            >
-                              <option value="">Status...</option>
-                              ${(statusCol.options || []).map(o => `<option value="${escapeHtml(o.name)}" ${statusVal === o.name ? 'selected' : ''}>${escapeHtml(o.name)}</option>`).join('')}
-                              ${statusVal && !(statusCol.options || []).some(o => o.name === statusVal) ? `<option value="${escapeHtml(statusVal)}" selected>${escapeHtml(statusVal)}</option>` : ''}
-                            </select>
-                          ` : ''}
-                          <button onclick="openRowModal('${row.id}')" class="p-1 rounded-lg text-notion-muted opacity-40 group-hover:opacity-100 hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer" title="Editar detalhes da PC">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                          </button>
-                        </div>
-                      </div>
-
-                      ${rowPct !== null ? `
-                        <div class="mt-2.5 pt-2 border-t border-notion-border/40 dark:border-notion-darkBorder/40 flex items-center gap-2">
-                          <div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                            <div class="h-full ${rowPct >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full" style="width: ${rowPct}%"></div>
-                          </div>
-                          <span class="text-[10px] font-medium text-notion-muted tabular-nums">${rowPct}%</span>
-                        </div>
-                      ` : ''}
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            ` : `
-              <div onclick="toggleProjectBlock('${safeProjectId}')" class="px-4 py-2.5 text-xs text-notion-muted hover:text-notion-text dark:hover:text-notion-darkText cursor-pointer flex items-center justify-between bg-notion-sidebar/30 dark:bg-notion-darkBg/30">
-                <span>Clique para expandir as ${items.length} PCs deste projeto</span>
-                <span class="accent-text font-medium">Mostrar PCs &rarr;</span>
-              </div>
-            `}
+              ${totalBudget !== null && totalBudget > 0 ? `
+                <span class="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                  ${totalBudget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                </span>
+              ` : ''}
+            </div>
           </div>
         `;
       });
@@ -1886,85 +1992,109 @@
       container.innerHTML = html;
     }
 
-    function openNewPcForProject(projectId, projectName, suggestedTitle) {
-      if (state.projectFieldKey === '__notion_subitems__') {
-        openRowModal(null, '__parent_id__', projectId);
-      } else {
-        openRowModal(null, state.projectFieldKey, projectName);
-      }
-      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
-      if (titleCol) {
-        const input = document.querySelector(`#rowFormFields input[name="${titleCol.key}"]`);
-        if (input && !input.value) {
-          input.value = suggestedTitle;
-        }
-      }
-    }
-
     // -------------------------------------------------------------------------
-    // 7B. VISUALIZAÇÃO: LISTA GERAL AGRUPADA POR PROJETO
+    // 7B. VISUALIZAÇÃO EM LISTA HIERÁRQUICA (PROJETO + SUBITENS PCs)
     // -------------------------------------------------------------------------
     function renderTableView(container, rows) {
-      const visibleCols = state.schema.filter(c => c.visible);
-      const padClass = state.density === 'compact' ? 'py-1.5 px-3' : state.density === 'comfortable' ? 'py-3.5 px-4' : 'py-2.5 px-3.5';
-
       if (rows.length === 0) {
         container.innerHTML = renderEmptyState();
         return;
       }
 
-      const groups = groupRowsByProject(rows);
-      let html = `<div class="space-y-6">`;
+      const visibleCols = state.schema.filter(c => c.visible);
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const projectGroups = groupRowsByProject(rows);
+      const padClass = state.density === 'compact' ? 'py-1.5 px-3' : state.density === 'comfortable' ? 'py-3.5 px-4' : 'py-2.5 px-3.5';
 
-      groups.forEach(group => {
-        html += `
-          <div class="rounded-xl border border-notion-border dark:border-notion-darkBorder overflow-hidden bg-white dark:bg-notion-darkBg shadow-2xs animate-fade">
-            <div class="px-4 py-2.5 bg-notion-sidebar dark:bg-notion-darkSidebar border-b border-notion-border dark:border-notion-darkBorder flex items-center justify-between">
-              <div class="flex items-center gap-2 text-xs font-semibold">
-                ${renderBadge(group.projectName, getOptionColor(state.projectFieldKey, group.projectName))}
-                <span class="text-notion-muted font-normal">${group.items.length} PCs</span>
-              </div>
-              <button onclick="openNewPcForProject('${escapeHtml(group.projectName)}', 'PC ${group.items.length + 1}')" class="text-xs accent-text hover:underline font-medium cursor-pointer">+ Adicionar PC</button>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr class="border-b border-notion-border dark:border-notion-darkBorder bg-notion-sidebar/40 dark:bg-notion-darkSidebar/40 text-notion-muted dark:text-notion-darkMuted font-medium">
-                    ${visibleCols.map(col => `
-                      <th onclick="quickSortByColumn('${col.key}')" class="${padClass} border-r last:border-r-0 border-notion-border dark:border-notion-darkBorder select-none cursor-pointer hover:bg-notion-hover dark:hover:bg-notion-darkHover transition whitespace-nowrap">
-                        <div class="flex items-center gap-1.5">
-                          ${getPropertyIcon(col.type)}
-                          <span>${escapeHtml(col.label)}</span>
-                        </div>
-                      </th>
-                    `).join('')}
-                    <th class="${padClass} w-10 text-center"></th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-notion-border dark:divide-notion-darkBorder">
-                  ${group.items.map(row => `
-                    <tr class="group hover:bg-notion-hover/60 dark:hover:bg-notion-darkHover/60 transition-colors">
-                      ${visibleCols.map(col => `
-                        <td class="${padClass} border-r last:border-r-0 border-notion-border dark:border-notion-darkBorder align-middle">
-                          ${renderCellContent(row, col)}
-                        </td>
-                      `).join('')}
-                      <td class="${padClass} text-center">
-                        <button onclick="openRowModal('${row.id}')" class="opacity-40 group-hover:opacity-100 p-1 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-                          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                        </button>
-                      </td>
-                    </tr>
+      let html = `
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden animate-fade">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/70 text-slate-500 dark:text-slate-400">
+                  ${visibleCols.map(col => `
+                    <th onclick="quickSortByColumn('${col.key}')" class="${padClass} font-semibold whitespace-nowrap cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 select-none">
+                      <div class="inline-flex items-center gap-1.5">
+                        ${getPropertyIcon(col.type)}
+                        <span>${escapeHtml(col.label)}</span>
+                        ${state.sort.field === col.key ? `<span class="accent-text">${state.sort.direction === 'asc' ? '↑' : '↓'}</span>` : ''}
+                      </div>
+                    </th>
                   `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  <th class="${padClass} w-10"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+      `;
+
+      projectGroups.forEach(group => {
+        const { projectRow, projectName, items } = group;
+        const orderedPcs = sortPcsNewestFirst(items, titleCol.key);
+
+        // Linha de cabeçalho do Projeto Pai
+        html += `
+          <tr ${projectRow ? `onclick="openRowModal('${projectRow.id}')"` : ''} class="bg-blue-50/40 dark:bg-blue-950/20 font-semibold ${projectRow ? 'hover:bg-blue-50/80 dark:hover:bg-blue-950/35 cursor-pointer' : ''}">
+            ${visibleCols.map((col, idx) => {
+              if (idx === 0) {
+                return `
+                  <td class="${padClass}">
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-md accent-soft-bg accent-text shrink-0">
+                        <i data-lucide="folder" class="w-3 h-3"></i>
+                      </span>
+                      <span class="text-slate-900 dark:text-white">${escapeHtml(projectName)}</span>
+                      <span class="text-[11px] font-normal text-slate-400">(${orderedPcs.length} ${orderedPcs.length === 1 ? 'PC' : 'PCs'})</span>
+                    </div>
+                  </td>
+                `;
+              }
+              return `<td class="${padClass}" onclick="event.stopPropagation()">${projectRow ? renderCellContent(projectRow, col) : '<span class="text-slate-300 dark:text-slate-700">—</span>'}</td>`;
+            }).join('')}
+            <td class="${padClass} text-right">
+              ${projectRow ? `<button onclick="event.stopPropagation(); openRowModal('${projectRow.id}')" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>` : ''}
+            </td>
+          </tr>
         `;
+
+        // Sub-linhas das PCs vinculadas
+        orderedPcs.forEach((row, pcIdx) => {
+          html += `
+            <tr onclick="openRowModal('${row.id}')" class="hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition cursor-pointer">
+              ${visibleCols.map((col, idx) => {
+                if (idx === 0) {
+                  return `
+                    <td class="${padClass} pl-9">
+                      <div class="flex items-center gap-2">
+                        <span class="text-slate-300 dark:text-slate-600 select-none">↳</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-200">${escapeHtml(row.properties[col.key] || 'Sem título')}</span>
+                        ${pcIdx === 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold accent-soft-bg accent-text">Recente</span>` : ''}
+                      </div>
+                    </td>
+                  `;
+                }
+                return `<td class="${padClass}" onclick="event.stopPropagation()">${renderCellContent(row, col)}</td>`;
+              }).join('')}
+              <td class="${padClass} text-right">
+                <div class="inline-flex items-center gap-1">
+                  <button onclick="event.stopPropagation(); openPageNotesModal('${row.id}')" title="Ver anotações" class="p-1 rounded-lg text-slate-400 hover:accent-text cursor-pointer">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="event.stopPropagation(); openRowModal('${row.id}')" title="Editar propriedades" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
       });
 
-      html += `</div>`;
+      html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
       container.innerHTML = html;
     }
 
@@ -2349,6 +2479,221 @@
     }
 
     // =========================================================================
+    // 9B. LEITURA E ADIÇÃO DE ANOTAÇÕES INTERNAS DA PÁGINA DO NOTION (BLOCKS)
+    // =========================================================================
+    state.activeNotesRowId = null;
+
+    async function openPageNotesModal(rowId) {
+      const row = state.rows.find(r => r.id === rowId);
+      if (!row) return;
+
+      state.activeNotesRowId = rowId;
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const titleText = row.properties[titleCol.key] || 'Anotações da PC';
+
+      document.getElementById('notesModalTitle').textContent = titleText;
+      const notionLink = document.getElementById('notesOpenNotionLink');
+      if (row.notionUrl) {
+        notionLink.href = row.notionUrl;
+        notionLink.classList.remove('hidden');
+      } else {
+        notionLink.classList.add('hidden');
+      }
+
+      const bodyEl = document.getElementById('notesModalBody');
+      bodyEl.innerHTML = `
+        <div class="py-10 text-center text-slate-400 flex flex-col items-center gap-2">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin accent-text"></i>
+          <span>Buscando anotações internas da página no Notion...</span>
+        </div>
+      `;
+      document.getElementById('notesModal').classList.remove('hidden');
+      lucide.createIcons();
+
+      // Verifica se também existe alguma propriedade textual chamada "Anotações"
+      const propNotes = Object.entries(row.properties)
+        .filter(([k, v]) => /anota[cç][oõ]es|observa[cç][oõ]es|nota/i.test(k) && v && String(v).trim())
+        .map(([k, v]) => ({ label: k, value: String(v) }));
+
+      // Modo Demo ou Offline
+      if (state.sourceMode !== 'api' || !row.notionPageId || !state.notionConfig.token) {
+        const demoItems = row.notes || [];
+        renderNotesContent(bodyEl, demoItems, propNotes);
+        return;
+      }
+
+      // Busca blocos internos da página via API Oficial do Notion (/v1/blocks/{id}/children)
+      try {
+        const endpoint = `https://api.notion.com/v1/blocks/${row.notionPageId}/children?page_size=100`;
+        const url = buildProxiedNotionUrl(state.notionConfig.proxyUrl, endpoint);
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${state.notionConfig.token}`,
+            'Notion-Version': '2022-06-28'
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const blocks = (data.results || []).map(parseNotionBlockToItem).filter(Boolean);
+        row.notes = blocks;
+        renderNotesContent(bodyEl, blocks, propNotes);
+      } catch (err) {
+        console.warn('Erro ao carregar blocos da página:', err);
+        bodyEl.innerHTML = `
+          <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200">
+            <strong>Não foi possível ler o corpo da página agora:</strong> verifique se a integração tem permissão de <em>Read content</em> no Notion.
+          </div>
+          ${propNotes.length > 0 ? renderPropNotesSection(propNotes) : ''}
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    function parseNotionBlockToItem(block) {
+      const t = block.type;
+      const obj = block[t];
+      if (!obj) return null;
+
+      const extractRich = (arr) => (arr || []).map(x => x.plain_text).join('').trim();
+
+      if (t === 'bulleted_list_item') {
+        const text = extractRich(obj.rich_text);
+        return text ? { type: 'bullet', text } : null;
+      }
+      if (t === 'numbered_list_item') {
+        const text = extractRich(obj.rich_text);
+        return text ? { type: 'number', text } : null;
+      }
+      if (t === 'to_do') {
+        const text = extractRich(obj.rich_text);
+        return text ? { type: 'todo', checked: Boolean(obj.checked), text } : null;
+      }
+      if (t === 'paragraph' || t === 'quote' || t === 'callout') {
+        const text = extractRich(obj.rich_text);
+        return text ? { type: 'paragraph', text } : null;
+      }
+      if (t === 'heading_1' || t === 'heading_2' || t === 'heading_3') {
+        const text = extractRich(obj.rich_text);
+        return text ? { type: 'heading', text } : null;
+      }
+      return null;
+    }
+
+    function renderPropNotesSection(propNotes) {
+      return `
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-1.5">
+          ${propNotes.map(p => `
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${escapeHtml(p.label)}</span>
+              <p class="text-slate-700 dark:text-slate-200 whitespace-pre-line">${escapeHtml(p.value)}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderNotesContent(container, items, propNotes = []) {
+      let html = '';
+      if (propNotes.length > 0) {
+        html += renderPropNotesSection(propNotes);
+      }
+
+      if (!items || items.length === 0) {
+        html += `
+          <div class="py-8 text-center text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+            Nenhuma anotação encontrada dentro desta página ainda.<br/>
+            Use o campo abaixo para registrar um novo tópico!
+          </div>
+        `;
+      } else {
+        html += `<div class="space-y-2">`;
+        items.forEach((item, idx) => {
+          if (item.type === 'heading') {
+            html += `<h4 class="font-bold text-xs uppercase tracking-wider text-slate-500 pt-2">${escapeHtml(item.text)}</h4>`;
+          } else if (item.type === 'todo') {
+            html += `
+              <div class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span class="mt-0.5 text-sm leading-none">${item.checked ? '☑️' : '⬜'}</span>
+                <span class="${item.checked ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'} leading-relaxed">${escapeHtml(item.text)}</span>
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <span class="w-1.5 h-1.5 rounded-full accent-bg mt-1.5 shrink-0"></span>
+                <span class="text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line">${escapeHtml(item.text)}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    async function appendNoteBulletToNotion(event) {
+      event.preventDefault();
+      const input = document.getElementById('newNoteInput');
+      const text = input.value.trim();
+      if (!text || !state.activeNotesRowId) return;
+
+      const row = state.rows.find(r => r.id === state.activeNotesRowId);
+      if (!row) return;
+
+      const btn = document.getElementById('btnAddNoteSubmit');
+      btn.disabled = true;
+
+      if (state.sourceMode === 'api' && row.notionPageId && state.notionConfig.token) {
+        try {
+          const endpoint = `https://api.notion.com/v1/blocks/${row.notionPageId}/children`;
+          const url = buildProxiedNotionUrl(state.notionConfig.proxyUrl, endpoint);
+          const res = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${state.notionConfig.token}`,
+              'Notion-Version': '2022-06-28',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              children: [
+                {
+                  object: 'block',
+                  type: 'bulleted_list_item',
+                  bulleted_list_item: {
+                    rich_text: [{ type: 'text', text: { content: text } }]
+                  }
+                }
+              ]
+            })
+          });
+          if (res.ok) {
+            showToast('Anotação salva na página do Notion!', 'success');
+          }
+        } catch (e) {
+          console.warn('Erro ao enviar anotação para o Notion:', e);
+        }
+      }
+
+      if (!row.notes) row.notes = [];
+      row.notes.push({ type: 'bullet', text });
+      input.value = '';
+      btn.disabled = false;
+      renderNotesContent(document.getElementById('notesModalBody'), row.notes);
+    }
+
+    function closeNotesModal() {
+      document.getElementById('notesModal').classList.add('hidden');
+      state.activeNotesRowId = null;
+    }
+
+    // =========================================================================
     // 10. GERENCIADOR DE COLUNAS & CUSTOMIZAÇÃO (DRAWER)
     // =========================================================================
     function renderColumnManager() {
@@ -2576,16 +2921,27 @@
         const el = document.getElementById(`tab-${mode}`);
         if (!el) return;
         if (state.viewMode === mode) {
-          el.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold accent-soft-bg accent-text transition cursor-pointer';
+          el.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 accent-text shadow-xs transition cursor-pointer';
         } else {
-          el.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-notion-muted hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer';
+          el.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer';
         }
       });
     }
 
     function handleSearch(q) {
       state.searchQuery = q;
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn) clearBtn.classList.toggle('hidden', !q || !q.trim());
       renderAll();
+    }
+
+    function clearSearchInput() {
+      const input = document.getElementById('searchInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      handleSearch('');
     }
 
     function quickSortByColumn(key) {
@@ -2599,26 +2955,18 @@
     }
 
     function updateSort() {
-      state.sort.field = document.getElementById('sortFieldSelect').value;
-      document.getElementById('sortDirBtn').classList.toggle('hidden', !state.sort.field);
+      const sortSel = document.getElementById('sortFieldSelect');
+      if (!sortSel) return;
+      state.sort.field = sortSel.value;
+      const sortBtn = document.getElementById('sortDirBtn');
+      if (sortBtn) sortBtn.classList.toggle('hidden', !state.sort.field);
       renderAll();
     }
 
     function toggleSortDir() {
       state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortDirBtn').innerHTML = `<i data-lucide="${state.sort.direction === 'asc' ? 'arrow-up' : 'arrow-down'}" class="w-3 h-3"></i>`;
-      renderAll();
-    }
-
-    function quickSortByColumn(key) {
-      if (state.sort.field === key) {
-        state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
-      } else {
-        state.sort.field = key;
-        state.sort.direction = 'asc';
-      }
-      document.getElementById('sortFieldSelect').value = key;
-      document.getElementById('sortDirBtn').classList.remove('hidden');
+      const sortBtn = document.getElementById('sortDirBtn');
+      if (sortBtn) sortBtn.innerHTML = `<i data-lucide="${state.sort.direction === 'asc' ? 'arrow-up' : 'arrow-down'}" class="w-3 h-3"></i>`;
       renderAll();
     }
 
