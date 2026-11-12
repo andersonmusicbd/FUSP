@@ -95,7 +95,7 @@
         </div>
       </div>
 
-      <!-- Ações Direitas (sem o botão da chave API) -->
+      <!-- Ações Direitas -->
       <div class="order-2 lg:order-3 flex items-center gap-2">
         <button onclick="openNewPcModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-all">
           <i data-lucide="plus" class="w-4 h-4"></i>
@@ -178,7 +178,7 @@
     </div>
   </header>
 
-  <!-- Banner de Diagnóstico / CORS (sem botão de abrir modal de chave) -->
+  <!-- Banner de Diagnóstico / CORS -->
   <div id="corsWarningBanner" class="hidden max-w-[1600px] w-full mx-auto px-4 sm:px-6 pt-3">
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
       <div class="flex items-center gap-2">
@@ -308,6 +308,8 @@
       { key: 'title', label: 'Nome do Projeto', type: 'title', visible: true },
       { key: 'status', label: 'Status do Projeto', type: 'status', visible: true, options: ['Em elaboração', 'Submetida', 'Aprovada', 'Em Andamento', 'Encerrado'] },
       { key: 'dataEntrega', label: 'Data de Entrega', type: 'date', visible: true },
+      { key: 'dataCorteInicial', label: 'Data de Corte Inicial', type: 'date', visible: true },
+      { key: 'dataCorteFinal', label: 'Data de Corte Final', type: 'date', visible: true },
       { key: 'prioridade', label: 'Prioridade', type: 'select', visible: true, options: ['Alta', 'Média', 'Baixa'] },
       { key: 'anp', label: 'Número ANP', type: 'rich_text', visible: true },
       { key: 'financiador', label: 'Financiador', type: 'rich_text', visible: true },
@@ -317,21 +319,21 @@
     ];
 
     const DEMO_ROWS = [
-      { id: 'proj_420402', parentId: null, properties: { title: '420402 - SHELL/EP/OTIC_DGT2', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: 'Sim' } },
+      { id: 'proj_420402', parentId: null, properties: { title: '420402 - SHELL/EP/OTIC_DGT2', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: 'Sim' } },
 
-      { id: 'proj_420419', parentId: null, properties: { title: '420419 - SHELL/EP/OTIC_MNT2', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '6721.93', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420419_1', parentId: 'proj_420419', notes: [{ type: 'bullet', text: 'PC atual submetida à Shell' }], properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026', status: 'Submetida', dataEntrega: '2026-10-30', prioridade: 'Média', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420419', parentId: null, properties: { title: '420419 - SHELL/EP/OTIC_MNT2', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '6721.93', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420419_1', parentId: 'proj_420419', notes: [{ type: 'bullet', text: 'PC atual submetida à Shell' }], properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026', status: 'Submetida', dataEntrega: '2026-10-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Média', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
 
-      { id: 'proj_420420', parentId: null, properties: { title: '420420 - SHELL/EP/OTIC_MNT4', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '8462.42', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420420_1', parentId: 'proj_420420', notes: [{ type: 'bullet', text: 'PC atual aprovada' }], properties: { title: 'PC 1 - 01/04/2026 a 30/09/2026', status: 'Aprovada', dataEntrega: '2026-10-15', prioridade: 'Baixa', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Emitida', precisaDevolverDoa: '' } },
+      { id: 'proj_420420', parentId: null, properties: { title: '420420 - SHELL/EP/OTIC_MNT4', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '8462.42', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420420_1', parentId: 'proj_420420', notes: [{ type: 'bullet', text: 'PC atual aprovada' }], properties: { title: 'PC 1 - 01/04/2026 a 30/09/2026', status: 'Aprovada', dataEntrega: '2026-10-15', dataCorteInicial: '2026-04-01', dataCorteFinal: '2026-09-30', prioridade: 'Baixa', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Emitida', precisaDevolverDoa: '' } },
 
-      { id: 'proj_420418', parentId: null, properties: { title: '420418 - SHELL/EP/OTIC_MNT1', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24369-1', financiador: 'Shell Brasil', saldo3009: '31232.38', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420422', parentId: null, properties: { title: '420422 - SHELL/EP/OTIC_NPO2 (ainda não lançado a partir do mês 7)', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24367-5', financiador: 'Shell Brasil', saldo3009: '38085.3', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420404', parentId: null, properties: { title: '420404 - SHELL/EP/OTIC_DGT4', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '67862.34', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420404_1', parentId: 'proj_420404', notes: [{ type: 'bullet', text: 'Solicitar assinatura recibo DOA e fechar medição' }], properties: { title: 'PC - 01/05/2026 a 31/10/2026 (lançado até 10/2026, solicitar assinatura recibo doa)', status: 'Em elaboração', dataEntrega: '2026-11-30', prioridade: 'Alta', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420413', parentId: null, properties: { title: '420413 - SHELL/EP/OTIC_HSE6', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24380-8', financiador: 'Shell Brasil', saldo3009: '68675.63', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420403', parentId: null, properties: { title: '420403 - SHELL/EP/OTIC_DGT3', status: 'Em Andamento', dataEntrega: '', prioridade: '', anp: '24379-0', financiador: 'Shell Brasil', saldo3009: '69591.91', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420403_19', parentId: 'proj_420403', notes: [{ type: 'bullet', text: 'Separado até 10/2026' }], properties: { title: 'PC 19 - 01/06/2026 a 31/10/2026 - Separado até 10', status: 'Em elaboração', dataEntrega: '2026-11-30', prioridade: 'Alta', anp: '48675-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } }
+      { id: 'proj_420418', parentId: null, properties: { title: '420418 - SHELL/EP/OTIC_MNT1', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24369-1', financiador: 'Shell Brasil', saldo3009: '31232.38', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420422', parentId: null, properties: { title: '420422 - SHELL/EP/OTIC_NPO2 (ainda não lançado a partir do mês 7)', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24367-5', financiador: 'Shell Brasil', saldo3009: '38085.3', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420404', parentId: null, properties: { title: '420404 - SHELL/EP/OTIC_DGT4', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '67862.34', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420404_1', parentId: 'proj_420404', notes: [{ type: 'bullet', text: 'Solicitar assinatura recibo DOA e fechar medição' }], properties: { title: 'PC - 01/05/2026 a 31/10/2026 (lançado até 10/2026, solicitar assinatura recibo doa)', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420413', parentId: null, properties: { title: '420413 - SHELL/EP/OTIC_HSE6', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24380-8', financiador: 'Shell Brasil', saldo3009: '68675.63', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420403', parentId: null, properties: { title: '420403 - SHELL/EP/OTIC_DGT3', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24379-0', financiador: 'Shell Brasil', saldo3009: '69591.91', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420403_19', parentId: 'proj_420403', notes: [{ type: 'bullet', text: 'Separado até 10/2026' }], properties: { title: 'PC 19 - 01/06/2026 a 31/10/2026 - Separado até 10', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-06-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '48675-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } }
     ];
 
     const state = {
@@ -439,9 +441,19 @@
     }
 
     function findDeliveryDateColumn() {
-      return state.schema.find(c => c.type === 'date' && /data\s*de\s*entrega/i.test(c.label))
-        || state.schema.find(c => c.type === 'date' && /entrega/i.test(c.label))
-        || state.schema.find(c => c.type === 'date' && !/created|edit/i.test(c.label));
+      return state.schema.find(c => c.type === 'date' && /data\s*de\s*entrega/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => c.type === 'date' && /entrega/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => c.type === 'date' && !/created|edit|corte|corde/i.test(normalizeStr(c.label)));
+    }
+
+    function findCutoffStartColumn() {
+      return state.schema.find(c => /cor[td]e\s*inicial/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => /inicio\s*(do\s*)?cor[td]e/i.test(normalizeStr(c.label)));
+    }
+
+    function findCutoffEndColumn() {
+      return state.schema.find(c => /cor[td]e\s*final/i.test(normalizeStr(c.label)))
+        || state.schema.find(c => /fim\s*(do\s*)?cor[td]e/i.test(normalizeStr(c.label)));
     }
 
     function findDoaColumn() {
@@ -460,12 +472,37 @@
       return null;
     }
 
+    function formatShortDateBR(rawVal) {
+      if (!rawVal) return '';
+      const d = parseNotionDateOnly(rawVal);
+      if (d && !isNaN(d.getTime())) {
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+      return String(rawVal).trim();
+    }
+
     function extractPcDeliveryDate(row) {
       const dateCol = findDeliveryDateColumn();
       if (dateCol && row.properties[dateCol.key]) {
         return parseNotionDateOnly(row.properties[dateCol.key]);
       }
       return null;
+    }
+
+    function extractPcCutoffDates(row, parentRow) {
+      const startCol = findCutoffStartColumn();
+      const endCol = findCutoffEndColumn();
+      const rawStart = startCol
+        ? (row.properties[startCol.key] || parentRow?.properties[startCol.key] || '')
+        : '';
+      const rawEnd = endCol
+        ? (row.properties[endCol.key] || parentRow?.properties[endCol.key] || '')
+        : '';
+
+      return {
+        cutoffStartStr: formatShortDateBR(rawStart),
+        cutoffEndStr: formatShortDateBR(rawEnd)
+      };
     }
 
     function isPcApprovedOrSubmitted(pc, statusCol) {
@@ -698,6 +735,7 @@
         if (group.projectRow) {
           const pRow = group.projectRow;
           const pDeliveryDate = extractPcDeliveryDate(pRow);
+          const pCutoff = extractPcCutoffDates(pRow, null);
           const pSaldoNum = effectiveSaldoColKey ? parseNumericValue(pRow.properties[effectiveSaldoColKey]) : NaN;
           const pEntry = {
             projectNumber,
@@ -705,6 +743,8 @@
             pc: pRow,
             isProjectLevel: true,
             deliveryDate: pDeliveryDate,
+            cutoffStartStr: pCutoff.cutoffStartStr,
+            cutoffEndStr: pCutoff.cutoffEndStr,
             pcAnp: projAnp,
             pcPriority: priorityCol ? (pRow.properties[priorityCol.key] || '') : '',
             saldoNumeric: isNaN(pSaldoNum) ? Infinity : pSaldoNum
@@ -727,6 +767,7 @@
 
         if (currentPc && isPcApprovedOrSubmitted(currentPc, statusCol)) {
           const curDate = extractPcDeliveryDate(currentPc);
+          const curCutoff = extractPcCutoffDates(currentPc, group.projectRow);
           const curAnp = anpCol ? (currentPc.properties[anpCol.key] || projAnp || '') : '';
           const curPriority = priorityCol ? (currentPc.properties[priorityCol.key] || '') : '';
           alreadyDelivered.push({
@@ -735,6 +776,8 @@
             pc: currentPc,
             isProjectLevel: false,
             deliveryDate: curDate,
+            cutoffStartStr: curCutoff.cutoffStartStr,
+            cutoffEndStr: curCutoff.cutoffEndStr,
             pcAnp: curAnp,
             pcPriority: curPriority
           });
@@ -742,6 +785,7 @@
 
         orderedPcs.forEach(pc => {
           const deliveryDate = extractPcDeliveryDate(pc);
+          const pcCutoff = extractPcCutoffDates(pc, group.projectRow);
           const pcStatusRaw = statusCol ? String(pc.properties[statusCol.key] || '').trim() : '';
           const pcStatusNorm = normalizeStr(pcStatusRaw);
 
@@ -755,6 +799,8 @@
             pc,
             isProjectLevel: false,
             deliveryDate,
+            cutoffStartStr: pcCutoff.cutoffStartStr,
+            cutoffEndStr: pcCutoff.cutoffEndStr,
             pcAnp,
             pcPriority,
             saldoNumeric: isNaN(pcSaldoNum) ? Infinity : pcSaldoNum
@@ -810,7 +856,7 @@
       const selectedBlock = state.selectedOverviewBlock;
       const listHeightClass = selectedBlock ? 'max-h-[600px]' : 'max-h-[440px]';
 
-      const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none') => {
+      const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none', showCutoffPeriod = false) => {
         if (items.length === 0) {
           return `<div class="p-8 text-center text-xs text-slate-400">${escapeHtml(emptyMsg)}</div>`;
         }
@@ -823,6 +869,18 @@
               const dateStr = item.deliveryDate
                 ? item.deliveryDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
                 : '';
+
+              let cutoffRangeText = '';
+              if (showCutoffPeriod && (item.cutoffStartStr || item.cutoffEndStr)) {
+                if (item.cutoffStartStr && item.cutoffEndStr) {
+                  cutoffRangeText = `${item.cutoffStartStr} → ${item.cutoffEndStr}`;
+                } else if (item.cutoffStartStr) {
+                  cutoffRangeText = `Início: ${item.cutoffStartStr}`;
+                } else {
+                  cutoffRangeText = `Fim: ${item.cutoffEndStr}`;
+                }
+              }
+
               const rawExtraVal = (extraColKey && extraColKey !== 'auto') ? (pc.properties[extraColKey] || '') : '';
               let displayExtraVal = '';
               if (rawExtraVal) {
@@ -851,9 +909,15 @@
                       </button>
                       <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500">
                         ${dateStr ? `
-                          <span class="inline-flex items-center gap-1 font-medium text-slate-700">
+                          <span title="Data de Entrega" class="inline-flex items-center gap-1 font-medium text-slate-700">
                             <i data-lucide="calendar" class="w-3 h-3 text-blue-600"></i>
                             ${dateStr}
+                          </span>
+                        ` : ''}
+                        ${cutoffRangeText ? `
+                          <span title="Período de Corte da Prestação de Contas (Inicial → Final)" class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-blue-50 text-blue-800 border border-blue-200/80 font-medium text-[10px]">
+                            <i data-lucide="calendar-range" class="w-3 h-3 text-blue-600 shrink-0"></i>
+                            <span>Corte: ${escapeHtml(cutoffRangeText)}</span>
                           </span>
                         ` : ''}
                         ${item.pcAnp ? `<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">ANP ${escapeHtml(item.pcAnp)}</span>` : ''}
@@ -996,7 +1060,7 @@
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-600 text-white">${currentDeliveries.length}</span>
               </div>
             </div>
-            ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs')}
+            ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs', null, 'none', true)}
           </section>
         `,
         entregues: `
