@@ -375,6 +375,7 @@
       sourceMode: 'demo',
       notionConfig: { ...DEFAULT_NOTION_CONFIG },
       viewMode: 'overview',
+      selectedOverviewBlock: null, // null = exibe os 4 blocos | 'entregues' | 'entregas' | 'doa' | 'saldo'
       deliveryPeriod: 'view_window',
       schema: JSON.parse(JSON.stringify(DEMO_SCHEMA)),
       rows: JSON.parse(JSON.stringify(DEMO_ROWS)),
@@ -390,9 +391,7 @@
       activeNotesRowId: null,
       editingViewRuleTarget: null,
       viewRules: {
-        // Espelha exatamente a aba "Devolução de DOA": propriedade "Precisa devolver DOA" = "Sim"
         doa: { colKey: 'auto', values: ['Sim'], statusFilter: '', includeParents: true },
-        // Espelha exatamente a aba "Por saldo": Saldo (30/09/2026) preenchido + Status do Projeto = "Em Andamento"
         saldo: { colKey: 'auto', values: [], statusFilter: 'Em Andamento', includeParents: true }
       }
     };
@@ -541,7 +540,6 @@
       return autoDetectorFn(row);
     }
 
-    // Detecção exata da aba "Devolução de DOA": propriedade "Precisa devolver DOA" marcada como "Sim"
     function autoDetectDevolucaoDoa(row) {
       const doaCol = findDoaColumn();
       if (!doaCol) return false;
@@ -660,6 +658,11 @@
       });
     }
 
+    function toggleOverviewBlockFilter(blockKey) {
+      state.selectedOverviewBlock = (state.selectedOverviewBlock === blockKey) ? null : blockKey;
+      renderAll();
+    }
+
     function renderAll() {
       const processedRows = getProcessedRows();
       const viewport = document.getElementById('mainViewport');
@@ -693,7 +696,7 @@
       lucide.createIcons();
     }
 
-    // 1. PÁGINA INICIAL: 4 Blocos Sincronizados com as Visualizações do Notion
+    // 1. PÁGINA INICIAL: 4 Botões Grandes Selecionáveis + Bloco Centralizado ao Clicar
     function renderExecutiveOverview(container, rows) {
       const projectGroups = groupRowsByProject(rows);
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
@@ -848,12 +851,15 @@
         ? statusCol.options
         : ['Em elaboração', 'Submetida', 'Aprovada', 'Em Andamento', 'Encerrado'];
 
+      const selectedBlock = state.selectedOverviewBlock;
+      const listHeightClass = selectedBlock ? 'max-h-[600px]' : 'max-h-[440px]';
+
       const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none') => {
         if (items.length === 0) {
           return `<div class="p-8 text-center text-xs text-slate-400">${escapeHtml(emptyMsg)}</div>`;
         }
         return `
-          <div class="divide-y divide-slate-100 max-h-[440px] overflow-y-auto custom-scrollbar">
+          <div class="divide-y divide-slate-100 ${listHeightClass} overflow-y-auto custom-scrollbar">
             ${items.map(item => {
               const pc = item.pc;
               const pcTitle = pc.properties[titleCol.key] || 'Sem título';
@@ -880,7 +886,6 @@
               return `
                 <div class="px-4 py-3 hover:bg-slate-50/90 transition-colors flex items-center justify-between gap-3">
                   <div class="flex items-center gap-3 min-w-0">
-                    <!-- Somente o Número do Projeto -->
                     <span title="${escapeHtml(item.fullProjectTitle)}" class="px-2.5 py-1.5 rounded-xl font-mono text-xs font-extrabold tracking-tight shrink-0 ${badgeTheme}">
                       ${escapeHtml(item.projectNumber)}
                     </span>
@@ -938,59 +943,87 @@
       const saldoStatusText = state.viewRules.saldo.statusFilter ? ` • Status: ${state.viewRules.saldo.statusFilter}` : '';
       const saldoSubtitle = `↑ ${saldoColLabel}${saldoStatusText}`;
 
-      container.innerHTML = `
-        <!-- Resumo Numérico Superior -->
+      // Configuração dos 4 Botões Grandes Selecionáveis
+      const selectorCards = [
+        {
+          key: 'entregas',
+          title: 'Entregas Atuais',
+          count: currentDeliveries.length,
+          subtitle: 'Tabela por data de entrega',
+          icon: 'calendar-clock',
+          titleColor: 'text-blue-700',
+          iconBg: 'bg-blue-600',
+          borderNormal: 'border-blue-200 hover:border-blue-400',
+          borderActive: 'border-blue-600 ring-2 ring-blue-500/30 bg-blue-50/40 shadow-md scale-[1.01]'
+        },
+        {
+          key: 'entregues',
+          title: 'Já Entregues',
+          count: alreadyDelivered.length,
+          subtitle: 'PCs atuais Aprovadas / Submetidas',
+          icon: 'check-circle-2',
+          titleColor: 'text-emerald-700',
+          iconBg: 'bg-emerald-600',
+          borderNormal: 'border-emerald-200 hover:border-emerald-400',
+          borderActive: 'border-emerald-600 ring-2 ring-emerald-500/30 bg-emerald-50/40 shadow-md scale-[1.01]'
+        },
+        {
+          key: 'doa',
+          title: 'Devolução de DOA',
+          count: pendingDoaList.length,
+          subtitle: 'Precisa devolver DOA: Sim',
+          icon: 'file-warning',
+          titleColor: 'text-amber-700',
+          iconBg: 'bg-amber-500',
+          borderNormal: 'border-amber-200 hover:border-amber-400',
+          borderActive: 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/40 shadow-md scale-[1.01]'
+        },
+        {
+          key: 'saldo',
+          title: 'PC por Saldo',
+          count: balancePcsList.length,
+          subtitle: 'Aba Por saldo • Em Andamento',
+          icon: 'wallet',
+          titleColor: 'text-indigo-700',
+          iconBg: 'bg-indigo-600',
+          borderNormal: 'border-indigo-200 hover:border-indigo-400',
+          borderActive: 'border-indigo-600 ring-2 ring-indigo-500/30 bg-indigo-50/40 shadow-md scale-[1.01]'
+        }
+      ];
+
+      const selectorBarHtml = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
-          <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-blue-700">Entregas Atuais</p>
-              <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${currentDeliveries.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Tabela por data de entrega</p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
-              <i data-lucide="calendar-clock" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl border border-emerald-200 p-4 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-emerald-700">Já Entregues</p>
-              <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${alreadyDelivered.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">PCs atuais Aprovadas / Submetidas</p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-              <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl border border-amber-200 p-4 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-amber-700">Devolução de DOA</p>
-              <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${pendingDoaList.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Precisa devolver DOA: Sim</p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center">
-              <i data-lucide="file-warning" class="w-5 h-5"></i>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl border border-indigo-200 p-4 shadow-2xs flex items-center justify-between">
-            <div>
-              <p class="text-xs font-semibold text-indigo-700">PC por Saldo</p>
-              <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${balancePcsList.length}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">Aba Por saldo • Em Andamento</p>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-              <i data-lucide="wallet" class="w-5 h-5"></i>
-            </div>
-          </div>
+          ${selectorCards.map(card => {
+            const isSelected = selectedBlock === card.key;
+            const isDimmed = selectedBlock && !isSelected;
+            return `
+              <button
+                type="button"
+                onclick="toggleOverviewBlockFilter('${card.key}')"
+                aria-pressed="${isSelected}"
+                class="text-left bg-white rounded-2xl border p-4 transition-all duration-200 cursor-pointer flex items-center justify-between focus:outline-none ${isSelected ? card.borderActive : card.borderNormal} ${isDimmed ? 'opacity-65 hover:opacity-100' : 'shadow-2xs hover:shadow-sm'}"
+              >
+                <div class="min-w-0 pr-2">
+                  <div class="flex items-center gap-1.5">
+                    <p class="text-xs font-bold ${card.titleColor} truncate">${escapeHtml(card.title)}</p>
+                    ${isSelected ? `<span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-slate-900 text-white shrink-0">Ativo</span>` : ''}
+                  </div>
+                  <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${card.count}</p>
+                  <p class="text-[11px] text-slate-500 mt-0.5 truncate">${escapeHtml(card.subtitle)}</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl ${card.iconBg} text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <i data-lucide="${card.icon}" class="w-5 h-5"></i>
+                </div>
+              </button>
+            `;
+          }).join('')}
         </div>
+      `;
 
-        <!-- Grid com os 4 Blocos Principais -->
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          
-          <!-- BLOCO 1: ENTREGAS ATUAIS -->
-          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
+      // Seletor de blocos individuais
+      const blockSections = {
+        entregas: `
+          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col w-full">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-blue-50/50 flex items-center justify-between gap-2">
               <div>
                 <div class="flex items-center gap-2">
@@ -999,13 +1032,21 @@
                 </div>
                 <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5">${escapeHtml(periodSubtitle)} &bull; ↑ Data de Entrega</p>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-600 text-white">${currentDeliveries.length}</span>
+              <div class="flex items-center gap-2 shrink-0">
+                ${selectedBlock === 'entregas' ? `
+                  <button onclick="toggleOverviewBlockFilter('entregas')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold transition-colors">
+                    <i data-lucide="layout-grid" class="w-3 h-3"></i>
+                    <span>Ver todos</span>
+                  </button>
+                ` : ''}
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-600 text-white">${currentDeliveries.length}</span>
+              </div>
             </div>
             ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs')}
           </section>
-
-          <!-- BLOCO 2: JÁ ENTREGUES (Somente PCs Atuais Aprovadas ou Submetidas) -->
-          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
+        `,
+        entregues: `
+          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col w-full">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-emerald-50/50 flex items-center justify-between gap-2">
               <div>
                 <div class="flex items-center gap-2">
@@ -1014,13 +1055,21 @@
                 </div>
                 <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5">PCs Atuais com Status do Projeto: Aprovada ou Submetida</p>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-600 text-white">${alreadyDelivered.length}</span>
+              <div class="flex items-center gap-2 shrink-0">
+                ${selectedBlock === 'entregues' ? `
+                  <button onclick="toggleOverviewBlockFilter('entregues')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold transition-colors">
+                    <i data-lucide="layout-grid" class="w-3 h-3"></i>
+                    <span>Ver todos</span>
+                  </button>
+                ` : ''}
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-600 text-white">${alreadyDelivered.length}</span>
+              </div>
             </div>
             ${renderBlockItems(alreadyDelivered, 'Nenhuma PC atual marcada como Aprovada ou Submetida.', 'bg-emerald-50 text-emerald-800 border border-emerald-200')}
           </section>
-
-          <!-- BLOCO 3: PENDENTE DE DEVOLUÇÃO DE DOA (Precisa devolver DOA = Sim) -->
-          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
+        `,
+        doa: `
+          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col w-full">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-amber-50/60 flex items-center justify-between gap-2">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
@@ -1030,6 +1079,12 @@
                 <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5 truncate">${escapeHtml(doaSubtitle)}</p>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
+                ${selectedBlock === 'doa' ? `
+                  <button onclick="toggleOverviewBlockFilter('doa')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold transition-colors">
+                    <i data-lucide="layout-grid" class="w-3 h-3"></i>
+                    <span>Ver todos</span>
+                  </button>
+                ` : ''}
                 <button onclick="openViewRuleModal('doa')" title="Configurar coluna/filtro da aba Devolução de DOA" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-200 text-[11px] font-semibold transition-colors">
                   <i data-lucide="sliders" class="w-3 h-3"></i>
                   <span>Regra</span>
@@ -1039,9 +1094,9 @@
             </div>
             ${renderBlockItems(pendingDoaList, 'Nenhum projeto com "Precisa devolver DOA = Sim" encontrado.', 'bg-amber-100 text-amber-900 border border-amber-300', effectiveDoaColKey, 'doa')}
           </section>
-
-          <!-- BLOCO 4: PC POR SALDO DO PROJETO (Visualização Por saldo) -->
-          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col">
+        `,
+        saldo: `
+          <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col w-full">
             <div class="px-4 py-3.5 border-b border-slate-100 bg-indigo-50/50 flex items-center justify-between gap-2">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
@@ -1051,6 +1106,12 @@
                 <p class="text-[11px] text-slate-500 pl-4.5 mt-0.5 truncate">${escapeHtml(saldoSubtitle)}</p>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
+                ${selectedBlock === 'saldo' ? `
+                  <button onclick="toggleOverviewBlockFilter('saldo')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold transition-colors">
+                    <i data-lucide="layout-grid" class="w-3 h-3"></i>
+                    <span>Ver todos</span>
+                  </button>
+                ` : ''}
                 <button onclick="openViewRuleModal('saldo')" title="Ajustar regra da aba Por saldo" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-100 text-indigo-900 border border-indigo-200 text-[11px] font-semibold transition-colors">
                   <i data-lucide="sliders" class="w-3 h-3"></i>
                   <span>Regra</span>
@@ -1060,9 +1121,27 @@
             </div>
             ${renderBlockItems(balancePcsList, 'Nenhum projeto em andamento com saldo encontrado.', 'bg-indigo-100 text-indigo-900 border border-indigo-200', effectiveSaldoColKey, 'currency')}
           </section>
+        `
+      };
 
-        </div>
-      `;
+      const blocksLayoutHtml = selectedBlock && blockSections[selectedBlock]
+        ? `
+          <div class="flex justify-center">
+            <div class="w-full max-w-[760px]">
+              ${blockSections[selectedBlock]}
+            </div>
+          </div>
+        `
+        : `
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            ${blockSections.entregas}
+            ${blockSections.entregues}
+            ${blockSections.doa}
+            ${blockSections.saldo}
+          </div>
+        `;
+
+      container.innerHTML = selectorBarHtml + blocksLayoutHtml;
     }
 
     // Modal de Regra das Visualizações ("Devolução de DOA" e "Por saldo")
