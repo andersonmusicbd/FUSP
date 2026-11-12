@@ -115,114 +115,105 @@
     <header class="sticky top-0 z-30 h-12 px-4 border-b border-notion-border dark:border-notion-darkBorder bg-notion-bg/90 dark:bg-notion-darkBg/90 backdrop-blur-md flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-7 h-7 rounded-md accent-bg text-white flex items-center justify-center shadow-sm shrink-0">
-          <i data-lucide="database" class="w-4 h-4"></i>
+          <i data-lucide="boxes" class="w-4 h-4"></i>
         </div>
         <div class="flex items-center gap-1.5 text-sm truncate">
           <span class="font-medium text-notion-muted dark:text-notion-darkMuted hidden sm:inline">Workspace</span>
           <span class="text-notion-muted/50 hidden sm:inline">/</span>
-          <span id="headerDbTitle" class="font-semibold truncate">Roadmap & Operações Q4</span>
+          <span id="headerDbTitle" class="font-semibold truncate">Gestão de Projetos & PCs</span>
+          <span id="connectionBadge" class="ml-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            Modo Demo
+          </span>
         </div>
-        <!-- Status da Fonte de Dados -->
-        <span id="connectionBadge" class="ml-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0">
-          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-          Modo Demo
-        </span>
       </div>
 
-      <!-- Ações Rápidas da Barra Superior -->
+      <!-- Ações Rápidas da Topbar -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <!-- Seletor de Auto-Refresh -->
-        <div class="hidden lg:flex items-center gap-1 px-2 py-1 rounded-lg border border-notion-border dark:border-notion-darkBorder text-xs text-notion-muted" title="Atualização automática periódica">
-          <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+        <div class="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg border border-notion-border dark:border-notion-darkBorder text-xs">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-notion-muted"></i>
           <select id="autoRefreshSelect" onchange="setAutoRefresh(this.value)" class="bg-transparent focus:outline-none text-xs cursor-pointer dark:bg-notion-darkBg">
-            <option value="0">Auto: Off</option>
-            <option value="30000">Auto: 30s</option>
-            <option value="60000">Auto: 1m</option>
-            <option value="300000">Auto: 5m</option>
+            <option value="0">Auto-Sync: Off</option>
+            <option value="15000">A cada 15s</option>
+            <option value="30000">A cada 30s</option>
+            <option value="60000">A cada 1min</option>
           </select>
         </div>
 
-        <button onclick="fetchFromNotionAPI(true)" id="btnQuickSync" title="Sincronizar agora com o Notion" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-          <i data-lucide="refresh-cw" id="quickSyncIcon" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Sincronizar</span>
+        <button onclick="fetchFromNotionAPI(true)" title="Sincronizar agora com o Notion" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+          <i id="quickSyncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span class="hidden md:inline">Atualizar</span>
         </button>
 
         <button onclick="openConnectModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium accent-bg text-white hover:opacity-90 transition shadow-sm cursor-pointer">
-          <i data-lucide="plug" class="w-3.5 h-3.5"></i>
-          <span>Conexão & API</span>
+          <i data-lucide="plug-zap" class="w-3.5 h-3.5"></i>
+          <span>Conectar Notion</span>
         </button>
 
-        <button onclick="toggleCustomizeDrawer()" title="Personalizar Aparência e Colunas" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-          <span class="hidden md:inline">Customizar</span>
-        </button>
-
-        <div class="relative" id="exportDropdownWrapper">
-          <button onclick="toggleExportMenu()" title="Exportar Dados" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+        <div class="relative">
+          <button onclick="toggleExportMenu()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
             <span class="hidden md:inline">Exportar</span>
           </button>
-          <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-44 rounded-xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar shadow-lg py-1.5 z-40 animate-fade">
-            <button onclick="exportData('csv')" class="w-full px-3 py-2 text-left text-xs hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2">
-              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
-              Exportar CSV (Filtrado)
+          <div id="exportMenu" class="hidden absolute right-0 mt-1.5 w-44 rounded-xl bg-white dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder shadow-lg py-1 z-40 text-xs">
+            <button onclick="exportData('csv')" class="w-full px-3 py-2 text-left hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2 cursor-pointer">
+              <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i> Exportar CSV
             </button>
-            <button onclick="exportData('json')" class="w-full px-3 py-2 text-left text-xs hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2">
-              <i data-lucide="file-code" class="w-3.5 h-3.5 text-blue-600"></i>
-              Exportar JSON (Completo)
+            <button onclick="exportData('json')" class="w-full px-3 py-2 text-left hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-2 cursor-pointer">
+              <i data-lucide="file-json" class="w-3.5 h-3.5 text-blue-600"></i> Exportar JSON
             </button>
           </div>
         </div>
 
+        <button onclick="toggleCustomizeDrawer()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Customizar</span>
+        </button>
+
         <button onclick="toggleDarkMode()" title="Alternar Tema Claro/Escuro" class="p-1.5 rounded-lg border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-          <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
-          <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+          <i data-lucide="sun-moon" class="w-4 h-4"></i>
         </button>
       </div>
     </header>
 
     <!-- Banner de Ajuda CORS (Exibido apenas se o navegador bloquear a chamada direta) -->
-    <div id="corsAlertBanner" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-8 pt-4 animate-fade">
-      <div class="p-3.5 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-700/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-        <div class="flex items-start gap-2.5 text-amber-900 dark:text-amber-200">
-          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"></i>
-          <div class="space-y-1">
-            <p class="font-semibold">Aguardando liberação de Proxy CORS para conectar à sua tabela (<code class="px-1 py-0.2 rounded bg-amber-200/60 dark:bg-amber-900">31414927...c2b1b</code>)</p>
-            <p class="text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-              Como você abriu este arquivo localmente no navegador, o Notion bloqueia requisições diretas sem proxy. Você pode rodar um proxy local em 5 segundos no terminal ou configurar um proxy customizado em <strong>Conexão & API</strong>.
-            </p>
-          </div>
+    <div id="corsAlertBanner" class="hidden bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/50 px-4 py-2.5 text-xs text-amber-900 dark:text-amber-200">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+          <span>
+            <strong>Conexão automática aguardando Proxy CORS:</strong> Seu navegador bloqueou a chamada direta para <code>api.notion.com</code>. Rode um proxy local ou informe uma URL de proxy em <strong>Conectar Notion</strong>.
+          </span>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-          <button onclick="copyLocalProxyCmd()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700 transition cursor-pointer">
-            <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
-            <span>Copiar Comando Proxy Local</span>
+        <div class="flex items-center gap-2">
+          <button onclick="copyLocalProxyCmd()" class="px-2.5 py-1 rounded-md bg-amber-600 text-white font-medium hover:bg-amber-700 transition cursor-pointer">
+            Copiar Comando Proxy Local
           </button>
-          <button onclick="fetchFromNotionAPI(true)" class="px-2.5 py-1.5 rounded-lg border border-amber-400 dark:border-amber-700 font-medium hover:bg-amber-100 dark:hover:bg-amber-900/40 transition cursor-pointer">
+          <button onclick="fetchFromNotionAPI(true)" class="px-2.5 py-1 rounded-md border border-amber-400 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 font-medium cursor-pointer">
             Tentar Novamente
           </button>
-          <button onclick="document.getElementById('corsAlertBanner').classList.add('hidden')" class="p-1 text-amber-700 dark:text-amber-300 hover:opacity-75 cursor-pointer" title="Fechar aviso">
-            <i data-lucide="x" class="w-4 h-4"></i>
+          <button onclick="document.getElementById('corsAlertBanner').classList.add('hidden')" class="p-1 opacity-70 hover:opacity-100 cursor-pointer">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Cabeçalho da Página Estilo Notion (Capa sutil + Ícone + Título Editável + Métricas) -->
-    <section class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-2">
+    <!-- Cabeçalho da Página (Título + Ícone + Métricas de Projetos & PCs) -->
+    <div class="max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-2">
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div class="flex items-start gap-3.5">
-          <button onclick="cyclePageIcon()" title="Clique para trocar o ícone" class="text-4xl sm:text-5xl hover:scale-105 transition-transform select-none cursor-pointer" id="pageIcon">📊</button>
+          <button onclick="cyclePageIcon()" title="Clique para trocar o ícone" class="text-4xl sm:text-5xl hover:scale-105 transition-transform select-none cursor-pointer" id="pageIcon">🏗️</button>
           <div>
             <input
               id="pageTitleInput"
               type="text"
-              value="Roadmap & Operações Q4"
+              value="Gestão de Projetos & PCs"
               onchange="updateDbTitle(this.value)"
               class="text-2xl sm:text-3xl font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 rounded px-1 -ml-1 w-full"
             />
             <p id="pageSubtitle" class="text-xs sm:text-sm text-notion-muted dark:text-notion-darkMuted mt-1 px-1">
-              Visualize, filtre, agrupe e edite propriedades do seu banco de dados Notion de forma dinâmica.
+              Organização hierárquica em blocos: cada Projeto agrupa automaticamente suas PCs (PC 1, PC 2, PC 3...) e métricas consolidadas.
             </p>
           </div>
         </div>
@@ -232,39 +223,48 @@
           <!-- Preenchido via JS -->
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Barra de Controle das Views (Tabs + Busca + Filtros + Ordenação + Agrupamento + Novo Item) -->
+    <!-- Barra de Controle das Views (Blocos de Projeto + Mapeamento Projeto/PC + Busca + Filtros) -->
     <section class="max-w-7xl w-full mx-auto px-4 sm:px-8 mt-4">
       <div class="flex flex-wrap items-center justify-between gap-3 pb-2.5 border-b border-notion-border dark:border-notion-darkBorder">
         
-        <!-- Abas de Visualização -->
+        <!-- Abas de Visualização Focadas em Projetos & PCs -->
         <div class="flex items-center gap-1 overflow-x-auto">
-          <button onclick="setViewMode('table')" id="tab-table" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
-            <i data-lucide="table-2" class="w-3.5 h-3.5"></i>
-            <span>Tabela</span>
+          <button onclick="setViewMode('blocks')" id="tab-blocks" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
+            <i data-lucide="boxes" class="w-3.5 h-3.5"></i>
+            <span>Blocos de Projetos (PCs)</span>
           </button>
           <button onclick="setViewMode('kanban')" id="tab-kanban" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
             <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
-            <span>Quadro Kanban</span>
+            <span>Fluxo de PCs</span>
           </button>
-          <button onclick="setViewMode('gallery')" id="tab-gallery" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
-            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-            <span>Galeria / Cards</span>
+          <button onclick="setViewMode('table')" id="tab-table" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">
+            <i data-lucide="list-tree" class="w-3.5 h-3.5"></i>
+            <span>Lista Geral</span>
           </button>
         </div>
 
         <!-- Controles Dinâmicos à Direita -->
         <div class="flex flex-wrap items-center gap-2">
+          <!-- Seletor de Modo de Agrupamento (Subitens Nativos do Notion ou por Coluna) -->
+          <div class="flex items-center gap-1.5 border border-notion-border dark:border-notion-darkBorder rounded-lg px-2.5 py-1 text-xs bg-notion-sidebar/60 dark:bg-notion-darkSidebar/60" title="Escolha como os blocos de Projeto são formados">
+            <i data-lucide="git-fork" class="w-3.5 h-3.5 accent-text"></i>
+            <span class="text-notion-muted hidden sm:inline">Agrupar Blocos por:</span>
+            <select id="projectFieldSelect" onchange="updateProjectGroupingField(this.value)" class="bg-transparent font-medium focus:outline-none text-xs cursor-pointer pr-1 dark:bg-notion-darkBg">
+              <!-- Preenchido via JS -->
+            </select>
+          </div>
+
           <!-- Busca Instantânea -->
           <div class="relative">
             <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-notion-muted"></i>
             <input
               id="searchInput"
               type="text"
-              placeholder="Buscar registros..."
+              placeholder="Buscar projeto ou PC..."
               oninput="handleSearch(this.value)"
-              class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-notion-border dark:border-notion-darkBorder bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-40 sm:w-52 transition"
+              class="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-notion-border dark:border-notion-darkBorder bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-40 sm:w-48 transition"
             />
           </div>
 
@@ -275,29 +275,15 @@
             <span id="filterCountBadge" class="hidden px-1.5 py-0.2 rounded-full text-[10px] accent-bg text-white">0</span>
           </button>
 
-          <!-- Seletor de Ordenação -->
-          <div class="flex items-center gap-1 border border-notion-border dark:border-notion-darkBorder rounded-lg px-2 py-1 text-xs">
-            <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-notion-muted"></i>
-            <select id="sortFieldSelect" onchange="updateSort()" class="bg-transparent focus:outline-none text-xs cursor-pointer pr-1 dark:bg-notion-darkBg">
-              <option value="">Ordenar por...</option>
-            </select>
-            <button onclick="toggleSortDir()" id="sortDirBtn" title="Inverter direção" class="p-0.5 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover hidden">
-              <i data-lucide="arrow-up" class="w-3 h-3"></i>
-            </button>
-          </div>
+          <!-- Botão Expandir / Recolher Todos os Blocos -->
+          <button onclick="toggleAllProjectBlocks()" id="btnToggleAllBlocks" title="Expandir ou recolher todos os blocos" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-notion-border dark:border-notion-darkBorder hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+            <i data-lucide="chevrons-down-up" class="w-3.5 h-3.5"></i>
+          </button>
 
-          <!-- Seletor de Agrupamento (Tabela ou Kanban) -->
-          <div class="flex items-center gap-1 border border-notion-border dark:border-notion-darkBorder rounded-lg px-2 py-1 text-xs">
-            <i data-lucide="layers" class="w-3.5 h-3.5 text-notion-muted"></i>
-            <select id="groupFieldSelect" onchange="updateGroupBy(this.value)" class="bg-transparent focus:outline-none text-xs cursor-pointer pr-1 dark:bg-notion-darkBg">
-              <option value="">Agrupar: Nenhum</option>
-            </select>
-          </div>
-
-          <!-- Botão Novo Registro -->
+          <!-- Botão Nova PC -->
           <button onclick="openRowModal()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium accent-bg text-white hover:opacity-90 transition shadow-sm cursor-pointer">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Novo</span>
+            <span>Nova PC</span>
           </button>
         </div>
       </div>
@@ -326,6 +312,20 @@
       </div>
     </section>
 
+    <!-- Área Principal de Conteúdo (Blocos de Projetos / Kanban / Lista) -->
+          <div class="flex items-center gap-2">
+            <button onclick="addFilterRule()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium accent-soft-bg accent-text hover:opacity-80 transition cursor-pointer">
+              <i data-lucide="plus" class="w-3 h-3"></i> Adicionar Regra
+            </button>
+            <button onclick="clearFilters()" class="text-xs text-notion-muted hover:text-red-500 transition cursor-pointer">Limpar tudo</button>
+          </div>
+        </div>
+        <div id="filterRulesList" class="flex flex-col gap-2">
+          <!-- Regras injetadas dinamicamente -->
+        </div>
+      </div>
+    </section>
+
     <!-- Área Principal de Conteúdo (Tabela / Kanban / Galeria) -->
     <main id="mainViewport" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-5 overflow-x-hidden">
       <!-- Renderizado dinamicamente via JS -->
@@ -334,16 +334,14 @@
     <!-- Rodapé Discreto -->
     <footer class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-4 border-t border-notion-border dark:border-notion-darkBorder flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-notion-muted dark:text-notion-darkMuted">
       <div class="flex items-center gap-2">
-        <span id="footerStats">0 registros exibidos</span>
+        <span id="footerStats">0 blocos de projeto • 0 PCs exibidas</span>
         <span>•</span>
-        <button onclick="loadDemoDataset('projects')" class="hover:underline cursor-pointer">Demo: Projetos</button>
+        <button onclick="loadDemoDataset('projects')" class="hover:underline cursor-pointer">Exemplo: Projetos & PCs</button>
         <span>•</span>
-        <button onclick="loadDemoDataset('crm')" class="hover:underline cursor-pointer">Demo: CRM Vendas</button>
-        <span>•</span>
-        <button onclick="loadDemoDataset('content')" class="hover:underline cursor-pointer">Demo: Conteúdo</button>
+        <button onclick="loadDemoDataset('crm')" class="hover:underline cursor-pointer">Exemplo: Clientes & Entregas</button>
       </div>
       <div>
-        Compatível com Notion API v2022-06-28, JSON exportado e CSV
+        Organização Hierárquica Projeto &rarr; PC 1, PC 2, PC 3 • Notion API v2022-06-28
       </div>
     </footer>
   </div>
@@ -561,16 +559,16 @@
     };
 
     const NOTION_COLORS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
-    const PAGE_ICONS = ['📊', '🚀', '📋', '⚡', '🎯', '💼', '🧠', '📅', '🛠️', '✨'];
+    const PAGE_ICONS = ['🏗️', '🚀', '📦', '⚡', '🎯', '💼', '🧠', '📅', '🛠️', '✨'];
 
     let autoRefreshTimer = null;
 
     const state = {
-      dbTitle: 'Minha Tabela Notion',
+      dbTitle: 'Gestão de Projetos & PCs',
       iconIndex: 0,
       sourceMode: 'demo', // 'demo' | 'api' | 'imported'
       notionConfig: { ...DEFAULT_NOTION_CONFIG },
-      viewMode: 'table', // 'table' | 'kanban' | 'gallery'
+      viewMode: 'blocks', // 'blocks' | 'kanban' | 'table'
       density: 'normal', // 'compact' | 'normal' | 'comfortable'
       showSummaryRow: true,
       highlightOverdue: true,
@@ -578,162 +576,409 @@
       filters: [], // { id, field, operator, value }
       filterLogic: 'AND',
       sort: { field: '', direction: 'asc' },
-      groupBy: '', // key da coluna
+      projectFieldKey: '__notion_subitems__', // '__notion_subitems__' = Hierarquia nativa de Subitens do Notion (setinha) ou chave de coluna
+      pcFieldKey: 'title',
+      collapsedProjects: {}, // { [projectIdOrName]: boolean }
       editingRowId: null,
       schema: [],
       rows: []
     };
 
     // =========================================================================
-    // 2. DATASETS DE DEMONSTRAÇÃO (FALLBACK ENQUANTO NÃO SINCRONIZA COM NOTION)
+    // 2. DATASETS DE DEMONSTRAÇÃO (ESPELHANDO SUA TABELA DE PROJETOS & SUBITENS PC)
     // =========================================================================
     const DEMO_DATASETS = {
       projects: {
-        title: 'Roadmap & Operações Q4',
-        icon: '📊',
+        title: 'Tabela de Projetos',
+        icon: '🏗️',
+        projectFieldKey: '__notion_subitems__',
+        pcFieldKey: 'title',
         schema: [
-          { key: 'title', label: 'Iniciativa / Projeto', type: 'title', visible: true, displayAs: 'text' },
+          { key: 'title', label: 'Nome do Projeto', type: 'title', visible: true, displayAs: 'text' },
           {
-            key: 'status', label: 'Status', type: 'status', visible: true, displayAs: 'badge',
+            key: 'status', label: 'Status do Projeto', type: 'status', visible: true, displayAs: 'badge',
             options: [
-              { name: 'A Fazer', color: 'gray' },
-              { name: 'Em Progresso', color: 'blue' },
-              { name: 'Em Revisão', color: 'yellow' },
-              { name: 'Concluído', color: 'green' }
+              { name: 'Em Andamento', color: 'blue' },
+              { name: 'Aprovada', color: 'green' },
+              { name: 'Submetida', color: 'brown' },
+              { name: 'Em elaboração', color: 'gray' },
+              { name: 'Encerrado', color: 'gray' }
             ]
           },
           {
-            key: 'tags', label: 'Área', type: 'multi_select', visible: true, displayAs: 'tags',
+            key: 'proforma', label: 'Proforma', type: 'status', visible: true, displayAs: 'badge',
             options: [
-              { name: 'Produto', color: 'purple' },
-              { name: 'Engenharia', color: 'blue' },
-              { name: 'Design', color: 'pink' },
-              { name: 'Growth', color: 'orange' }
+              { name: 'Não iniciada', color: 'gray' },
+              { name: 'Em andamento', color: 'blue' },
+              { name: 'Concluída', color: 'green' }
             ]
           },
-          { key: 'progress', label: 'Progresso', type: 'number', visible: true, displayAs: 'progress' },
-          { key: 'budget', label: 'Orçamento', type: 'number', visible: true, displayAs: 'currency' },
-          { key: 'dueDate', label: 'Prazo', type: 'date', visible: true, displayAs: 'date' },
-          { key: 'approved', label: 'Aprovado', type: 'checkbox', visible: true, displayAs: 'checkbox' }
+          { key: 'codigo', label: 'Código', type: 'text', visible: true, displayAs: 'text' },
+          {
+            key: 'cliente', label: 'Cliente', type: 'select', visible: true, displayAs: 'badge',
+            options: [
+              { name: 'Shell Brasil', color: 'yellow' }
+            ]
+          }
         ],
         rows: [
+          // Projeto Pai 1: 420402 - SHELL/EP/OTIC_DGT2
           {
-            id: 'r1',
+            id: 'proj_420402',
+            parentId: null,
             properties: {
-              title: 'Novo Portal do Cliente v2',
-              status: 'Em Progresso',
-              tags: ['Produto', 'Engenharia'],
-              progress: 72,
-              budget: 48000,
-              dueDate: '2026-11-28',
-              approved: true
+              title: '420402 - SHELL/EP/OTIC_DGT2',
+              status: 'Em Andamento',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
             }
           },
           {
-            id: 'r2',
+            id: 'pc_420402_1',
+            parentId: 'proj_420402',
             properties: {
-              title: 'Automação de Onboarding & Billing',
-              status: 'Em Revisão',
-              tags: ['Growth', 'Produto'],
-              progress: 90,
-              budget: 25000,
-              dueDate: '2026-11-18',
-              approved: true
+              title: 'PC#1 06/06/2024 à 31/10/2024',
+              status: 'Aprovada',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
             }
           },
           {
-            id: 'r3',
+            id: 'pc_420402_5',
+            parentId: 'proj_420402',
             properties: {
-              title: 'Design System Multi-tema',
-              status: 'Concluído',
-              tags: ['Design'],
-              progress: 100,
-              budget: 18500,
-              dueDate: '2026-11-05',
-              approved: true
+              title: 'PC#5 01/11/2024 à 30/04/2025',
+              status: 'Aprovada',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
             }
           },
           {
-            id: 'r4',
+            id: 'pc_420402_9',
+            parentId: 'proj_420402',
             properties: {
-              title: 'Integração API Pública & Webhooks',
-              status: 'A Fazer',
-              tags: ['Engenharia'],
-              progress: 15,
-              budget: 62000,
-              dueDate: '2026-12-15',
-              approved: false
+              title: 'PC#9 01/05/2025 à 31/11/2025',
+              status: 'Aprovada',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420402_19',
+            parentId: 'proj_420402',
+            properties: {
+              title: 'PC#19 - 01/12/2025 a 31/08/2026',
+              status: 'Submetida',
+              proforma: 'Em andamento',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420402_20',
+            parentId: 'proj_420402',
+            properties: {
+              title: 'PC - 01/09/2026 a 28/02/2027',
+              status: 'Em elaboração',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420402_21',
+            parentId: 'proj_420402',
+            properties: {
+              title: 'PC - 01/03/2027 a 05/06/2028',
+              status: 'Em elaboração',
+              proforma: 'Não iniciada',
+              codigo: '24398-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          // Projeto Pai 2: 420403 - SHELL/EP/OTIC_DGT3
+          {
+            id: 'proj_420403',
+            parentId: null,
+            properties: {
+              title: '420403 - SHELL/EP/OTIC_DGT3',
+              status: 'Em Andamento',
+              proforma: 'Não iniciada',
+              codigo: '24379-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420403_1',
+            parentId: 'proj_420403',
+            properties: {
+              title: 'PC#1 01/07/2024 à 31/12/2024',
+              status: 'Aprovada',
+              proforma: 'Concluída',
+              codigo: '24379-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420403_2',
+            parentId: 'proj_420403',
+            properties: {
+              title: 'PC#2 01/01/2025 à 30/06/2025',
+              status: 'Submetida',
+              proforma: 'Em andamento',
+              codigo: '24379-0',
+              cliente: 'Shell Brasil'
+            }
+          },
+          // Projeto Pai 3: 420404 - SHELL/EP/OTIC_DGT4
+          {
+            id: 'proj_420404',
+            parentId: null,
+            properties: {
+              title: '420404 - SHELL/EP/OTIC_DGT4',
+              status: 'Em Andamento',
+              proforma: 'Não iniciada',
+              codigo: '24377-4',
+              cliente: 'Shell Brasil'
+            }
+          },
+          {
+            id: 'pc_420404_1',
+            parentId: 'proj_420404',
+            properties: {
+              title: 'PC#1 15/08/2024 à 15/02/2025',
+              status: 'Aprovada',
+              proforma: 'Não iniciada',
+              codigo: '24377-4',
+              cliente: 'Shell Brasil'
             }
           }
         ]
       },
       crm: {
-        title: 'Pipeline Comercial & CRM',
+        title: 'Contas & Entregas por PC',
         icon: '💼',
+        projectFieldKey: '__notion_subitems__',
+        pcFieldKey: 'title',
         schema: [
-          { key: 'title', label: 'Empresa / Conta', type: 'title', visible: true, displayAs: 'text' },
-          {
-            key: 'status', label: 'Etapa', type: 'status', visible: true, displayAs: 'badge',
-            options: [
-              { name: 'Lead Novo', color: 'gray' },
-              { name: 'Qualificação', color: 'blue' },
-              { name: 'Proposta Enviada', color: 'yellow' },
-              { name: 'Fechado Ganho', color: 'green' }
-            ]
-          },
-          { key: 'value', label: 'Valor Contrato', type: 'number', visible: true, displayAs: 'currency' },
-          { key: 'prob', label: 'Probabilidade', type: 'number', visible: true, displayAs: 'progress' },
-          { key: 'dueDate', label: 'Fechamento Previsto', type: 'date', visible: true, displayAs: 'date' }
-        ],
-        rows: [
-          { id: 'c1', properties: { title: 'Grupo Horizonte S.A.', status: 'Proposta Enviada', value: 120000, prob: 80, dueDate: '2026-11-25' } },
-          { id: 'c2', properties: { title: 'TechNova Logística', status: 'Fechado Ganho', value: 85000, prob: 100, dueDate: '2026-11-08' } },
-          { id: 'c3', properties: { title: 'Varejo Express Brasil', status: 'Qualificação', value: 54000, prob: 45, dueDate: '2026-12-10' } }
-        ]
-      },
-      content: {
-        title: 'Calendário Editorial & Conteúdo',
-        icon: '✨',
-        schema: [
-          { key: 'title', label: 'Título do Conteúdo', type: 'title', visible: true, displayAs: 'text' },
+          { key: 'title', label: 'Projeto / PC', type: 'title', visible: true, displayAs: 'text' },
           {
             key: 'status', label: 'Status', type: 'status', visible: true, displayAs: 'badge',
             options: [
-              { name: 'Ideia', color: 'gray' },
-              { name: 'Roteiro', color: 'purple' },
-              { name: 'Produção', color: 'blue' },
-              { name: 'Publicado', color: 'green' }
+              { name: 'Em Andamento', color: 'blue' },
+              { name: 'Aprovada', color: 'green' },
+              { name: 'Em elaboração', color: 'gray' }
             ]
           },
-          {
-            key: 'channel', label: 'Canal', type: 'select', visible: true, displayAs: 'badge',
-            options: [
-              { name: 'YouTube', color: 'red' },
-              { name: 'LinkedIn', color: 'blue' },
-              { name: 'Blog', color: 'orange' }
-            ]
-          },
-          { key: 'dueDate', label: 'Publicação', type: 'date', visible: true, displayAs: 'date' },
-          { key: 'done', label: 'Revisado', type: 'checkbox', visible: true, displayAs: 'checkbox' }
+          { key: 'value', label: 'Valor PC', type: 'number', visible: true, displayAs: 'currency' }
         ],
         rows: [
-          { id: 'm1', properties: { title: 'Guia Completo de Automação com Notion', status: 'Produção', channel: 'YouTube', dueDate: '2026-11-20', done: true } },
-          { id: 'm2', properties: { title: '5 Métricas Essenciais para SaaS B2B', status: 'Publicado', channel: 'LinkedIn', dueDate: '2026-11-10', done: true } },
-          { id: 'm3', properties: { title: 'Estudo de Caso: Redução de Churn', status: 'Roteiro', channel: 'Blog', dueDate: '2026-11-29', done: false } }
+          { id: 'c_p1', parentId: null, properties: { title: '420408 - SHELL/EP/OTIC_HSE1', status: 'Em Andamento', value: 120000 } },
+          { id: 'c1', parentId: 'c_p1', properties: { title: 'PC#1 — Diagnóstico Inicial', status: 'Aprovada', value: 40000 } },
+          { id: 'c2', parentId: 'c_p1', properties: { title: 'PC#2 — Implantação Campo', status: 'Em elaboração', value: 80000 } }
         ]
       }
     };
+    // Converte o JSON oficial do Notion (results[]) para o nosso schema dinâmico,
+    // preservando os vínculos nativos de Sub-items (Parent item <-> Sub-item)
+    function parseNotionQueryPayload(payload, mode = 'imported') {
+      const results = Array.isArray(payload) ? payload : (payload.results || []);
+      if (!results.length) {
+        if (mode === 'api') {
+          state.rows = [];
+          state.sourceMode = 'api';
+          updateConnectionBadge('api');
+          renderAll();
+          return;
+        }
+        throw new Error('Nenhum registro encontrado no JSON do Notion.');
+      }
+
+      const schemaMap = new Map();
+      const parsedRows = [];
+      const allPageIds = new Set(results.map(p => p.id).filter(Boolean));
+
+      results.forEach((page, idx) => {
+        const props = page.properties || {};
+        const rowData = {};
+        const relationFields = [];
+
+        Object.entries(props).forEach(([propName, propObj]) => {
+          const type = propObj.type;
+          const key = propName;
+
+          if (type === 'relation' && Array.isArray(propObj.relation)) {
+            relationFields.push({
+              key: propName,
+              ids: propObj.relation.map(r => r.id)
+            });
+          }
+
+          if (!schemaMap.has(key)) {
+            schemaMap.set(key, {
+              key,
+              label: propName,
+              type: mapNotionType(type),
+              visible: type !== 'relation', // Oculta colunas técnicas de relação interna por padrão
+              displayAs: defaultDisplayForNotionType(type),
+              optionsMap: new Map()
+            });
+          }
+
+          const colMeta = schemaMap.get(key);
+          const extracted = extractNotionPropertyValue(propObj, colMeta);
+          rowData[key] = extracted;
+        });
+
+        parsedRows.push({
+          id: page.id || `notion_${idx}`,
+          notionPageId: page.id || null,
+          parentId: null,
+          _relations: relationFields,
+          properties: rowData
+        });
+      });
+
+      // Resolve automaticamente quem é Projeto Pai e quem é Subitem (PC) nas relações internas do Notion
+      resolveNotionSubitemHierarchy(parsedRows, allPageIds);
+
+      // Ordena schema para que 'title' seja sempre a primeira coluna
+      const newSchema = Array.from(schemaMap.values()).map(col => ({
+        key: col.key,
+        label: col.label,
+        type: col.type,
+        visible: col.visible,
+        displayAs: col.displayAs,
+        options: Array.from(col.optionsMap.values())
+      }));
+
+      newSchema.sort((a, b) => (a.type === 'title' ? -1 : b.type === 'title' ? 1 : 0));
+
+      state.schema = newSchema;
+      state.rows = parsedRows;
+      state.sourceMode = mode;
+      state.filters = [];
+      state.sort = { field: '', direction: 'asc' };
+      state.collapsedProjects = {};
+
+      detectProjectAndPcFields();
+
+      if (mode === 'imported') {
+        state.dbTitle = 'Tabela de Projetos';
+        document.getElementById('pageTitleInput').value = state.dbTitle;
+        document.getElementById('headerDbTitle').textContent = state.dbTitle;
+      }
+
+      updateConnectionBadge(mode);
+      syncControlSelectors();
+      renderAll();
+    }
+
+    // Identifica relações pai-filho (Subitens nativos do Notion) entre páginas da mesma tabela
+    function resolveNotionSubitemHierarchy(rows, allPageIds) {
+      let parentPropKey = null;
+      let subPropKey = null;
+
+      // 1. Procura pelos nomes típicos das propriedades de subitens do Notion
+      rows.forEach(r => {
+        (r._relations || []).forEach(rel => {
+          if (/parent|principal|pai|projeto pai|super/i.test(rel.key)) {
+            parentPropKey = rel.key;
+          } else if (/sub-?item|subitem|sub-?t[oó]pico|filho/i.test(rel.key)) {
+            subPropKey = rel.key;
+          }
+        });
+      });
+
+      // 2. Caso o usuário tenha renomeado a relação, detecta relação auto-referenciada (1 pai -> N filhos)
+      if (!parentPropKey && !subPropKey) {
+        const selfRelations = new Map();
+        rows.forEach(r => {
+          (r._relations || []).forEach(rel => {
+            const internalIds = rel.ids.filter(id => allPageIds.has(id) && id !== r.id);
+            if (internalIds.length > 0) {
+              if (!selfRelations.has(rel.key)) selfRelations.set(rel.key, []);
+              selfRelations.get(rel.key).push(internalIds.length);
+            }
+          });
+        });
+
+        // A coluna onde cada item aponta para no máximo 1 ID é a coluna "Parent item"
+        for (const [key, counts] of selfRelations.entries()) {
+          if (counts.every(c => c === 1)) {
+            parentPropKey = key;
+            break;
+          }
+        }
+        // A coluna onde um item aponta para vários IDs é a coluna "Sub-items"
+        for (const [key, counts] of selfRelations.entries()) {
+          if (key !== parentPropKey && counts.some(c => c >= 1)) {
+            subPropKey = key;
+            break;
+          }
+        }
+      }
+
+      state.parentRelationKey = parentPropKey;
+
+      // Aplica parentId em cada subitem (PC)
+      if (parentPropKey) {
+        rows.forEach(r => {
+          const rel = (r._relations || []).find(x => x.key === parentPropKey);
+          if (rel && rel.ids.length > 0 && allPageIds.has(rel.ids[0])) {
+            r.parentId = rel.ids[0];
+          }
+        });
+      } else if (subPropKey) {
+        const rowById = new Map(rows.map(r => [r.id, r]));
+        rows.forEach(parentRow => {
+          const rel = (parentRow._relations || []).find(x => x.key === subPropKey);
+          if (rel && rel.ids.length > 0) {
+            rel.ids.forEach(childId => {
+              const child = rowById.get(childId);
+              if (child && child.id !== parentRow.id) {
+                child.parentId = parentRow.id;
+              }
+            });
+          }
+        });
+      }
+    }
+
+    // Heurística inteligente: prioriza os Subitens Nativos do Notion se existirem na tabela
+    function detectProjectAndPcFields() {
+      if (!state.schema.length) return;
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      state.pcFieldKey = titleCol.key;
+
+      const hasNativeSubitems = state.rows.some(r => Boolean(r.parentId));
+      if (hasNativeSubitems) {
+        state.projectFieldKey = '__notion_subitems__';
+        return;
+      }
+
+      const projectCandidate = state.schema.find(c =>
+        c.key !== titleCol.key &&
+        /projeto|project|obra|cliente|contrato|grupo|empreendimento/i.test(c.label)
+      ) || state.schema.find(c =>
+        c.key !== titleCol.key && ['select', 'status', 'text'].includes(c.type)
+      ) || titleCol;
+
+      state.projectFieldKey = projectCandidate.key;
+    }
 
     // =========================================================================
-    // 3. INICIALIZAÇÃO E CONEXÃO AUTOMÁTICA AO ABRIR
+    // 3. INICIALIZAÇÃO E PERSISTÊNCIA LOCAL
     // =========================================================================
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Carrega preferências salvas mantendo suas credenciais pré-configuradas como padrão
+    document.addEventListener('DOMContentLoaded', async () => {
       try {
         const savedTheme = localStorage.getItem('notion_viewer_theme');
-        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-        }
+        if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+
         const savedAccent = localStorage.getItem('notion_viewer_accent');
         if (savedAccent) setAccentColor(savedAccent, false);
 
@@ -804,7 +1049,7 @@
     }
 
     function loadDemoDataset(key, notify = true) {
-      const ds = JSON.parse(JSON.stringify(DEMO_DATASETS[key]));
+      const ds = JSON.parse(JSON.stringify(DEMO_DATASETS[key] || DEMO_DATASETS.projects));
       state.dbTitle = ds.title;
       state.schema = ds.schema;
       state.rows = ds.rows;
@@ -812,7 +1057,9 @@
       state.filters = [];
       state.searchQuery = '';
       state.sort = { field: '', direction: 'asc' };
-      state.groupBy = '';
+      state.projectFieldKey = ds.projectFieldKey || 'projeto';
+      state.pcFieldKey = ds.pcFieldKey || 'title';
+      state.collapsedProjects = {};
 
       document.getElementById('pageIcon').textContent = ds.icon;
       document.getElementById('pageTitleInput').value = ds.title;
@@ -878,27 +1125,47 @@
       for (const proxy of proxyCandidates) {
         try {
           const targetUrl = buildProxiedNotionUrl(proxy, notionEndpoint);
-          const response = await fetch(targetUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Notion-Version': '2022-06-28',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ page_size: 100 })
-          });
+          let allResults = [];
+          let hasMore = true;
+          let nextCursor = undefined;
 
-          if (!response.ok) {
-            const errText = await response.text();
-            lastError = new Error(`HTTP ${response.status}: ${errText.slice(0, 140)}`);
-            // Se for erro 401/404 da própria API do Notion, não precisa testar outro proxy
-            if (response.status === 401 || response.status === 404 || response.status === 400) {
+          // Paginação completa para trazer TODOS os Projetos e todas as PCs (além do limite de 100)
+          while (hasMore) {
+            const bodyPayload = { page_size: 100 };
+            if (nextCursor) bodyPayload.start_cursor = nextCursor;
+
+            const response = await fetch(targetUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Notion-Version': '2022-06-28',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(bodyPayload)
+            });
+
+            if (!response.ok) {
+              const errText = await response.text();
+              lastError = new Error(`HTTP ${response.status}: ${errText.slice(0, 140)}`);
+              if (response.status === 401 || response.status === 404 || response.status === 400) {
+                hasMore = false;
+                break;
+              }
+              throw lastError;
+            }
+
+            const pageData = await response.json();
+            allResults = allResults.concat(pageData.results || []);
+            hasMore = Boolean(pageData.has_more && pageData.next_cursor);
+            nextCursor = pageData.next_cursor;
+          }
+
+          if (lastError && allResults.length === 0) {
+            if (lastError.message.includes('HTTP 401') || lastError.message.includes('HTTP 404') || lastError.message.includes('HTTP 400')) {
               break;
             }
             continue;
           }
-
-          const data = await response.json();
 
           // Tenta buscar também o título oficial do Database
           try {
@@ -922,11 +1189,10 @@
 
           state.notionConfig.proxyUrl = proxy;
           document.getElementById('corsProxyInput').value = proxy;
-          parseNotionQueryPayload(data, 'api');
+          parseNotionQueryPayload({ results: allResults }, 'api');
           document.getElementById('corsAlertBanner').classList.add('hidden');
-          closeConnectModal();
           connected = true;
-          if (isManual) showToast(`${state.rows.length} registros sincronizados do Notion!`, 'success');
+          if (isManual) showToast(`${state.rows.length} itens (Projetos + PCs) sincronizados do Notion!`, 'success');
           break;
         } catch (err) {
           lastError = err;
@@ -945,84 +1211,6 @@
       if (btn) btn.disabled = false;
       if (quickIcon) quickIcon.classList.remove('animate-spin');
       lucide.createIcons();
-    }
-
-    // Converte o JSON oficial do Notion (results[]) para o nosso schema dinâmico
-    function parseNotionQueryPayload(payload, mode = 'imported') {
-      const results = Array.isArray(payload) ? payload : (payload.results || []);
-      if (!results.length) {
-        if (mode === 'api') {
-          state.rows = [];
-          state.sourceMode = 'api';
-          updateConnectionBadge('api');
-          renderAll();
-          return;
-        }
-        throw new Error('Nenhum registro encontrado no JSON do Notion.');
-      }
-
-      const schemaMap = new Map();
-      const parsedRows = [];
-
-      results.forEach((page, idx) => {
-        const props = page.properties || {};
-        const rowData = {};
-
-        Object.entries(props).forEach(([propName, propObj]) => {
-          const type = propObj.type;
-          const key = propName;
-
-          if (!schemaMap.has(key)) {
-            schemaMap.set(key, {
-              key,
-              label: propName,
-              type: mapNotionType(type),
-              visible: true,
-              displayAs: defaultDisplayForNotionType(type),
-              optionsMap: new Map()
-            });
-          }
-
-          const colMeta = schemaMap.get(key);
-          const extracted = extractNotionPropertyValue(propObj, colMeta);
-          rowData[key] = extracted;
-        });
-
-        parsedRows.push({
-          id: page.id || `notion_${idx}`,
-          notionPageId: page.id || null,
-          properties: rowData
-        });
-      });
-
-      // Ordena schema para que 'title' seja sempre a primeira coluna
-      const newSchema = Array.from(schemaMap.values()).map(col => ({
-        key: col.key,
-        label: col.label,
-        type: col.type,
-        visible: col.visible,
-        displayAs: col.displayAs,
-        options: Array.from(col.optionsMap.values())
-      }));
-
-      newSchema.sort((a, b) => (a.type === 'title' ? -1 : b.type === 'title' ? 1 : 0));
-
-      state.schema = newSchema;
-      state.rows = parsedRows;
-      state.sourceMode = mode;
-      state.filters = [];
-      state.groupBy = '';
-      state.sort = { field: '', direction: 'asc' };
-
-      if (mode === 'imported') {
-        state.dbTitle = 'Database Importada do Notion';
-        document.getElementById('pageTitleInput').value = state.dbTitle;
-        document.getElementById('headerDbTitle').textContent = state.dbTitle;
-      }
-
-      updateConnectionBadge(mode);
-      syncControlSelectors();
-      renderAll();
     }
 
     function mapNotionType(notionType) {
@@ -1143,19 +1331,26 @@
           },
           body: JSON.stringify({ properties: notionProperties })
         });
-        if (res.ok) {
-          showToast('Sincronizado com o Notion!', 'success');
-        }
+        if (res.ok) showToast('Sincronizado com o Notion!', 'success');
       } catch (e) {
         console.warn('PATCH Notion falhou:', e);
       }
     }
 
-    async function createPageInNotion(newProps) {
+    async function createPageInNotion(newProps, parentPageId = null) {
       if (state.sourceMode !== 'api' || !state.notionConfig.token || !state.notionConfig.databaseId) return null;
       try {
         const endpoint = 'https://api.notion.com/v1/pages';
         const url = buildProxiedNotionUrl(state.notionConfig.proxyUrl, endpoint);
+        const notionProps = buildNotionPropertiesPayload(newProps);
+
+        // Se estiver criando uma PC filha de um Projeto pai, já vincula na relação de subitem do Notion
+        if (parentPageId && state.parentRelationKey) {
+          notionProps[state.parentRelationKey] = {
+            relation: [{ id: parentPageId }]
+          };
+        }
+
         const res = await fetch(url, {
           method: 'POST',
           headers: {
@@ -1165,12 +1360,12 @@
           },
           body: JSON.stringify({
             parent: { database_id: state.notionConfig.databaseId },
-            properties: buildNotionPropertiesPayload(newProps)
+            properties: notionProps
           })
         });
         if (res.ok) {
           const created = await res.json();
-          showToast('Linha criada diretamente no Notion!', 'success');
+          showToast('Subitem (PC) criado diretamente no Notion!', 'success');
           return created.id;
         }
       } catch (e) {
@@ -1180,195 +1375,37 @@
     }
 
     // =========================================================================
-    // 5. IMPORTAÇÃO MANUAL (JSON DA API NOTION OU ARQUIVO CSV/JSON)
-    // =========================================================================
-    function fillSampleNotionPayload() {
-      const sample = {
-        object: "list",
-        results: [
-          {
-            id: "page-101",
-            properties: {
-              "Nome": { type: "title", title: [{ plain_text: "Lançamento App v3.0" }] },
-              "Status": { type: "status", status: { name: "Em Progresso", color: "blue" } },
-              "Tags": { type: "multi_select", multi_select: [{ name: "Mobile", color: "purple" }, { name: "Prioridade", color: "red" }] },
-              "Investimento": { type: "number", number: 42000 },
-              "Prazo": { type: "date", date: { start: "2026-12-01" } },
-              "Validado": { type: "checkbox", checkbox: true }
-            }
-          },
-          {
-            id: "page-102",
-            properties: {
-              "Nome": { type: "title", title: [{ plain_text: "Auditoria de Segurança SOC2" }] },
-              "Status": { type: "status", status: { name: "Concluído", color: "green" } },
-              "Tags": { type: "multi_select", multi_select: [{ name: "Infra", color: "gray" }] },
-              "Investimento": { type: "number", number: 65000 },
-              "Prazo": { type: "date", date: { start: "2026-11-10" } },
-              "Validado": { type: "checkbox", checkbox: true }
-            }
-          }
-        ]
-      };
-      document.getElementById('rawNotionJsonInput').value = JSON.stringify(sample, null, 2);
-    }
-
-    function importRawNotionJson() {
-      const raw = document.getElementById('rawNotionJsonInput').value.trim();
-      if (!raw) {
-        showToast('Cole o JSON antes de processar.', 'error');
-        return;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        parseNotionQueryPayload(parsed, 'imported');
-        closeConnectModal();
-        showToast('JSON do Notion importado com sucesso!', 'success');
-      } catch (err) {
-        showToast(`JSON inválido: ${err.message}`, 'error');
-      }
-    }
-
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target.result;
-        try {
-          if (file.name.endsWith('.json')) {
-            const json = JSON.parse(content);
-            parseNotionQueryPayload(json, 'imported');
-          } else {
-            parseCsvContent(content, file.name.replace('.csv', ''));
-          }
-          closeConnectModal();
-          showToast(`Arquivo "${file.name}" importado!`, 'success');
-        } catch (err) {
-          showToast(`Erro ao ler arquivo: ${err.message}`, 'error');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function parseCsvContent(csvText, titleName) {
-      const lines = csvText.split(/\r?\n/).filter(l => l.trim().length > 0);
-      if (lines.length < 2) throw new Error('CSV vazio ou sem linhas de dados.');
-
-      const splitCsvLine = (line) => {
-        const res = [];
-        let cur = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') { inQuotes = !inQuotes; }
-          else if (ch === ',' && !inQuotes) { res.push(cur.trim()); cur = ''; }
-          else { cur += ch; }
-        }
-        res.push(cur.trim());
-        return res;
-      };
-
-      const headers = splitCsvLine(lines[0]).map((h, i) => h.replace(/^\uFEFF/, '') || `Coluna ${i + 1}`);
-      const rawRows = lines.slice(1).map(splitCsvLine);
-
-      const newSchema = headers.map((header, colIdx) => {
-        const samples = rawRows.map(r => r[colIdx] || '').filter(Boolean);
-        let type = colIdx === 0 ? 'title' : 'text';
-        let displayAs = 'text';
-        let options = [];
-
-        if (colIdx > 0 && samples.length > 0) {
-          const allNumbers = samples.every(v => !isNaN(Number(v.replace(/[R$\s.]/g, '').replace(',', '.'))));
-          const allBooleans = samples.every(v => ['true', 'false', 'sim', 'não', 'yes', 'no'].includes(v.toLowerCase()));
-          const uniqueVals = [...new Set(samples)];
-
-          if (allBooleans) {
-            type = 'checkbox';
-            displayAs = 'checkbox';
-          } else if (allNumbers) {
-            type = 'number';
-            displayAs = 'number';
-          } else if (uniqueVals.length <= 8 && rawRows.length >= 3) {
-            type = 'select';
-            displayAs = 'badge';
-            options = uniqueVals.map((u, i) => ({ name: u, color: NOTION_COLORS[i % NOTION_COLORS.length] }));
-          }
-        }
-
-        return { key: `col_${colIdx}`, label: header, type, visible: true, displayAs, options };
-      });
-
-      const parsedRows = rawRows.map((cols, rIdx) => {
-        const properties = {};
-        newSchema.forEach((col, cIdx) => {
-          const val = cols[cIdx] ?? '';
-          if (col.type === 'number') {
-            properties[col.key] = Number(val.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
-          } else if (col.type === 'checkbox') {
-            properties[col.key] = ['true', 'sim', 'yes', '1'].includes(val.toLowerCase());
-          } else {
-            properties[col.key] = val;
-          }
-        });
-        return { id: `csv_${rIdx}`, properties };
-      });
-
-      state.dbTitle = titleName || 'Tabela CSV Importada';
-      state.schema = newSchema;
-      state.rows = parsedRows;
-      state.sourceMode = 'imported';
-      state.filters = [];
-      state.groupBy = '';
-      document.getElementById('pageTitleInput').value = state.dbTitle;
-      document.getElementById('headerDbTitle').textContent = state.dbTitle;
-      updateConnectionBadge('imported');
-      syncControlSelectors();
-      renderAll();
-    }
-
-    // =========================================================================
-    // 6. FILTRAGEM, ORDENAÇÃO E AGRUPAMENTO DINÂMICO
+    // 6. MOTOR DE FILTRAGEM, BUSCA E ORDENAÇÃO
     // =========================================================================
     function getProcessedRows() {
       let result = [...state.rows];
 
-      // 1. Busca global instantânea
-      if (state.searchQuery.trim() !== '') {
+      if (state.searchQuery.trim()) {
         const q = state.searchQuery.toLowerCase();
-        result = result.filter(row => {
-          return Object.values(row.properties).some(val => {
+        result = result.filter(row =>
+          Object.values(row.properties).some(val => {
             if (Array.isArray(val)) return val.some(v => String(v).toLowerCase().includes(q));
             return String(val ?? '').toLowerCase().includes(q);
-          });
-        });
+          })
+        );
       }
 
-      // 2. Regras de filtros avançados combináveis
       if (state.filters.length > 0) {
         result = result.filter(row => {
-          const evaluations = state.filters.map(rule => evaluateFilterRule(row, rule));
+          const evaluations = state.filters.map(f => evaluateFilterRule(row, f));
           return state.filterLogic === 'AND' ? evaluations.every(Boolean) : evaluations.some(Boolean);
         });
       }
 
-      // 3. Ordenação dinâmica
       if (state.sort.field) {
-        const col = state.schema.find(c => c.key === state.sort.field);
+        const key = state.sort.field;
         const dir = state.sort.direction === 'asc' ? 1 : -1;
         result.sort((a, b) => {
-          let va = a.properties[state.sort.field];
-          let vb = b.properties[state.sort.field];
-          if (Array.isArray(va)) va = va.join(', ');
-          if (Array.isArray(vb)) vb = vb.join(', ');
-
-          if (col && col.type === 'number') {
-            return ((Number(va) || 0) - (Number(vb) || 0)) * dir;
-          }
-          if (col && col.type === 'checkbox') {
-            return ((va === vb) ? 0 : va ? -1 : 1) * dir;
-          }
-          return String(va ?? '').localeCompare(String(vb ?? ''), 'pt-BR', { numeric: true }) * dir;
+          const va = a.properties[key] ?? '';
+          const vb = b.properties[key] ?? '';
+          if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+          if (typeof va === 'boolean' && typeof vb === 'boolean') return ((va === vb) ? 0 : va ? -1 : 1) * dir;
+          return String(va).localeCompare(String(vb), 'pt-BR', { numeric: true }) * dir;
         });
       }
 
@@ -1376,49 +1413,49 @@
     }
 
     function evaluateFilterRule(row, rule) {
-      if (!rule.field) return true;
       const rawVal = row.properties[rule.field];
+      const strVal = Array.isArray(rawVal) ? rawVal.join(', ').toLowerCase() : String(rawVal ?? '').toLowerCase();
       const target = String(rule.value ?? '').toLowerCase();
 
-      if (rule.operator === 'is_empty') {
-        return Array.isArray(rawVal) ? rawVal.length === 0 : (rawVal === '' || rawVal === null || rawVal === undefined);
+      switch (rule.operator) {
+        case 'contains': return strVal.includes(target);
+        case 'not_contains': return !strVal.includes(target);
+        case 'equals': return strVal === target;
+        case 'not_equals': return strVal !== target;
+        case 'gt': return Number(rawVal) > Number(rule.value);
+        case 'lt': return Number(rawVal) < Number(rule.value);
+        case 'is_empty': return rawVal === '' || rawVal === null || rawVal === undefined || (Array.isArray(rawVal) && rawVal.length === 0);
+        case 'is_not_empty': return !(rawVal === '' || rawVal === null || rawVal === undefined || (Array.isArray(rawVal) && rawVal.length === 0));
+        default: return true;
       }
-      if (rule.operator === 'is_not_empty') {
-        return Array.isArray(rawVal) ? rawVal.length > 0 : (rawVal !== '' && rawVal !== null && rawVal !== undefined);
-      }
+    }
 
-      if (typeof rawVal === 'boolean') {
-        const expected = target === 'true' || target === 'sim';
-        return rule.operator === 'equals' ? rawVal === expected : rawVal !== expected;
-      }
+    function addFilterRule() {
+      const firstCol = state.schema[0]?.key || 'title';
+      state.filters.push({ id: `f_${Date.now()}`, field: firstCol, operator: 'contains', value: '' });
+      renderAll();
+    }
 
-      if (typeof rawVal === 'number') {
-        const numTarget = Number(rule.value);
-        if (isNaN(numTarget)) return true;
-        if (rule.operator === 'equals') return rawVal === numTarget;
-        if (rule.operator === 'not_equals') return rawVal !== numTarget;
-        if (rule.operator === 'gt') return rawVal > numTarget;
-        if (rule.operator === 'lt') return rawVal < numTarget;
-        if (rule.operator === 'gte') return rawVal >= numTarget;
-        if (rule.operator === 'lte') return rawVal <= numTarget;
+    function updateFilterRule(id, prop, val) {
+      const rule = state.filters.find(f => f.id === id);
+      if (rule) {
+        rule[prop] = val;
+        renderAll();
       }
+    }
 
-      const strVal = Array.isArray(rawVal) ? rawVal.join(' ').toLowerCase() : String(rawVal ?? '').toLowerCase();
-      if (rule.operator === 'contains') return strVal.includes(target);
-      if (rule.operator === 'not_contains') return !strVal.includes(target);
-      if (rule.operator === 'equals') {
-        if (Array.isArray(rawVal)) return rawVal.some(v => v.toLowerCase() === target);
-        return strVal === target;
-      }
-      if (rule.operator === 'not_equals') {
-        if (Array.isArray(rawVal)) return !rawVal.some(v => v.toLowerCase() === target);
-        return strVal !== target;
-      }
-      return true;
+    function removeFilterRule(id) {
+      state.filters = state.filters.filter(f => f.id !== id);
+      renderAll();
+    }
+
+    function clearFilters() {
+      state.filters = [];
+      renderAll();
     }
 
     // =========================================================================
-    // 7. RENDERIZAÇÃO PRINCIPAL (KPIs, TABELA, KANBAN, GALERIA)
+    // 7. RENDERIZAÇÃO PRINCIPAL (KPIs, BLOCOS DE PROJETO + PCs, KANBAN, LISTA)
     // =========================================================================
     function renderAll() {
       const processedRows = getProcessedRows();
@@ -1428,35 +1465,42 @@
       renderColumnManager();
 
       const viewport = document.getElementById('mainViewport');
-      if (state.viewMode === 'table') {
-        renderTableView(viewport, processedRows);
+      if (state.viewMode === 'blocks') {
+        renderProjectBlocksView(viewport, processedRows);
       } else if (state.viewMode === 'kanban') {
         renderKanbanView(viewport, processedRows);
       } else {
-        renderGalleryView(viewport, processedRows);
+        renderTableView(viewport, processedRows);
       }
 
-      document.getElementById('footerStats').textContent = `${processedRows.length} de ${state.rows.length} registros exibidos`;
+      const projectGroups = groupRowsByProject(processedRows);
+      document.getElementById('footerStats').textContent = `${projectGroups.length} blocos de projeto • ${processedRows.length} PCs exibidas`;
       lucide.createIcons();
     }
 
     function renderKPIs(rows) {
       const container = document.getElementById('kpiStrip');
-      const total = rows.length;
+      const totalPCs = rows.length;
+      const projectGroups = groupRowsByProject(rows);
       const numericCols = state.schema.filter(c => c.type === 'number');
-      const statusCol = state.schema.find(c => c.type === 'status' || c.type === 'select');
+      const statusCol = state.schema.find(c => c.type === 'status' || c.type === 'select' && c.key !== state.projectFieldKey);
 
       let html = `
-        <div class="px-3 py-1.5 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder text-xs">
-          <span class="text-notion-muted">Registros:</span> <strong class="font-semibold">${total}</strong>
+        <div class="px-3 py-1.5 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder text-xs flex items-center gap-1.5">
+          <i data-lucide="boxes" class="w-3.5 h-3.5 accent-text"></i>
+          <span class="text-notion-muted">Projetos:</span> <strong class="font-semibold">${projectGroups.length}</strong>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder text-xs flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-500"></i>
+          <span class="text-notion-muted">Total de PCs:</span> <strong class="font-semibold">${totalPCs}</strong>
         </div>
       `;
 
-      // Mostra KPI da primeira coluna numérica (ex: Orçamento ou Progresso)
+      // Mostra KPI da primeira coluna numérica (ex: Valor Total das PCs)
       if (numericCols.length > 0) {
         const col = numericCols.find(c => c.displayAs === 'currency') || numericCols[0];
         const sum = rows.reduce((acc, r) => acc + (Number(r.properties[col.key]) || 0), 0);
-        const avg = total ? (sum / total) : 0;
+        const avg = totalPCs ? (sum / totalPCs) : 0;
         const formatted = col.displayAs === 'currency'
           ? sum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
           : col.displayAs === 'progress'
@@ -1470,13 +1514,13 @@
         `;
       }
 
-      // Mostra % de concluídos se houver coluna de status
+      // Mostra % de PCs concluídas
       if (statusCol) {
-        const doneCount = rows.filter(r => ['concluído', 'fechado ganho', 'publicado', 'done'].includes(String(r.properties[statusCol.key] || '').toLowerCase())).length;
-        const pct = total ? Math.round((doneCount / total) * 100) : 0;
+        const doneCount = rows.filter(r => ['concluído', 'concluída', 'fechado ganho', 'publicado', 'done', 'finalizado'].includes(String(r.properties[statusCol.key] || '').toLowerCase())).length;
+        const pct = totalPCs ? Math.round((doneCount / totalPCs) * 100) : 0;
         html += `
           <div class="px-3 py-1.5 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder text-xs flex items-center gap-2">
-            <span class="text-notion-muted">Conclusão:</span>
+            <span class="text-notion-muted">PCs Concluídas:</span>
             <div class="w-14 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
               <div class="h-full bg-emerald-500 rounded-full" style="width: ${pct}%"></div>
             </div>
@@ -1488,8 +1532,377 @@
       container.innerHTML = html;
     }
 
+    // =========================================================================
+    // 7A. VISUALIZAÇÃO PRINCIPAL: BLOCOS DE PROJETOS COM SUBITENS (PC 1, 2, 3)
+    // =========================================================================
+    function isPcTitle(titleStr) {
+      return /^pc\b|^pc#/i.test(String(titleStr || '').trim());
+    }
+
+    function groupRowsByProject(rows) {
+      const projKey = state.projectFieldKey;
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const pcKey = state.pcFieldKey || titleCol?.key;
+
+      // MODO 1: Hierarquia nativa de Subitens do Notion (Projetos Pai -> Subitens PC#1, PC#5...)
+      if (projKey === '__notion_subitems__') {
+        const allById = new Map(state.rows.map(r => [r.id, r]));
+        const visibleIds = new Set(rows.map(r => r.id));
+
+        // Identifica coluna de Código/Centro de Custo (ex: 24398-0) como fallback caso algum subitem não tenha relação marcada
+        const codeCol = state.schema.find(c =>
+          c.key !== titleCol.key && /c[oó]digo|code|projeto|cc|contrato|os\b|id/i.test(c.label)
+        ) || state.schema.find(c => c.key !== titleCol.key && c.type === 'text');
+
+        // Identifica os Projetos Raiz (itens sem parentId e que não começam com "PC")
+        const rootProjects = state.rows.filter(r => {
+          const hasValidParent = r.parentId && allById.has(r.parentId);
+          if (hasValidParent) return false;
+          const titleVal = String(r.properties[titleCol.key] || '');
+          return !isPcTitle(titleVal);
+        });
+
+        // Mapa auxiliar por Código do Projeto (ex: "24398-0" -> projRow)
+        const projectByCode = new Map();
+        if (codeCol) {
+          rootProjects.forEach(p => {
+            const codeVal = String(p.properties[codeCol.key] || '').trim();
+            if (codeVal) projectByCode.set(codeVal, p.id);
+          });
+        }
+
+        // Vincula cada PC ao seu Projeto Pai (priorizando parentId nativo do Notion e usando o Código como apoio)
+        const childrenByProjectId = new Map(rootProjects.map(p => [p.id, []]));
+        const orphanPCs = [];
+
+        rows.forEach(r => {
+          const titleVal = String(r.properties[titleCol.key] || '');
+          const isRootProject = rootProjects.some(p => p.id === r.id);
+          if (isRootProject) return;
+
+          let targetProjectId = null;
+          // 1. Tenta relação nativa parentId (ou avô, se for sub-nível de outra PC)
+          let cursor = r;
+          const visited = new Set();
+          while (cursor && cursor.parentId && !visited.has(cursor.id)) {
+            visited.add(cursor.id);
+            if (childrenByProjectId.has(cursor.parentId)) {
+              targetProjectId = cursor.parentId;
+              break;
+            }
+            cursor = allById.get(cursor.parentId);
+          }
+
+          // 2. Fallback pelo mesmo Código de Projeto (ex: 24377-4)
+          if (!targetProjectId && codeCol) {
+            const codeVal = String(r.properties[codeCol.key] || '').trim();
+            if (codeVal && projectByCode.has(codeVal)) {
+              targetProjectId = projectByCode.get(codeVal);
+            }
+          }
+
+          if (targetProjectId && childrenByProjectId.has(targetProjectId)) {
+            childrenByProjectId.get(targetProjectId).push(r);
+          } else if (isPcTitle(titleVal) || r.parentId) {
+            orphanPCs.push(r);
+          }
+        });
+
+        const groups = [];
+        rootProjects.forEach(projRow => {
+          const matchedChildren = childrenByProjectId.get(projRow.id) || [];
+          // Exibe o bloco se o Projeto corresponde à busca/filtro OU se alguma PC filha dele corresponde
+          if (!visibleIds.has(projRow.id) && matchedChildren.length === 0) return;
+
+          const sortedChildren = matchedChildren.sort((a, b) => {
+            const va = String(a.properties[pcKey] ?? '');
+            const vb = String(b.properties[pcKey] ?? '');
+            return va.localeCompare(vb, 'pt-BR', { numeric: true });
+          });
+
+          groups.push({
+            projectId: projRow.id,
+            projectRow: projRow,
+            projectName: String(projRow.properties[titleCol.key] || 'Projeto Sem Nome'),
+            items: sortedChildren
+          });
+        });
+
+        if (orphanPCs.length > 0) {
+          groups.push({
+            projectId: '__unassigned_pcs__',
+            projectRow: null,
+            projectName: 'PCs sem Projeto Pai Vinculado',
+            items: orphanPCs
+          });
+        }
+
+        return groups;
+      }
+
+      // MODO 2: Agrupamento por coluna escolhida (ex: Cliente "Shell Brasil", Código ou Status)
+      const map = new Map();
+      rows.forEach(row => {
+        let rawProj = row.properties[projKey];
+        if (Array.isArray(rawProj)) rawProj = rawProj.join(', ');
+        const projectName = rawProj ? String(rawProj).trim() : 'Sem Categoria';
+
+        if (!map.has(projectName)) {
+          map.set(projectName, []);
+        }
+        map.get(projectName).push(row);
+      });
+
+      return Array.from(map.entries()).map(([projectName, items]) => {
+        const sortedItems = [...items].sort((a, b) => {
+          const va = String(a.properties[pcKey] ?? '');
+          const vb = String(b.properties[pcKey] ?? '');
+          return va.localeCompare(vb, 'pt-BR', { numeric: true });
+        });
+        return {
+          projectId: projectName,
+          projectRow: null,
+          projectName,
+          items: sortedItems
+        };
+      });
+    }
+
+    function toggleProjectBlock(projectKey) {
+      state.collapsedProjects[projectKey] = !state.collapsedProjects[projectKey];
+      renderAll();
+    }
+
+    function toggleAllProjectBlocks() {
+      const groups = groupRowsByProject(getProcessedRows());
+      const anyExpanded = groups.some(g => !state.collapsedProjects[g.projectId]);
+      groups.forEach(g => {
+        state.collapsedProjects[g.projectId] = anyExpanded;
+      });
+      renderAll();
+    }
+
+    function updateProjectGroupingField(newKey) {
+      state.projectFieldKey = newKey;
+      state.collapsedProjects = {};
+      renderAll();
+    }
+
+    function renderProjectBlocksView(container, rows) {
+      if (rows.length === 0) {
+        container.innerHTML = renderEmptyState();
+        return;
+      }
+
+      const projectGroups = groupRowsByProject(rows);
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const statusCol = state.schema.find(c => (c.type === 'status' || c.type === 'select') && c.key !== state.projectFieldKey);
+      const progressCol = state.schema.find(c => c.type === 'number' && c.displayAs === 'progress');
+      const currencyCol = state.schema.find(c => c.type === 'number' && c.displayAs === 'currency');
+      const extraCols = state.schema.filter(c =>
+        c.visible &&
+        c.key !== titleCol.key &&
+        c.key !== state.projectFieldKey &&
+        c.key !== statusCol?.key
+      );
+
+      let html = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">`;
+
+      projectGroups.forEach(group => {
+        const { projectId, projectRow, projectName, items } = group;
+        const isCollapsed = Boolean(state.collapsedProjects[projectId]);
+
+        // Status e metadados do próprio Projeto Pai (quando vindo da linha pai do Notion)
+        const parentStatusVal = projectRow && statusCol ? projectRow.properties[statusCol.key] : '';
+        const parentStatusColor = statusCol && parentStatusVal ? getOptionColor(statusCol.key, parentStatusVal) : 'blue';
+        const parentBadges = projectRow
+          ? extraCols.slice(0, 3).map(col => renderCompactCardProp(projectRow, col)).filter(Boolean).join('')
+          : '';
+
+        // Cálculo de progresso consolidado das PCs do Projeto
+        let projectProgress = 0;
+        if (progressCol && items.length > 0) {
+          const sumPct = items.reduce((acc, r) => acc + (Number(r.properties[progressCol.key]) || 0), 0);
+          projectProgress = Math.round(sumPct / items.length);
+        } else if (statusCol && items.length > 0) {
+          const done = items.filter(r => ['aprovada', 'aprovado', 'concluído', 'concluída', 'encerrado', 'done', 'finalizado'].includes(String(r.properties[statusCol.key] || '').toLowerCase())).length;
+          projectProgress = Math.round((done / items.length) * 100);
+        }
+
+        const totalBudget = currencyCol
+          ? items.reduce((acc, r) => acc + (Number(r.properties[currencyCol.key]) || 0), 0)
+          : null;
+
+        const nextPcNumber = items.length + 1;
+        const suggestedPcTitle = `PC#${nextPcNumber}`;
+        const safeProjectId = escapeHtml(projectId);
+        const safeProjectName = escapeHtml(projectName);
+
+        html += `
+          <div class="rounded-2xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar/80 shadow-sm hover:shadow-md transition-all overflow-hidden animate-fade flex flex-col">
+            
+            <!-- Cabeçalho do Bloco de Projeto -->
+            <div class="p-4 sm:p-5 bg-gradient-to-r from-notion-sidebar to-white dark:from-notion-darkSidebar dark:to-notion-darkBg border-b border-notion-border dark:border-notion-darkBorder">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3 min-w-0">
+                  <button
+                    onclick="toggleProjectBlock('${safeProjectId}')"
+                    class="mt-0.5 p-1.5 rounded-lg border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkBg hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer shrink-0"
+                    title="${isCollapsed ? 'Expandir PCs do Projeto' : 'Recolher PCs do Projeto'}"
+                  >
+                    <i data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" class="w-4 h-4"></i>
+                  </button>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                      ${parentStatusVal ? renderBadge(parentStatusVal, parentStatusColor) : `
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold badge-blue">
+                          <i data-lucide="folder" class="w-3 h-3"></i> Projeto
+                        </span>
+                      `}
+                      <span class="text-xs font-medium text-notion-muted">
+                        ${items.length} ${items.length === 1 ? 'PC (subitem)' : 'PCs (subitens)'}
+                      </span>
+                      ${parentBadges}
+                    </div>
+                    <h3
+                      ${projectRow ? `onclick="openRowModal('${projectRow.id}')"` : ''}
+                      class="font-bold text-base sm:text-lg tracking-tight text-notion-text dark:text-notion-darkText truncate ${projectRow ? 'hover:accent-text cursor-pointer' : ''}"
+                      title="${safeProjectName}"
+                    >
+                      ${safeProjectName}
+                    </h3>
+                  </div>
+                </div>
+
+                <!-- Botão rápido para adicionar novo subitem (PC) dentro deste projeto -->
+                <button
+                  onclick="openNewPcForProject('${safeProjectId}', '${safeProjectName}', '${escapeHtml(suggestedPcTitle)}')"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium accent-soft-bg accent-text hover:opacity-85 transition shrink-0 cursor-pointer"
+                  title="Adicionar nova PC neste projeto"
+                >
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>${suggestedPcTitle}</span>
+                </button>
+              </div>
+
+              <!-- Barra de Progresso Consolidada & Resumo do Projeto -->
+              <div class="mt-4 pt-3 border-t border-notion-border/60 dark:border-notion-darkBorder/60 flex flex-wrap items-center justify-between gap-4 text-xs">
+                <div class="flex items-center gap-2.5 flex-1 min-w-[160px]">
+                  <span class="text-notion-muted whitespace-nowrap">PCs Aprovadas:</span>
+                  <div class="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div class="h-full ${projectProgress >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full transition-all duration-300" style="width: ${projectProgress}%"></div>
+                  </div>
+                  <strong class="font-semibold tabular-nums">${projectProgress}%</strong>
+                </div>
+
+                ${totalBudget !== null && totalBudget > 0 ? `
+                  <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-notion-darkBg border border-notion-border dark:border-notion-darkBorder">
+                    <span class="text-notion-muted">Total:</span>
+                    <strong class="font-mono font-semibold text-notion-text dark:text-notion-darkText">
+                      ${totalBudget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                    </strong>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Lista de Subitens (PC#1, PC#5, PC#9...) dentro do Bloco -->
+            ${!isCollapsed ? `
+              <div class="p-3 sm:p-4 space-y-2.5 bg-notion-bg/50 dark:bg-notion-darkBg/40">
+                ${items.length === 0 ? `
+                  <div class="p-4 rounded-xl border border-dashed border-notion-border dark:border-notion-darkBorder text-center text-xs text-notion-muted">
+                    Nenhuma PC vinculada a este projeto ainda. Clique em <strong>+ ${suggestedPcTitle}</strong> acima para criar.
+                  </div>
+                ` : items.map((row, idx) => {
+                  const pcTitle = row.properties[titleCol.key] || `PC ${idx + 1}`;
+                  const statusVal = statusCol ? row.properties[statusCol.key] : '';
+                  const statusColor = statusCol ? getOptionColor(statusCol.key, statusVal) : 'gray';
+                  const rowPct = progressCol ? Math.max(0, Math.min(100, Number(row.properties[progressCol.key]) || 0)) : null;
+
+                  return `
+                    <div
+                      onclick="openRowModal('${row.id}')"
+                      class="group relative p-3 rounded-xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar hover:border-blue-500/50 hover:shadow-xs transition-all cursor-pointer"
+                    >
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-2.5 min-w-0">
+                          <!-- Indicador numérico sequencial da PC -->
+                          <div class="w-6 h-6 rounded-lg accent-soft-bg accent-text font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                            ${idx + 1}
+                          </div>
+                          <div class="min-w-0">
+                            <div class="font-semibold text-xs sm:text-sm text-notion-text dark:text-notion-darkText group-hover:accent-text transition truncate" title="${escapeHtml(pcTitle)}">
+                              ${escapeHtml(pcTitle)}
+                            </div>
+
+                            <!-- Metadados secundários da PC (Proforma, Código, Cliente, etc.) -->
+                            <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                              ${extraCols.map(col => renderCompactCardProp(row, col)).filter(Boolean).join('')}
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Seletor rápido de Status da PC (sem abrir modal) -->
+                        <div class="flex items-center gap-2 shrink-0" onclick="event.stopPropagation()">
+                          ${statusCol ? `
+                            <select
+                              onchange="updateInlineSelect('${row.id}', '${statusCol.key}', this.value)"
+                              class="appearance-none cursor-pointer focus:outline-none rounded-lg px-2.5 py-1 text-[11px] font-semibold badge-${statusColor}"
+                            >
+                              <option value="">Status...</option>
+                              ${(statusCol.options || []).map(o => `<option value="${escapeHtml(o.name)}" ${statusVal === o.name ? 'selected' : ''}>${escapeHtml(o.name)}</option>`).join('')}
+                              ${statusVal && !(statusCol.options || []).some(o => o.name === statusVal) ? `<option value="${escapeHtml(statusVal)}" selected>${escapeHtml(statusVal)}</option>` : ''}
+                            </select>
+                          ` : ''}
+                          <button onclick="openRowModal('${row.id}')" class="p-1 rounded-lg text-notion-muted opacity-40 group-hover:opacity-100 hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer" title="Editar detalhes da PC">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      ${rowPct !== null ? `
+                        <div class="mt-2.5 pt-2 border-t border-notion-border/40 dark:border-notion-darkBorder/40 flex items-center gap-2">
+                          <div class="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            <div class="h-full ${rowPct >= 100 ? 'bg-emerald-500' : 'accent-bg'} rounded-full" style="width: ${rowPct}%"></div>
+                          </div>
+                          <span class="text-[10px] font-medium text-notion-muted tabular-nums">${rowPct}%</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : `
+              <div onclick="toggleProjectBlock('${safeProjectId}')" class="px-4 py-2.5 text-xs text-notion-muted hover:text-notion-text dark:hover:text-notion-darkText cursor-pointer flex items-center justify-between bg-notion-sidebar/30 dark:bg-notion-darkBg/30">
+                <span>Clique para expandir as ${items.length} PCs deste projeto</span>
+                <span class="accent-text font-medium">Mostrar PCs &rarr;</span>
+              </div>
+            `}
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function openNewPcForProject(projectId, projectName, suggestedTitle) {
+      if (state.projectFieldKey === '__notion_subitems__') {
+        openRowModal(null, '__parent_id__', projectId);
+      } else {
+        openRowModal(null, state.projectFieldKey, projectName);
+      }
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      if (titleCol) {
+        const input = document.querySelector(`#rowFormFields input[name="${titleCol.key}"]`);
+        if (input && !input.value) {
+          input.value = suggestedTitle;
+        }
+      }
+    }
+
     // -------------------------------------------------------------------------
-    // 7A. VISUALIZAÇÃO: TABELA DINÂMICA (COM AGRUPAMENTO E EDIÇÃO INLINE)
+    // 7B. VISUALIZAÇÃO: LISTA GERAL AGRUPADA POR PROJETO
     // -------------------------------------------------------------------------
     function renderTableView(container, rows) {
       const visibleCols = state.schema.filter(c => c.visible);
@@ -1500,33 +1913,29 @@
         return;
       }
 
-      // Agrupamento opcional na tabela
-      const groups = groupRowsByField(rows, state.groupBy);
-
+      const groups = groupRowsByProject(rows);
       let html = `<div class="space-y-6">`;
 
       groups.forEach(group => {
         html += `
           <div class="rounded-xl border border-notion-border dark:border-notion-darkBorder overflow-hidden bg-white dark:bg-notion-darkBg shadow-2xs animate-fade">
-            ${group.groupName !== null ? `
-              <div class="px-4 py-2 bg-notion-sidebar dark:bg-notion-darkSidebar border-b border-notion-border dark:border-notion-darkBorder flex items-center justify-between">
-                <div class="flex items-center gap-2 text-xs font-semibold">
-                  ${renderBadge(group.groupName, getOptionColor(state.groupBy, group.groupName))}
-                  <span class="text-notion-muted font-normal">${group.items.length} itens</span>
-                </div>
+            <div class="px-4 py-2.5 bg-notion-sidebar dark:bg-notion-darkSidebar border-b border-notion-border dark:border-notion-darkBorder flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs font-semibold">
+                ${renderBadge(group.projectName, getOptionColor(state.projectFieldKey, group.projectName))}
+                <span class="text-notion-muted font-normal">${group.items.length} PCs</span>
               </div>
-            ` : ''}
+              <button onclick="openNewPcForProject('${escapeHtml(group.projectName)}', 'PC ${group.items.length + 1}')" class="text-xs accent-text hover:underline font-medium cursor-pointer">+ Adicionar PC</button>
+            </div>
 
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr class="border-b border-notion-border dark:border-notion-darkBorder bg-notion-sidebar/60 dark:bg-notion-darkSidebar/60 text-notion-muted dark:text-notion-darkMuted font-medium">
+                  <tr class="border-b border-notion-border dark:border-notion-darkBorder bg-notion-sidebar/40 dark:bg-notion-darkSidebar/40 text-notion-muted dark:text-notion-darkMuted font-medium">
                     ${visibleCols.map(col => `
                       <th onclick="quickSortByColumn('${col.key}')" class="${padClass} border-r last:border-r-0 border-notion-border dark:border-notion-darkBorder select-none cursor-pointer hover:bg-notion-hover dark:hover:bg-notion-darkHover transition whitespace-nowrap">
                         <div class="flex items-center gap-1.5">
                           ${getPropertyIcon(col.type)}
                           <span>${escapeHtml(col.label)}</span>
-                          ${state.sort.field === col.key ? `<span class="accent-text font-bold">${state.sort.direction === 'asc' ? '↑' : '↓'}</span>` : ''}
                         </div>
                       </th>
                     `).join('')}
@@ -1542,22 +1951,15 @@
                         </td>
                       `).join('')}
                       <td class="${padClass} text-center">
-                        <button onclick="openRowModal('${row.id}')" title="Abrir / Editar Registro" class="opacity-40 group-hover:opacity-100 p-1 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
-                          <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                        <button onclick="openRowModal('${row.id}')" class="opacity-40 group-hover:opacity-100 p-1 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover transition cursor-pointer">
+                          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
                       </td>
                     </tr>
                   `).join('')}
                 </tbody>
-                ${state.showSummaryRow ? renderTableSummaryFooter(visibleCols, group.items, padClass) : ''}
               </table>
             </div>
-
-            <!-- Linha rápida de adição estilo Notion (+ Novo) -->
-            <button onclick="openRowModal(null, '${state.groupBy}', '${escapeHtml(group.groupName || '')}')" class="w-full px-4 py-2 text-left text-xs text-notion-muted hover:text-notion-text dark:hover:text-notion-darkText hover:bg-notion-hover/50 dark:hover:bg-notion-darkHover/50 border-t border-notion-border dark:border-notion-darkBorder flex items-center gap-1.5 transition cursor-pointer">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Novo registro</span>
-            </button>
           </div>
         `;
       });
@@ -1566,38 +1968,11 @@
       container.innerHTML = html;
     }
 
-    function renderTableSummaryFooter(visibleCols, items, padClass) {
-      const hasNumeric = visibleCols.some(c => c.type === 'number');
-      if (!hasNumeric) return '';
-
-      return `
-        <tfoot>
-          <tr class="bg-notion-sidebar/50 dark:bg-notion-darkSidebar/50 border-t border-notion-border dark:border-notion-darkBorder text-[11px] text-notion-muted">
-            ${visibleCols.map((col, idx) => {
-              if (col.type === 'number') {
-                const sum = items.reduce((acc, r) => acc + (Number(r.properties[col.key]) || 0), 0);
-                const avg = items.length ? sum / items.length : 0;
-                const label = col.displayAs === 'progress'
-                  ? `Média: ${Math.round(avg)}%`
-                  : col.displayAs === 'currency'
-                    ? `Soma: ${sum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}`
-                    : `Soma: ${sum.toLocaleString('pt-BR')}`;
-                return `<td class="${padClass} font-medium text-notion-text dark:text-notion-darkText border-r last:border-r-0 border-notion-border dark:border-notion-darkBorder">${label}</td>`;
-              }
-              return `<td class="${padClass} border-r last:border-r-0 border-notion-border dark:border-notion-darkBorder">${idx === 0 ? `Contagem: ${items.length}` : ''}</td>`;
-            }).join('')}
-            <td></td>
-          </tr>
-        </tfoot>
-      `;
-    }
-
     // -------------------------------------------------------------------------
-    // 7B. VISUALIZAÇÃO: QUADRO KANBAN INTERATIVO (COM DRAG & DROP)
+    // 7C. VISUALIZAÇÃO: FLUXO KANBAN DAS PCs (EXIBINDO O PROJETO EM CADA CARD)
     // -------------------------------------------------------------------------
     function renderKanbanView(container, rows) {
-      // Escolhe coluna de agrupamento (padrão: primeira status ou select)
-      let groupCol = state.schema.find(c => c.key === state.groupBy && (c.type === 'status' || c.type === 'select'));
+      let groupCol = state.schema.find(c => (c.type === 'status' || c.type === 'select') && c.key !== state.projectFieldKey);
       if (!groupCol) {
         groupCol = state.schema.find(c => c.type === 'status' || c.type === 'select');
       }
@@ -1605,37 +1980,34 @@
       if (!groupCol) {
         container.innerHTML = `
           <div class="p-8 rounded-2xl border border-dashed border-notion-border dark:border-notion-darkBorder text-center text-xs text-notion-muted">
-            Para usar o Quadro Kanban, crie ou importe uma coluna do tipo <strong>Status</strong> ou <strong>Select</strong>.
+            Para usar o Fluxo de PCs, crie ou importe uma coluna do tipo <strong>Status</strong> ou <strong>Select</strong>.
           </div>
         `;
         return;
       }
 
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
-      const cardCols = state.schema.filter(c => c.visible && c.key !== titleCol.key && c.key !== groupCol.key);
+      const allById = new Map(state.rows.map(r => [r.id, r]));
+      const cardCols = state.schema.filter(c => c.visible && c.key !== titleCol.key && c.key !== groupCol.key && c.key !== state.projectFieldKey);
 
-      // Monta colunas do Kanban a partir das options registradas + valores existentes
       const laneNames = new Set((groupCol.options || []).map(o => o.name));
       rows.forEach(r => {
         const v = r.properties[groupCol.key];
         if (v) laneNames.add(v);
       });
-      laneNames.add('Sem Categoria');
+      laneNames.add('Sem Status');
 
       let html = `
-        <div class="mb-3 flex items-center justify-between text-xs text-notion-muted">
-          <span>Agrupado por: <strong class="text-notion-text dark:text-notion-darkText">${groupCol.label}</strong> (arraste os cards para mudar o status)</span>
-        </div>
         <div class="flex gap-4 overflow-x-auto pb-4 items-start">
       `;
 
       laneNames.forEach(lane => {
         const laneItems = rows.filter(r => {
           const val = r.properties[groupCol.key];
-          return lane === 'Sem Categoria' ? !val : val === lane;
+          return lane === 'Sem Status' ? !val : val === lane;
         });
 
-        if (lane === 'Sem Categoria' && laneItems.length === 0) return;
+        if (lane === 'Sem Status' && laneItems.length === 0) return;
 
         const color = getOptionColor(groupCol.key, lane);
 
@@ -1643,42 +2015,47 @@
           <div
             ondragover="event.preventDefault(); this.classList.add('ring-2', 'ring-blue-500/40')"
             ondragleave="this.classList.remove('ring-2', 'ring-blue-500/40')"
-            ondrop="handleKanbanDrop(event, '${groupCol.key}', '${lane === 'Sem Categoria' ? '' : escapeHtml(lane)}')"
-            class="w-72 shrink-0 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder p-2.5 flex flex-col gap-2.5 transition"
+            ondrop="handleKanbanDrop(event, '${groupCol.key}', '${lane === 'Sem Status' ? '' : escapeHtml(lane)}')"
+            class="w-76 shrink-0 rounded-xl bg-notion-sidebar dark:bg-notion-darkSidebar border border-notion-border dark:border-notion-darkBorder p-2.5 flex flex-col gap-2.5 transition"
           >
-            <!-- Header da Coluna Kanban -->
             <div class="flex items-center justify-between px-1 py-0.5">
               <div class="flex items-center gap-2">
                 ${renderBadge(lane, color)}
                 <span class="text-xs font-medium text-notion-muted">${laneItems.length}</span>
               </div>
-              <button onclick="openRowModal(null, '${groupCol.key}', '${lane === 'Sem Categoria' ? '' : escapeHtml(lane)}')" class="p-1 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover text-notion-muted cursor-pointer" title="Adicionar card nesta coluna">
+              <button onclick="openRowModal(null, '${groupCol.key}', '${lane === 'Sem Status' ? '' : escapeHtml(lane)}')" class="p-1 rounded hover:bg-notion-hover dark:hover:bg-notion-darkHover text-notion-muted cursor-pointer">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
-            <!-- Lista de Cards -->
             <div class="flex flex-col gap-2 min-h-[60px]">
-              ${laneItems.map(row => `
-                <div
-                  draggable="true"
-                  ondragstart="event.dataTransfer.setData('text/plain', '${row.id}')"
-                  onclick="openRowModal('${row.id}')"
-                  class="p-3 rounded-xl bg-white dark:bg-notion-darkBg border border-notion-border dark:border-notion-darkBorder shadow-2xs hover:shadow-md hover:border-blue-500/40 transition cursor-pointer space-y-2.5 animate-fade"
-                >
-                  <div class="font-medium text-xs leading-snug">
-                    ${escapeHtml(row.properties[titleCol.key] || 'Sem título')}
+              ${laneItems.map(row => {
+                const parentRow = row.parentId ? allById.get(row.parentId) : null;
+                const projName = parentRow
+                  ? parentRow.properties[titleCol.key]
+                  : (state.projectFieldKey !== '__notion_subitems__' ? row.properties[state.projectFieldKey] : '');
+                return `
+                  <div
+                    draggable="true"
+                    ondragstart="event.dataTransfer.setData('text/plain', '${row.id}')"
+                    onclick="openRowModal('${row.id}')"
+                    class="p-3 rounded-xl bg-white dark:bg-notion-darkBg border border-notion-border dark:border-notion-darkBorder shadow-2xs hover:shadow-md hover:border-blue-500/40 transition cursor-pointer space-y-2 animate-fade"
+                  >
+                    ${projName ? `
+                      <div class="text-[10px] font-semibold uppercase tracking-wider accent-text truncate">
+                        📁 ${escapeHtml(projName)}
+                      </div>
+                    ` : ''}
+                    <div class="font-semibold text-xs leading-snug">
+                      ${escapeHtml(row.properties[titleCol.key] || 'Sem título')}
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 items-center">
+                      ${cardCols.slice(0, 3).map(col => renderCompactCardProp(row, col)).join('')}
+                    </div>
                   </div>
-                  <div class="flex flex-wrap gap-1.5 items-center">
-                    ${cardCols.slice(0, 4).map(col => renderCompactCardProp(row, col)).join('')}
-                  </div>
-                </div>
-              `).join('')}
+                `;
+              }).join('')}
             </div>
-
-            <button onclick="openRowModal(null, '${groupCol.key}', '${lane === 'Sem Categoria' ? '' : escapeHtml(lane)}')" class="w-full py-1.5 px-2 rounded-lg text-left text-xs text-notion-muted hover:bg-notion-hover dark:hover:bg-notion-darkHover flex items-center gap-1 transition cursor-pointer">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Novo
-            </button>
           </div>
         `;
       });
@@ -1695,50 +2072,8 @@
         row.properties[fieldKey] = targetValue;
         syncRowPatchToNotion(row, fieldKey, targetValue);
         renderAll();
-        showToast(`Movido para "${targetValue || 'Sem Categoria'}"`, 'info');
+        showToast(`Movido para "${targetValue || 'Sem Status'}"`, 'info');
       }
-    }
-
-    // -------------------------------------------------------------------------
-    // 7C. VISUALIZAÇÃO: GALERIA / CARDS RICOS
-    // -------------------------------------------------------------------------
-    function renderGalleryView(container, rows) {
-      if (rows.length === 0) {
-        container.innerHTML = renderEmptyState();
-        return;
-      }
-
-      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
-      const visibleCols = state.schema.filter(c => c.visible && c.key !== titleCol.key);
-
-      const html = `
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade">
-          ${rows.map(row => `
-            <div onclick="openRowModal('${row.id}')" class="group rounded-2xl border border-notion-border dark:border-notion-darkBorder bg-white dark:bg-notion-darkSidebar/70 hover:shadow-lg hover:border-blue-500/40 transition overflow-hidden flex flex-col cursor-pointer">
-              <!-- Faixa decorativa superior baseada no status -->
-              <div class="h-1.5 w-full accent-bg opacity-75 group-hover:opacity-100 transition"></div>
-              <div class="p-4 flex-1 flex flex-col justify-between gap-4">
-                <div>
-                  <div class="flex items-start justify-between gap-2 mb-3">
-                    <h3 class="font-semibold text-sm leading-snug">${escapeHtml(row.properties[titleCol.key] || 'Sem título')}</h3>
-                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-notion-muted opacity-0 group-hover:opacity-100 transition shrink-0"></i>
-                  </div>
-                  <div class="space-y-2 text-xs">
-                    ${visibleCols.map(col => `
-                      <div class="flex items-center justify-between gap-2 py-1 border-b border-notion-border/50 dark:border-notion-darkBorder/50 last:border-none">
-                        <span class="text-notion-muted truncate">${escapeHtml(col.label)}</span>
-                        <div class="text-right">${renderCompactCardProp(row, col, true)}</div>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-
-      container.innerHTML = html;
     }
 
     // =========================================================================
@@ -1880,13 +2215,16 @@
     // =========================================================================
     function openRowModal(rowId = null, presetKey = '', presetVal = '') {
       state.editingRowId = rowId;
+      state.pendingParentId = presetKey === '__parent_id__' ? presetVal : null;
       const existingRow = rowId ? state.rows.find(r => r.id === rowId) : null;
 
-      document.getElementById('rowModalTitle').textContent = existingRow ? 'Editar Registro' : 'Novo Registro';
+      document.getElementById('rowModalTitle').textContent = existingRow
+        ? 'Editar Item / PC'
+        : (state.pendingParentId ? 'Nova PC (Subitem do Projeto)' : 'Novo Projeto / PC');
       document.getElementById('btnDeleteRow').classList.toggle('hidden', !existingRow);
 
       const fieldsContainer = document.getElementById('rowFormFields');
-      fieldsContainer.innerHTML = state.schema.map(col => {
+      fieldsContainer.innerHTML = state.schema.filter(c => c.visible || c.type === 'title').map(col => {
         let currentVal = existingRow ? existingRow.properties[col.key] : (col.key === presetKey ? presetVal : '');
 
         if (col.type === 'checkbox') {
@@ -1939,6 +2277,7 @@
     function closeRowModal() {
       document.getElementById('rowModal').classList.add('hidden');
       state.editingRowId = null;
+      state.pendingParentId = null;
     }
 
     async function saveRowForm(event) {
@@ -1947,6 +2286,13 @@
       const newProps = {};
 
       state.schema.forEach(col => {
+        if (!formData.has(col.key) && col.type !== 'checkbox') {
+          if (state.editingRowId) {
+            const existing = state.rows.find(r => r.id === state.editingRowId);
+            if (existing) newProps[col.key] = existing.properties[col.key];
+          }
+          return;
+        }
         if (col.type === 'checkbox') {
           newProps[col.key] = formData.get(col.key) === 'on';
         } else if (col.type === 'number') {
@@ -1965,7 +2311,6 @@
           const row = state.rows[idx];
           row.properties = newProps;
           if (state.sourceMode === 'api' && row.notionPageId) {
-            // Sincroniza todas as propriedades editadas
             const endpoint = `https://api.notion.com/v1/pages/${row.notionPageId}`;
             fetch(buildProxiedNotionUrl(state.notionConfig.proxyUrl, endpoint), {
               method: 'PATCH',
@@ -1980,13 +2325,15 @@
           showToast('Registro atualizado!', 'success');
         }
       } else {
-        const createdNotionId = await createPageInNotion(newProps);
-        state.rows.unshift({
+        const parentId = state.pendingParentId || null;
+        const createdNotionId = await createPageInNotion(newProps, parentId);
+        state.rows.push({
           id: createdNotionId || `row_${Date.now()}`,
           notionPageId: createdNotionId,
+          parentId,
           properties: newProps
         });
-        if (!createdNotionId) showToast('Novo registro criado!', 'success');
+        if (!createdNotionId) showToast(parentId ? 'Nova PC adicionada ao projeto!' : 'Novo bloco de projeto criado!', 'success');
       }
 
       closeRowModal();
@@ -2067,44 +2414,13 @@
     // 11. CONTROLES DE FILTRO, ORDENAÇÃO, AGRUPAMENTO E EXPORTAÇÃO
     // =========================================================================
     function syncControlSelectors() {
-      const sortSel = document.getElementById('sortFieldSelect');
-      const groupSel = document.getElementById('groupFieldSelect');
-
-      sortSel.innerHTML = `<option value="">Ordenar por...</option>` +
-        state.schema.map(c => `<option value="${c.key}" ${state.sort.field === c.key ? 'selected' : ''}>${escapeHtml(c.label)}</option>`).join('');
-
-      const groupableCols = state.schema.filter(c => ['status', 'select', 'checkbox'].includes(c.type));
-      groupSel.innerHTML = `<option value="">Agrupar: Nenhum</option>` +
-        groupableCols.map(c => `<option value="${c.key}" ${state.groupBy === c.key ? 'selected' : ''}>Agrupar: ${escapeHtml(c.label)}</option>`).join('');
-    }
-
-    function addFilterRule() {
-      const firstCol = state.schema[0];
-      state.filters.push({
-        id: `f_${Date.now()}`,
-        field: firstCol ? firstCol.key : '',
-        operator: 'contains',
-        value: ''
-      });
-      document.getElementById('filterBar').classList.remove('hidden');
-      renderAll();
-    }
-
-    function removeFilterRule(id) {
-      state.filters = state.filters.filter(f => f.id !== id);
-      renderAll();
-    }
-
-    function clearFilters() {
-      state.filters = [];
-      renderAll();
-    }
-
-    function updateFilterRule(id, prop, val) {
-      const rule = state.filters.find(f => f.id === id);
-      if (rule) {
-        rule[prop] = val;
-        renderAll();
+      const projSel = document.getElementById('projectFieldSelect');
+      if (projSel) {
+        const subitemOption = `<option value="__notion_subitems__" ${state.projectFieldKey === '__notion_subitems__' ? 'selected' : ''}>Subitens do Notion (Setinha)</option>`;
+        const colOptions = state.schema.filter(c => c.type !== 'title').map(c =>
+          `<option value="${c.key}" ${state.projectFieldKey === c.key ? 'selected' : ''}>Coluna: ${escapeHtml(c.label)}</option>`
+        ).join('');
+        projSel.innerHTML = subitemOption + colOptions;
       }
     }
 
@@ -2256,8 +2572,9 @@
     }
 
     function updateViewTabsUI() {
-      ['table', 'kanban', 'gallery'].forEach(mode => {
+      ['blocks', 'kanban', 'table'].forEach(mode => {
         const el = document.getElementById(`tab-${mode}`);
+        if (!el) return;
         if (state.viewMode === mode) {
           el.className = 'view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold accent-soft-bg accent-text transition cursor-pointer';
         } else {
@@ -2268,6 +2585,16 @@
 
     function handleSearch(q) {
       state.searchQuery = q;
+      renderAll();
+    }
+
+    function quickSortByColumn(key) {
+      if (state.sort.field === key) {
+        state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sort.field = key;
+        state.sort.direction = 'asc';
+      }
       renderAll();
     }
 
