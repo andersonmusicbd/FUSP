@@ -48,6 +48,23 @@
       background-color: #eff6ff !important;
       border-color: #3b82f6 !important;
     }
+    @keyframes projectAlertBlink {
+      0%, 100% {
+        background-color: #e11d48;
+        color: #ffffff;
+        box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.65);
+        transform: scale(1);
+      }
+      50% {
+        background-color: #fb7185;
+        color: #ffffff;
+        box-shadow: 0 0 0 6px rgba(225, 29, 72, 0);
+        transform: scale(1.04);
+      }
+    }
+    .project-blink-alert {
+      animation: projectAlertBlink 1.15s infinite ease-in-out;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-900">
@@ -117,10 +134,15 @@
     <!-- Barra Secundária: Navegação de Modos + Período da Tabela por Data de Entrega -->
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70">
       <!-- Abas de Visualização -->
-      <div class="inline-flex p-1 rounded-xl bg-slate-200/70 border border-slate-200/80">
+      <div class="inline-flex flex-wrap p-1 rounded-xl bg-slate-200/70 border border-slate-200/80 gap-0.5">
         <button onclick="setViewMode('overview')" id="tab-overview" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-blue-700 shadow-sm">
           <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
           <span>Início &bull; Blocos</span>
+        </button>
+        <button onclick="setViewMode('actions')" id="tab-actions" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900">
+          <i data-lucide="siren" class="w-3.5 h-3.5 text-rose-600"></i>
+          <span>Ações Importantes</span>
+          <span id="actionsNavBadge" class="hidden px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-extrabold">0</span>
         </button>
         <button onclick="setViewMode('blocks')" id="tab-blocks" class="view-tab inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900">
           <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
@@ -147,6 +169,11 @@
             <option value="all_elaboracao">Todas em Elaboração (com Data)</option>
           </select>
         </div>
+
+        <button id="refreshImportantActionsBtn" onclick="loadAllImportantActions(true)" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xs font-semibold text-rose-700 transition-colors">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          <span>Re-ler anotações das PCs</span>
+        </button>
 
         <div class="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
           <i data-lucide="git-fork" class="w-3.5 h-3.5 text-blue-600"></i>
@@ -322,18 +349,48 @@
       { id: 'proj_420402', parentId: null, properties: { title: '420402 - SHELL/EP/OTIC_DGT2', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: 'Sim' } },
 
       { id: 'proj_420419', parentId: null, properties: { title: '420419 - SHELL/EP/OTIC_MNT2', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '6721.93', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420419_1', parentId: 'proj_420419', notes: [{ type: 'bullet', text: 'PC atual submetida à Shell' }], properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026', status: 'Submetida', dataEntrega: '2026-10-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Média', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'pc_420419_1', parentId: 'proj_420419', notes: [{ type: 'paragraph', text: 'PC atual submetida à Shell' }], properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026', status: 'Submetida', dataEntrega: '2026-10-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Média', anp: '24371-7', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
 
       { id: 'proj_420420', parentId: null, properties: { title: '420420 - SHELL/EP/OTIC_MNT4', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '8462.42', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420420_1', parentId: 'proj_420420', notes: [{ type: 'bullet', text: 'PC atual aprovada' }], properties: { title: 'PC 1 - 01/04/2026 a 30/09/2026', status: 'Aprovada', dataEntrega: '2026-10-15', dataCorteInicial: '2026-04-01', dataCorteFinal: '2026-09-30', prioridade: 'Baixa', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Emitida', precisaDevolverDoa: '' } },
+      { id: 'pc_420420_1', parentId: 'proj_420420', notes: [{ type: 'paragraph', text: 'PC atual aprovada' }], properties: { title: 'PC 1 - 01/04/2026 a 30/09/2026', status: 'Aprovada', dataEntrega: '2026-10-15', dataCorteInicial: '2026-04-01', dataCorteFinal: '2026-09-30', prioridade: 'Baixa', anp: '24374-1', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Emitida', precisaDevolverDoa: '' } },
 
-      { id: 'proj_420418', parentId: null, properties: { title: '420418 - SHELL/EP/OTIC_MNT1', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24369-1', financiador: 'Shell Brasil', saldo3009: '31232.38', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420422', parentId: null, properties: { title: '420422 - SHELL/EP/OTIC_NPO2 (ainda não lançado a partir do mês 7)', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24367-5', financiador: 'Shell Brasil', saldo3009: '38085.3', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      { id: 'proj_420408', parentId: null, properties: { title: '420408 - SHELL/EP/OTIC_HSE1', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24378-2', financiador: 'Shell Brasil', saldo3009: '41200.00', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      {
+        id: 'pc_420408_19',
+        parentId: 'proj_420408',
+        notes: [
+          { type: 'paragraph', text: '25/08/2026 - Lançado até Mês 7' },
+          { type: 'paragraph', text: '05/11/2026 - Solicitei indicação do membro Lucas por email' },
+          { type: 'paragraph', text: 'AÇÕES IMPORTANTES!! 🚨🚨' },
+          { type: 'paragraph', text: '13/11/2026 - Devolver DOA e RCI' }
+        ],
+        properties: { title: 'PC 19 Prova real batida, devolver doa, indicar membros)', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '24378-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: 'Sim' }
+      },
+
       { id: 'proj_420404', parentId: null, properties: { title: '420404 - SHELL/EP/OTIC_DGT4', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '67862.34', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420404_1', parentId: 'proj_420404', notes: [{ type: 'bullet', text: 'Solicitar assinatura recibo DOA e fechar medição' }], properties: { title: 'PC - 01/05/2026 a 31/10/2026 (lançado até 10/2026, solicitar assinatura recibo doa)', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'proj_420413', parentId: null, properties: { title: '420413 - SHELL/EP/OTIC_HSE6', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24380-8', financiador: 'Shell Brasil', saldo3009: '68675.63', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
+      {
+        id: 'pc_420404_1',
+        parentId: 'proj_420404',
+        notes: [
+          { type: 'paragraph', text: 'Lançado até 10/2026' },
+          { type: 'heading_3', text: 'AÇÕES IMPORTANTES!!' },
+          { type: 'bulleted_list_item', text: 'Solicitar assinatura do recibo DOA junto à coordenação' },
+          { type: 'bulleted_list_item', text: 'Fechar medição final da rubrica de equipamentos' }
+        ],
+        properties: { title: 'PC 1 - 01/05/2026 a 31/10/2026 (lançado até 10/2026, solicitar assinatura recibo doa)', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-05-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '24377-4', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' }
+      },
+
       { id: 'proj_420403', parentId: null, properties: { title: '420403 - SHELL/EP/OTIC_DGT3', status: 'Em Andamento', dataEntrega: '', dataCorteInicial: '', dataCorteFinal: '', prioridade: '', anp: '24379-0', financiador: 'Shell Brasil', saldo3009: '69591.91', proforma: 'Não iniciada', precisaDevolverDoa: '' } },
-      { id: 'pc_420403_19', parentId: 'proj_420403', notes: [{ type: 'bullet', text: 'Separado até 10/2026' }], properties: { title: 'PC 19 - 01/06/2026 a 31/10/2026 - Separado até 10', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-06-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '48675-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' } }
+      {
+        id: 'pc_420403_19',
+        parentId: 'proj_420403',
+        notes: [
+          { type: 'paragraph', text: 'Separado até 10/2026' },
+          { type: 'paragraph', text: 'AÇÕES IMPORTANTES' },
+          { type: 'to_do', checked: false, text: 'Validar notas fiscais de outubro pendentes no sistema' }
+        ],
+        properties: { title: 'PC 19 - 01/06/2026 a 31/10/2026 - Separado até 10', status: 'Em elaboração', dataEntrega: '2026-11-30', dataCorteInicial: '2026-06-01', dataCorteFinal: '2026-10-31', prioridade: 'Alta', anp: '48675-2', financiador: 'Shell Brasil', saldo3009: '', proforma: 'Não iniciada', precisaDevolverDoa: '' }
+      }
     ];
 
     const state = {
@@ -355,6 +412,8 @@
       presetParentId: null,
       activeNotesRowId: null,
       editingViewRuleTarget: null,
+      resolvedImportantPcs: {},
+      notesScanProgress: { loading: false, done: 0, total: 0 },
       viewRules: {
         doa: { colKey: 'auto', values: ['Sim'], statusFilter: '', includeParents: true },
         saldo: { colKey: 'auto', values: [], statusFilter: 'Em Andamento', includeParents: true }
@@ -365,7 +424,15 @@
       localStorage.removeItem('notion_blocks_cfg_v1');
       const savedRules = localStorage.getItem('notion_view_rules_v3');
       if (savedRules) state.viewRules = { ...state.viewRules, ...JSON.parse(savedRules) };
+      const savedResolved = localStorage.getItem('notion_resolved_important_pcs_v1');
+      if (savedResolved) state.resolvedImportantPcs = JSON.parse(savedResolved) || {};
     } catch (e) {}
+
+    function persistResolvedImportantPcs() {
+      try {
+        localStorage.setItem('notion_resolved_important_pcs_v1', JSON.stringify(state.resolvedImportantPcs));
+      } catch (e) {}
+    }
 
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -429,6 +496,13 @@
     function extractPcNumber(title) {
       const m = String(title || '').match(/pc\s*#?\s*(\d+)/i);
       return m ? parseInt(m[1], 10) : -1;
+    }
+
+    function extractPcShortLabel(title) {
+      const str = String(title || '').trim();
+      const m = str.match(/^(pc\s*#?\s*\d+)/i);
+      if (m) return m[1].replace(/\s+/g, ' ').toUpperCase();
+      return str || 'PC';
     }
 
     function sortPcsNewestFirst(pcs, titleKey) {
@@ -503,6 +577,94 @@
         cutoffStartStr: formatShortDateBR(rawStart),
         cutoffEndStr: formatShortDateBR(rawEnd)
       };
+    }
+
+    // Extrai exclusivamente os itens listados abaixo do título "AÇÕES IMPORTANTES" nas anotações da PC
+    function extractImportantActionsFromNotes(notes) {
+      if (!Array.isArray(notes) || notes.length === 0) return [];
+      const actions = [];
+      let inImportantSection = false;
+
+      for (const block of notes) {
+        const rawText = String(block.text || '').trim();
+        if (!rawText) continue;
+        const norm = normalizeStr(rawText);
+
+        if (/acoes\s*importantes/.test(norm)) {
+          inImportantSection = true;
+          const sameLineAfter = rawText.replace(/^.*?a[çc][õo]es\s*importantes[!🚨\s:—-]*/i, '').trim();
+          if (sameLineAfter) {
+            actions.push({
+              id: block.id || null,
+              type: block.type || 'paragraph',
+              checked: Boolean(block.checked),
+              text: sameLineAfter
+            });
+          }
+          continue;
+        }
+
+        if (inImportantSection) {
+          if (block.type === 'divider' || /^heading_[12]$/.test(block.type)) {
+            break;
+          }
+          actions.push({
+            id: block.id || null,
+            type: block.type || 'paragraph',
+            checked: Boolean(block.checked),
+            text: rawText
+          });
+        }
+      }
+
+      return actions;
+    }
+
+    function getImportantActionsSignature(actions) {
+      return actions.map(a => `${a.text.trim()}:${a.checked ? '1' : '0'}`).join('|');
+    }
+
+    // Verifica se a PC (ou o projeto pai) ainda tem ações importantes pendentes de arrumar
+    function hasUnresolvedImportantActionsForPc(pc, parentRow) {
+      const checkRow = (r) => {
+        if (!r || !Array.isArray(r.notes)) return false;
+        const actions = extractImportantActionsFromNotes(r.notes);
+        if (actions.length === 0) return false;
+        const openActions = actions.filter(a => !a.checked);
+        if (openActions.length === 0) return false;
+
+        const sig = getImportantActionsSignature(openActions);
+        if (state.resolvedImportantPcs[r.id] === sig) return false;
+        return true;
+      };
+
+      return checkRow(pc) || checkRow(parentRow);
+    }
+
+    function isPcImportantResolved(row) {
+      if (!row || !Array.isArray(row.notes)) return false;
+      const actions = extractImportantActionsFromNotes(row.notes);
+      if (actions.length === 0) return true;
+      const openActions = actions.filter(a => !a.checked);
+      if (openActions.length === 0) return true;
+      const sig = getImportantActionsSignature(openActions);
+      return state.resolvedImportantPcs[row.id] === sig;
+    }
+
+    function togglePcImportantResolved(rowId) {
+      const row = state.rows.find(r => r.id === rowId);
+      if (!row) return;
+      const actions = extractImportantActionsFromNotes(row.notes || []);
+      const openActions = actions.filter(a => !a.checked);
+      const sig = getImportantActionsSignature(openActions);
+
+      if (state.resolvedImportantPcs[rowId] === sig) {
+        delete state.resolvedImportantPcs[rowId];
+      } else {
+        state.resolvedImportantPcs[rowId] = sig;
+      }
+      persistResolvedImportantPcs();
+      renderAll();
     }
 
     function isPcApprovedOrSubmitted(pc, statusCol) {
@@ -640,7 +802,8 @@
       return state.rows.filter(row => {
         if (state.searchQuery.trim()) {
           const q = normalizeStr(state.searchQuery);
-          const haystack = normalizeStr(Object.values(row.properties || {}).join(' '));
+          const notesStr = (row.notes || []).map(n => n.text).join(' ');
+          const haystack = normalizeStr(Object.values(row.properties || {}).join(' ') + ' ' + notesStr);
           if (!haystack.includes(q)) return false;
         }
         for (const rule of state.filters) {
@@ -653,6 +816,67 @@
         }
         return true;
       });
+    }
+
+    function getProjectsWithImportantActions(rows) {
+      const groups = groupRowsByProject(rows);
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const result = [];
+
+      groups.forEach(group => {
+        const orderedPcs = sortPcsNewestFirst(group.items, titleCol.key);
+        const pcsWithActions = [];
+
+        orderedPcs.forEach(pc => {
+          const importantActions = extractImportantActionsFromNotes(pc.notes || []);
+          if (importantActions.length > 0) {
+            pcsWithActions.push({
+              pc,
+              actions: importantActions,
+              isResolved: isPcImportantResolved(pc)
+            });
+          }
+        });
+
+        if (group.projectRow) {
+          const parentActions = extractImportantActionsFromNotes(group.projectRow.notes || []);
+          if (parentActions.length > 0) {
+            pcsWithActions.unshift({
+              pc: group.projectRow,
+              isParentNote: true,
+              actions: parentActions,
+              isResolved: isPcImportantResolved(group.projectRow)
+            });
+          }
+        }
+
+        if (pcsWithActions.length > 0) {
+          const unresolvedActionItems = pcsWithActions.reduce((acc, p) => {
+            if (p.isResolved) return acc;
+            return acc + p.actions.filter(a => !a.checked).length;
+          }, 0);
+          const allResolved = unresolvedActionItems === 0;
+          result.push({
+            ...group,
+            pcsWithActions,
+            totalActionItems: unresolvedActionItems,
+            allResolved
+          });
+        }
+      });
+
+      // Projetos com pendências não arrumadas aparecem primeiro
+      result.sort((a, b) => Number(a.allResolved) - Number(b.allResolved));
+      return result;
+    }
+
+    function updateActionsNavCounter() {
+      const badge = document.getElementById('actionsNavBadge');
+      if (!badge) return;
+      const projectsWithActions = getProjectsWithImportantActions(state.rows);
+      const totalOpen = projectsWithActions.reduce((sum, g) => sum + g.totalActionItems, 0);
+      badge.textContent = totalOpen;
+      badge.classList.toggle('hidden', totalOpen === 0);
     }
 
     function toggleOverviewBlockFilter(blockKey) {
@@ -678,8 +902,15 @@
       const periodWrap = document.getElementById('periodSelectorWrap');
       if (periodWrap) periodWrap.classList.toggle('hidden', state.viewMode !== 'overview');
 
+      const refreshActionsBtn = document.getElementById('refreshImportantActionsBtn');
+      if (refreshActionsBtn) refreshActionsBtn.classList.toggle('hidden', state.viewMode !== 'actions');
+
+      updateActionsNavCounter();
+
       if (state.viewMode === 'overview') {
         renderExecutiveOverview(viewport, processedRows);
+      } else if (state.viewMode === 'actions') {
+        renderImportantActionsGalleryView(viewport, processedRows);
       } else if (state.viewMode === 'blocks') {
         renderProjectBlocksView(viewport, processedRows);
       } else if (state.viewMode === 'kanban') {
@@ -693,7 +924,194 @@
       lucide.createIcons();
     }
 
-    // 1. PÁGINA INICIAL: 4 Botões Grandes Selecionáveis + Bloco Centralizado ao Clicar
+    // GALERIA DE AÇÕES IMPORTANTES COM PERGUNTA "JÁ ARRUMOU? SIM / NÃO"
+    function renderImportantActionsGalleryView(container, rows) {
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const codeCol = state.schema.find(c => /codigo|anp|code/.test(normalizeStr(c.label)));
+      const clientCol = state.schema.find(c => /cliente|financiador|client/.test(normalizeStr(c.label)));
+
+      const projectsWithActions = getProjectsWithImportantActions(rows);
+      const totalOpenItems = projectsWithActions.reduce((acc, p) => acc + p.totalActionItems, 0);
+
+      const scanBannerHtml = state.notesScanProgress.loading
+        ? `
+          <div class="mb-4 px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between gap-3 text-xs text-rose-900">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="loader-2" class="w-4 h-4 text-rose-600 animate-spin shrink-0"></i>
+              <span>Lendo anotações internas das PCs no Notion... (${state.notesScanProgress.done}/${state.notesScanProgress.total})</span>
+            </div>
+            <div class="w-32 h-1.5 bg-rose-200 rounded-full overflow-hidden shrink-0">
+              <div class="h-full bg-rose-600 transition-all" style="width: ${state.notesScanProgress.total ? Math.round((state.notesScanProgress.done / state.notesScanProgress.total) * 100) : 0}%"></div>
+            </div>
+          </div>
+        `
+        : '';
+
+      const headerSummaryHtml = `
+        <div class="mb-5 bg-white rounded-2xl border border-rose-200/80 p-4 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-sm shrink-0">
+              <i data-lucide="siren" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-extrabold text-slate-900">Ações Importantes das PCs</h2>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                  ${projectsWithActions.length} projeto(s) &bull; ${totalOpenItems} pendente(s)
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Enquanto não marcar <strong>Já arrumou? → Sim</strong>, o número do projeto continua piscando em <strong>Entregas Atuais</strong>.
+              </p>
+            </div>
+          </div>
+
+          <button onclick="setViewMode('overview')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            <span>Voltar aos Blocos</span>
+          </button>
+        </div>
+      `;
+
+      if (projectsWithActions.length === 0) {
+        container.innerHTML = scanBannerHtml + headerSummaryHtml + `
+          <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-2">
+            <p class="text-sm font-bold text-slate-800">Nenhuma ação importante pendente encontrada</p>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">
+              Escreva o título <strong>AÇÕES IMPORTANTES</strong> dentro das anotações de qualquer PC no Notion para que os itens apareçam aqui.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const cardsHtml = projectsWithActions.map(group => {
+        const firstPc = group.pcsWithActions[0]?.pc;
+        const projCode = codeCol ? (group.projectRow?.properties[codeCol.key] || firstPc?.properties[codeCol.key] || '') : '';
+        const projNum = extractProjectNumberOnly(group.title, projCode);
+        const projClient = clientCol ? (group.projectRow?.properties[clientCol.key] || firstPc?.properties[clientCol.key] || '') : '';
+        const cardResolved = group.allResolved;
+
+        return `
+          <article class="bg-white rounded-2xl border ${cardResolved ? 'border-emerald-200/90' : 'border-rose-200/90'} shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+            <div>
+              <!-- Cabeçalho do Projeto -->
+              <div class="p-4 border-b ${cardResolved ? 'border-emerald-100 bg-emerald-50/40' : 'border-rose-100 bg-rose-50/50'}">
+                <div class="flex items-center justify-between gap-2 mb-1.5">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="px-2.5 py-0.5 rounded-lg ${cardResolved ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'} font-mono text-xs font-extrabold shrink-0">${escapeHtml(projNum)}</span>
+                    ${projCode ? `<span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 font-mono text-[10px] font-semibold shrink-0">ANP ${escapeHtml(projCode)}</span>` : ''}
+                    ${projClient ? `<span class="text-[11px] font-medium text-slate-500 truncate">${escapeHtml(projClient)}</span>` : ''}
+                  </div>
+
+                  ${cardResolved
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">Arrumado</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 shrink-0">${group.totalActionItems} ação(ões)</span>`
+                  }
+                </div>
+                <h3 class="text-xs font-extrabold text-slate-900 leading-snug" title="${escapeHtml(group.title)}">
+                  ${escapeHtml(group.title)}
+                </h3>
+              </div>
+
+              <!-- Corpo: Número da PC + Lista de Ações Importantes + Botão "Já arrumou? Sim" -->
+              <div class="p-4 space-y-2.5">
+                ${group.pcsWithActions.map(pcEntry => {
+                  const pc = pcEntry.pc;
+                  const pcRawTitle = pc.properties[titleCol.key] || 'PC';
+                  const pcShortNum = pcEntry.isParentNote ? 'Projeto' : extractPcShortLabel(pcRawTitle);
+                  const isResolved = pcEntry.isResolved;
+
+                  return `
+                    <div class="rounded-xl border ${isResolved ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200/80 bg-rose-50/20'} p-3 space-y-2.5 transition-colors">
+                      <div class="flex items-center justify-between gap-2">
+                        <button
+                          onclick="openNotesModal('${pc.id}')"
+                          title="${escapeHtml(pcRawTitle)}"
+                          class="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-900 hover:text-rose-700 transition-colors"
+                        >
+                          <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-mono text-[11px] font-bold">${escapeHtml(pcShortNum)}</span>
+                        </button>
+
+                        <!-- Pergunta "Já arrumou?" com botão Sim -->
+                        <div class="inline-flex items-center gap-1.5">
+                          <span class="text-[11px] font-semibold ${isResolved ? 'text-emerald-700' : 'text-slate-600'}">Já arrumou?</span>
+                          <button
+                            type="button"
+                            onclick="togglePcImportantResolved('${pc.id}')"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
+                              isResolved
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs hover:bg-emerald-700'
+                                : 'bg-white text-rose-700 border-rose-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
+                            }"
+                          >
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                            <span>Sim</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <ul class="space-y-1.5">
+                        ${pcEntry.actions.map((act, aIdx) => `
+                          <li class="flex items-start gap-2 text-xs leading-snug ${act.checked || isResolved ? 'line-through text-slate-400' : 'text-slate-800 font-medium'}">
+                            <button
+                              type="button"
+                              onclick="toggleImportantActionCheck('${pc.id}', ${aIdx})"
+                              title="${act.checked ? 'Desmarcar ação' : 'Marcar item como concluído'}"
+                              class="mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${act.checked || isResolved ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-rose-300 bg-white hover:border-rose-500 text-transparent'}"
+                            >
+                              <i data-lucide="check" class="w-3 h-3"></i>
+                            </button>
+                            <span class="flex-1">${escapeHtml(act.text)}</span>
+                          </li>
+                        `).join('')}
+                      </ul>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      container.innerHTML = scanBannerHtml + headerSummaryHtml + `
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          ${cardsHtml}
+        </div>
+      `;
+    }
+
+    async function toggleImportantActionCheck(pcId, actionIndex) {
+      const row = state.rows.find(r => r.id === pcId);
+      if (!row || !row.notes) return;
+      const actions = extractImportantActionsFromNotes(row.notes);
+      const targetAction = actions[actionIndex];
+      if (!targetAction) return;
+
+      const newChecked = !targetAction.checked;
+      const noteBlock = row.notes.find(n => (targetAction.id && n.id === targetAction.id) || n.text === targetAction.text);
+      if (noteBlock) {
+        noteBlock.checked = newChecked;
+      }
+      renderAll();
+
+      if (state.sourceMode === 'api' && targetAction.id && targetAction.type === 'to_do') {
+        try {
+          await fetch(buildNotionEndpoint(`/blocks/${targetAction.id}`), {
+            method: 'PATCH',
+            headers: notionHeaders(),
+            body: JSON.stringify({
+              to_do: { checked: newChecked }
+            })
+          });
+        } catch (err) {
+          console.warn('Não foi possível atualizar checkbox no Notion:', err);
+        }
+      }
+    }
+
+    // 1. PÁGINA INICIAL: 4 Botões Grandes Selecionáveis + Card de Atalho para Ações Importantes
     function renderExecutiveOverview(container, rows) {
       const projectGroups = groupRowsByProject(rows);
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
@@ -747,7 +1165,8 @@
             cutoffEndStr: pCutoff.cutoffEndStr,
             pcAnp: projAnp,
             pcPriority: priorityCol ? (pRow.properties[priorityCol.key] || '') : '',
-            saldoNumeric: isNaN(pSaldoNum) ? Infinity : pSaldoNum
+            saldoNumeric: isNaN(pSaldoNum) ? Infinity : pSaldoNum,
+            hasImportantBlink: hasUnresolvedImportantActionsForPc(pRow, null)
           };
 
           if (state.viewRules.doa.includeParents && matchesCustomViewRule(pRow, statusCol, state.viewRules.doa, autoDetectDevolucaoDoa)) {
@@ -779,7 +1198,8 @@
             cutoffStartStr: curCutoff.cutoffStartStr,
             cutoffEndStr: curCutoff.cutoffEndStr,
             pcAnp: curAnp,
-            pcPriority: curPriority
+            pcPriority: curPriority,
+            hasImportantBlink: false
           });
         }
 
@@ -803,7 +1223,8 @@
             cutoffEndStr: pcCutoff.cutoffEndStr,
             pcAnp,
             pcPriority,
-            saldoNumeric: isNaN(pcSaldoNum) ? Infinity : pcSaldoNum
+            saldoNumeric: isNaN(pcSaldoNum) ? Infinity : pcSaldoNum,
+            hasImportantBlink: hasUnresolvedImportantActionsForPc(pc, group.projectRow)
           };
 
           const isEmElaboracao = /em\s*elaboracao/.test(pcStatusNorm);
@@ -849,6 +1270,9 @@
       pendingDoaList.sort(sortAscendingByDeliveryDate);
       balancePcsList.sort((a, b) => a.saldoNumeric - b.saldoNumeric);
 
+      const projectsWithActions = getProjectsWithImportantActions(rows);
+      const totalImportantActions = projectsWithActions.reduce((acc, g) => acc + g.totalActionItems, 0);
+
       const statusOptions = (statusCol && statusCol.options && statusCol.options.length > 0)
         ? statusCol.options
         : ['Em elaboração', 'Submetida', 'Aprovada', 'Em Andamento', 'Encerrado'];
@@ -856,7 +1280,7 @@
       const selectedBlock = state.selectedOverviewBlock;
       const listHeightClass = selectedBlock ? 'max-h-[600px]' : 'max-h-[440px]';
 
-      const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none', showCutoffPeriod = false) => {
+      const renderBlockItems = (items, emptyMsg, badgeTheme, extraColKey = null, formatMode = 'none', showCutoffPeriod = false, enableBlinkAlert = false) => {
         if (items.length === 0) {
           return `<div class="p-8 text-center text-xs text-slate-400">${escapeHtml(emptyMsg)}</div>`;
         }
@@ -897,12 +1321,22 @@
                 ? 'bg-amber-50 text-amber-800 border-amber-200'
                 : 'bg-indigo-50 text-indigo-800 border-indigo-200 font-mono';
 
+              const isBlinking = enableBlinkAlert && item.hasImportantBlink;
+              const pillClasses = isBlinking
+                ? 'project-blink-alert cursor-pointer'
+                : badgeTheme;
+
               return `
                 <div class="px-4 py-3 hover:bg-slate-50/90 transition-colors flex items-center justify-between gap-3">
                   <div class="flex items-center gap-3 min-w-0">
-                    <span title="${escapeHtml(item.fullProjectTitle)}" class="px-2.5 py-1.5 rounded-xl font-mono text-xs font-extrabold tracking-tight shrink-0 ${badgeTheme}">
+                    <button
+                      type="button"
+                      onclick="${isBlinking ? `setViewMode('actions')` : `openRowModal('${pc.id}')`}"
+                      title="${isBlinking ? 'Tem ações importantes pendentes! Clique para abrir Ações Importantes' : escapeHtml(item.fullProjectTitle)}"
+                      class="px-2.5 py-1.5 rounded-xl font-mono text-xs font-extrabold tracking-tight shrink-0 transition-transform ${pillClasses}"
+                    >
                       ${escapeHtml(item.projectNumber)}
-                    </span>
+                    </button>
                     <div class="min-w-0">
                       <button onclick="openRowModal('${pc.id}')" class="text-xs font-bold text-slate-900 hover:text-blue-600 text-left block truncate max-w-full">
                         ${escapeHtml(pcTitle)}
@@ -919,6 +1353,12 @@
                             <i data-lucide="calendar-range" class="w-3 h-3 text-blue-600 shrink-0"></i>
                             <span>Corte: ${escapeHtml(cutoffRangeText)}</span>
                           </span>
+                        ` : ''}
+                        ${isBlinking ? `
+                          <button type="button" onclick="setViewMode('actions')" class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[10px] hover:bg-rose-100">
+                            <i data-lucide="siren" class="w-3 h-3 text-rose-600"></i>
+                            <span>Ação importante</span>
+                          </button>
                         ` : ''}
                         ${item.pcAnp ? `<span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">ANP ${escapeHtml(item.pcAnp)}</span>` : ''}
                         ${item.pcPriority ? `<span class="px-1.5 py-0.2 rounded border text-[10px] font-bold ${getPriorityBadgeClasses(item.pcPriority)}">${escapeHtml(item.pcPriority)}</span>` : ''}
@@ -1007,12 +1447,46 @@
           iconBg: 'bg-indigo-600',
           borderNormal: 'border-indigo-200 hover:border-indigo-400',
           borderActive: 'border-indigo-600 ring-2 ring-indigo-500/30 bg-indigo-50/40 shadow-md scale-[1.01]'
+        },
+        {
+          key: 'actions_shortcut',
+          isViewShortcut: true,
+          title: 'Ações Importantes',
+          count: totalImportantActions,
+          subtitle: `${projectsWithActions.length} projeto(s) • Ver galeria aberta`,
+          icon: 'siren',
+          titleColor: 'text-rose-700',
+          iconBg: 'bg-rose-600',
+          borderNormal: 'border-rose-200 hover:border-rose-400 bg-rose-50/25',
+          borderActive: ''
         }
       ];
 
       const selectorBarHtml = `
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5 mb-5">
           ${selectorCards.map(card => {
+            if (card.isViewShortcut) {
+              return `
+                <button
+                  type="button"
+                  onclick="setViewMode('actions')"
+                  class="text-left rounded-2xl border p-4 transition-all duration-200 cursor-pointer flex items-center justify-between focus:outline-none ${card.borderNormal} shadow-2xs hover:shadow-md"
+                >
+                  <div class="min-w-0 pr-2">
+                    <div class="flex items-center gap-1.5">
+                      <p class="text-xs font-extrabold ${card.titleColor} truncate">${escapeHtml(card.title)}</p>
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-rose-100 text-rose-700 shrink-0">Galeria</span>
+                    </div>
+                    <p class="text-2xl font-extrabold text-slate-900 mt-0.5">${card.count}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5 truncate">${escapeHtml(card.subtitle)}</p>
+                  </div>
+                  <div class="w-10 h-10 rounded-xl ${card.iconBg} text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <i data-lucide="${card.icon}" class="w-5 h-5"></i>
+                  </div>
+                </button>
+              `;
+            }
+
             const isSelected = selectedBlock === card.key;
             const isDimmed = selectedBlock && !isSelected;
             return `
@@ -1060,7 +1534,7 @@
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-600 text-white">${currentDeliveries.length}</span>
               </div>
             </div>
-            ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs', null, 'none', true)}
+            ${renderBlockItems(currentDeliveries, 'Nenhuma PC em elaboração com Data de Entrega neste intervalo.', 'bg-blue-600 text-white shadow-2xs', null, 'none', true, true)}
           </section>
         `,
         entregues: `
@@ -1728,6 +2202,7 @@
         try {
           const blocks = await fetchNotionPageBlocks(row.id);
           row.notes = blocks;
+          renderAll();
         } catch (err) {
           body.innerHTML = `<div class="p-4 rounded-xl bg-rose-50 text-rose-700 text-xs">Erro ao ler anotações do Notion: ${escapeHtml(err.message)}</div>`;
           return;
@@ -1743,12 +2218,15 @@
         body.innerHTML = `<div class="py-8 text-center text-xs text-slate-400">Nenhuma anotação interna encontrada nesta PC. Adicione a primeira abaixo!</div>`;
         return;
       }
-      body.innerHTML = notes.map(n => `
-        <div class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-800">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0"></span>
-          <span class="leading-relaxed">${escapeHtml(n.text)}</span>
-        </div>
-      `).join('');
+      body.innerHTML = notes.map(n => {
+        const isHeader = /acoes\s*importantes/.test(normalizeStr(n.text));
+        return `
+          <div class="flex items-start gap-2.5 p-2.5 rounded-xl ${isHeader ? 'bg-rose-50 border border-rose-200 font-extrabold text-rose-900' : 'bg-slate-50 border border-slate-100 text-slate-800'} text-xs">
+            <span class="w-1.5 h-1.5 rounded-full ${isHeader ? 'bg-rose-600' : 'bg-blue-600'} mt-1.5 shrink-0"></span>
+            <span class="leading-relaxed">${escapeHtml(n.text)}</span>
+          </div>
+        `;
+      }).join('');
     }
 
     function closeNotesModal() {
@@ -1766,9 +2244,13 @@
       if (!row) return;
 
       if (!row.notes) row.notes = [];
-      row.notes.push({ type: 'bullet', text });
+      row.notes.push({ type: 'bulleted_list_item', text });
+      // Se adicionou nova nota importante, reativa o alerta piscante
+      delete state.resolvedImportantPcs[row.id];
+      persistResolvedImportantPcs();
       input.value = '';
       renderNotesList(row.notes);
+      renderAll();
 
       if (state.sourceMode === 'api' && !row.id.startsWith('local_')) {
         try {
@@ -1777,6 +2259,52 @@
           alert('Salvo localmente, mas houve erro ao gravar bloco no Notion: ' + err.message);
         }
       }
+    }
+
+    // Varredura automática em segundo plano das anotações dos subitens (PCs) no Notion
+    async function loadAllImportantActions(forceReload = false) {
+      if (state.sourceMode !== 'api') {
+        renderAll();
+        return;
+      }
+
+      const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
+      const targetRows = state.rows.filter(r => {
+        if (r.id.startsWith('local_') || r.id.startsWith('pc_')) return false;
+        const isPc = Boolean(r.parentId) || /^pc\b/i.test(String(r.properties[titleCol?.key] || '').trim());
+        if (!isPc) return false;
+        return forceReload || !Array.isArray(r.notes);
+      });
+
+      if (targetRows.length === 0) {
+        renderAll();
+        return;
+      }
+
+      state.notesScanProgress = { loading: true, done: 0, total: targetRows.length };
+      renderAll();
+
+      const batchSize = 5;
+      for (let i = 0; i < targetRows.length; i += batchSize) {
+        const batch = targetRows.slice(i, i + batchSize);
+        await Promise.all(batch.map(async (row) => {
+          try {
+            row.notes = await fetchNotionPageBlocks(row.id);
+          } catch (err) {
+            console.warn('Falha ao ler blocos da PC', row.id, err);
+            row.notes = row.notes || [];
+          } finally {
+            state.notesScanProgress.done += 1;
+          }
+        }));
+        updateActionsNavCounter();
+        if (state.viewMode === 'actions' || state.viewMode === 'overview') {
+          renderAll();
+        }
+      }
+
+      state.notesScanProgress.loading = false;
+      renderAll();
     }
 
     // Integração Real com Notion API
@@ -1904,6 +2432,8 @@
         document.getElementById('corsWarningBanner').classList.add('hidden');
         document.getElementById('lastSyncText').textContent = `Sincronizado às ${new Date().toLocaleTimeString('pt-BR')} (${parsedRows.length} registros)`;
         renderAll();
+
+        loadAllImportantActions(!isInitial);
       } catch (err) {
         console.warn('Falha ao conectar Notion API:', err);
         state.sourceMode = 'demo';
@@ -2017,9 +2547,18 @@
       const data = await res.json();
       const notes = [];
       (data.results || []).forEach(b => {
+        if (b.type === 'divider') {
+          notes.push({ id: b.id, type: 'divider', text: '---' });
+          return;
+        }
         const rich = b[b.type]?.rich_text;
         if (Array.isArray(rich) && rich.length > 0) {
-          notes.push({ type: b.type, text: rich.map(t => t.plain_text).join('') });
+          notes.push({
+            id: b.id,
+            type: b.type,
+            checked: Boolean(b[b.type]?.checked),
+            text: rich.map(t => t.plain_text).join('')
+          });
         }
       });
       return notes;
