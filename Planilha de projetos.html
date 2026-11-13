@@ -413,6 +413,7 @@
       activeNotesRowId: null,
       editingViewRuleTarget: null,
       resolvedImportantPcs: {},
+      savingImportantIds: {},
       notesScanProgress: { loading: false, done: 0, total: 0 },
       viewRules: {
         doa: { colKey: 'auto', values: ['Sim'], statusFilter: '', includeParents: true },
@@ -579,6 +580,8 @@
       };
     }
 
+    const RESOLVED_MARKER_REGEX = /^✅\s*A[ÇC][ÕO]ES\s*IMPORTANTES\s*ARRUMADAS/i;
+
     // Extrai exclusivamente os itens listados abaixo do título "AÇÕES IMPORTANTES" nas anotações da PC
     function extractImportantActionsFromNotes(notes) {
       if (!Array.isArray(notes) || notes.length === 0) return [];
@@ -588,6 +591,7 @@
       for (const block of notes) {
         const rawText = String(block.text || '').trim();
         if (!rawText) continue;
+        if (RESOLVED_MARKER_REGEX.test(rawText)) continue;
         const norm = normalizeStr(rawText);
 
         if (/acoes\s*importantes/.test(norm)) {
@@ -624,21 +628,20 @@
       return actions.map(a => `${a.text.trim()}:${a.checked ? '1' : '0'}`).join('|');
     }
 
-    // Verifica se a PC (ou o projeto pai) ainda tem ações importantes pendentes de arrumar
-    function hasUnresolvedImportantActionsForPc(pc, parentRow) {
-      const checkRow = (r) => {
-        if (!r || !Array.isArray(r.notes)) return false;
-        const actions = extractImportantActionsFromNotes(r.notes);
-        if (actions.length === 0) return false;
-        const openActions = actions.filter(a => !a.checked);
-        if (openActions.length === 0) return false;
-
-        const sig = getImportantActionsSignature(openActions);
-        if (state.resolvedImportantPcs[r.id] === sig) return false;
-        return true;
-      };
-
-      return checkRow(pc) || checkRow(parentRow);
+    // Lê marcador persistido dentro dos blocos da própria página no Notion
+    function getNotionPersistedSignature(notes) {
+      if (!Array.isArray(notes)) return null;
+      for (let i = notes.length - 1; i >= 0; i--) {
+        const txt = String(notes[i].text || '').trim();
+        if (RESOLVED_MARKER_REGEX.test(txt)) {
+          const sigMatch = txt.match(/\[sig:([^\]]+)\]/i);
+          return {
+            blockId: notes[i].id || null,
+            sig: sigMatch ? sigMatch[1] : '__ALL__'
+          };
+        }
+      }
+      return null;
     }
 
     function isPcImportantResolved(row) {
@@ -647,24 +650,95 @@
       if (actions.length === 0) return true;
       const openActions = actions.filter(a => !a.checked);
       if (openActions.length === 0) return true;
+
       const sig = getImportantActionsSignature(openActions);
+
+      // 1) Verifica se já foi gravado dentro do próprio Notion
+      const notionSaved = getNotionPersistedSignature(row.notes);
+      if (notionSaved && (notionSaved.sig === '__ALL__' || notionSaved.sig === sig)) {
+        return true;
+      }
+
+      // 2) Fallback no localStorage
       return state.resolvedImportantPcs[row.id] === sig;
     }
 
-    function togglePcImportantResolved(rowId) {
+    // Verifica se a PC (ou o projeto pai) ainda tem ações importantes pendentes de arrumar
+    function hasUnresolvedImportantActionsForPc(pc, parentRow) {
+      const checkRow = (r) => {
+        if (!r || !Array.isArray(r.notes)) return false;
+        const actions = extractImportantActionsFromNotes(r.notes);
+        if (actions.length === 0) return false;
+        const openActions = actions.filter(a => !a.checked);
+        if (openActions.length === 0) return false;
+        return !isPcImportantResolved(r);
+      };
+
+      return checkRow(pc) || checkRow(parentRow);
+    }
+
+    async function togglePcImportantResolved(rowId) {
       const row = state.rows.find(r => r.id === rowId);
       if (!row) return;
       const actions = extractImportantActionsFromNotes(row.notes || []);
       const openActions = actions.filter(a => !a.checked);
       const sig = getImportantActionsSignature(openActions);
+      const currentlyResolved = isPcImportantResolved(row);
 
-      if (state.resolvedImportantPcs[rowId] === sig) {
+      if (currentlyResolved) {
+        // Reabrir pendência
         delete state.resolvedImportantPcs[rowId];
+        persistResolvedImportantPcs();
+
+        const notionMarker = getNotionPersistedSignature(row.notes);
+        if (Array.isArray(row.notes)) {
+          row.notes = row.notes.filter(n => !RESOLVED_MARKER_REGEX.test(String(n.text || '').trim()));
+        }
+        renderAll();
+
+        if (state.sourceMode === 'api' && notionMarker?.blockId) {
+          state.savingImportantIds[rowId] = true;
+          renderAll();
+          try {
+            await deleteNotionBlock(notionMarker.blockId);
+            document.getElementById('lastSyncText').textContent = `Reaberto no Notion às ${new Date().toLocaleTimeString('pt-BR')}`;
+          } catch (err) {
+            console.warn('Erro ao remover marcador no Notion:', err);
+          } finally {
+            delete state.savingImportantIds[rowId];
+            renderAll();
+          }
+        }
       } else {
+        // Marcar como arrumado (Sim) e gravar direto no Notion
         state.resolvedImportantPcs[rowId] = sig;
+        persistResolvedImportantPcs();
+
+        if (!Array.isArray(row.notes)) row.notes = [];
+        row.notes = row.notes.filter(n => !RESOLVED_MARKER_REGEX.test(String(n.text || '').trim()));
+
+        const nowBr = new Date().toLocaleDateString('pt-BR');
+        const markerText = `✅ AÇÕES IMPORTANTES ARRUMADAS (Sim em ${nowBr}) [sig:${sig}]`;
+        const tempNote = { id: null, type: 'paragraph', text: markerText };
+        row.notes.push(tempNote);
+        renderAll();
+
+        if (state.sourceMode === 'api' && !row.id.startsWith('local_') && !row.id.startsWith('pc_')) {
+          state.savingImportantIds[rowId] = true;
+          renderAll();
+          try {
+            const createdId = await appendNotionParagraphBlock(row.id, markerText);
+            if (createdId) tempNote.id = createdId;
+            document.getElementById('lastSyncText').textContent = `"Já arrumou? Sim" salvo no Notion às ${new Date().toLocaleTimeString('pt-BR')}`;
+          } catch (err) {
+            console.warn('Erro ao gravar confirmação no Notion:', err);
+            alert('Salvo neste navegador, mas não foi possível gravar no Notion: ' + err.message);
+          } finally {
+            delete state.savingImportantIds[rowId];
+            renderAll();
+          }
+        }
       }
-      persistResolvedImportantPcs();
-      renderAll();
     }
 
     function isPcApprovedOrSubmitted(pc, statusCol) {
@@ -865,7 +939,6 @@
         }
       });
 
-      // Projetos com pendências não arrumadas aparecem primeiro
       result.sort((a, b) => Number(a.allResolved) - Number(b.allResolved));
       return result;
     }
@@ -924,7 +997,7 @@
       lucide.createIcons();
     }
 
-    // GALERIA DE AÇÕES IMPORTANTES COM PERGUNTA "JÁ ARRUMOU? SIM / NÃO"
+    // GALERIA DE AÇÕES IMPORTANTES COM PERSISTÊNCIA DIRETA NO NOTION
     function renderImportantActionsGalleryView(container, rows) {
       const titleCol = state.schema.find(c => c.type === 'title') || state.schema[0];
       const codeCol = state.schema.find(c => /codigo|anp|code/.test(normalizeStr(c.label)));
@@ -961,7 +1034,7 @@
                 </span>
               </div>
               <p class="text-xs text-slate-500 mt-0.5">
-                Enquanto não marcar <strong>Já arrumou? → Sim</strong>, o número do projeto continua piscando em <strong>Entregas Atuais</strong>.
+                Ao marcar <strong>Já arrumou? → Sim</strong>, a confirmação fica salva diretamente no Notion e o número para de piscar em <strong>Entregas Atuais</strong>.
               </p>
             </div>
           </div>
@@ -1021,6 +1094,7 @@
                   const pcRawTitle = pc.properties[titleCol.key] || 'PC';
                   const pcShortNum = pcEntry.isParentNote ? 'Projeto' : extractPcShortLabel(pcRawTitle);
                   const isResolved = pcEntry.isResolved;
+                  const isSaving = Boolean(state.savingImportantIds[pc.id]);
 
                   return `
                     <div class="rounded-xl border ${isResolved ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200/80 bg-rose-50/20'} p-3 space-y-2.5 transition-colors">
@@ -1033,11 +1107,12 @@
                           <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white font-mono text-[11px] font-bold">${escapeHtml(pcShortNum)}</span>
                         </button>
 
-                        <!-- Pergunta "Já arrumou?" com botão Sim -->
+                        <!-- Pergunta "Já arrumou?" com botão Sim sincronizado no Notion -->
                         <div class="inline-flex items-center gap-1.5">
                           <span class="text-[11px] font-semibold ${isResolved ? 'text-emerald-700' : 'text-slate-600'}">Já arrumou?</span>
                           <button
                             type="button"
+                            disabled="${isSaving ? 'true' : ''}"
                             onclick="togglePcImportantResolved('${pc.id}')"
                             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition-all cursor-pointer ${
                               isResolved
@@ -1045,8 +1120,10 @@
                                 : 'bg-white text-rose-700 border-rose-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600'
                             }"
                           >
-                            <i data-lucide="check" class="w-3 h-3"></i>
-                            <span>Sim</span>
+                            ${isSaving
+                              ? `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i><span>Salvando...</span>`
+                              : `<i data-lucide="check" class="w-3 h-3"></i><span>Sim</span>`
+                            }
                           </button>
                         </div>
                       </div>
@@ -2214,11 +2291,12 @@
 
     function renderNotesList(notes) {
       const body = document.getElementById('notesContentBody');
-      if (!notes || notes.length === 0) {
+      const visibleNotes = (notes || []).filter(n => !RESOLVED_MARKER_REGEX.test(String(n.text || '').trim()));
+      if (visibleNotes.length === 0) {
         body.innerHTML = `<div class="py-8 text-center text-xs text-slate-400">Nenhuma anotação interna encontrada nesta PC. Adicione a primeira abaixo!</div>`;
         return;
       }
-      body.innerHTML = notes.map(n => {
+      body.innerHTML = visibleNotes.map(n => {
         const isHeader = /acoes\s*importantes/.test(normalizeStr(n.text));
         return `
           <div class="flex items-start gap-2.5 p-2.5 rounded-xl ${isHeader ? 'bg-rose-50 border border-rose-200 font-extrabold text-rose-900' : 'bg-slate-50 border border-slate-100 text-slate-800'} text-xs">
@@ -2245,7 +2323,6 @@
 
       if (!row.notes) row.notes = [];
       row.notes.push({ type: 'bulleted_list_item', text });
-      // Se adicionou nova nota importante, reativa o alerta piscante
       delete state.resolvedImportantPcs[row.id];
       persistResolvedImportantPcs();
       input.value = '';
@@ -2579,6 +2656,35 @@
             }
           ]
         })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+
+    async function appendNotionParagraphBlock(pageId, text) {
+      const res = await fetch(buildNotionEndpoint(`/blocks/${pageId}/children`), {
+        method: 'PATCH',
+        headers: notionHeaders(),
+        body: JSON.stringify({
+          children: [
+            {
+              object: 'block',
+              type: 'paragraph',
+              paragraph: {
+                rich_text: [{ type: 'text', text: { content: text } }]
+              }
+            }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data.results?.[0]?.id || null;
+    }
+
+    async function deleteNotionBlock(blockId) {
+      const res = await fetch(buildNotionEndpoint(`/blocks/${blockId}`), {
+        method: 'DELETE',
+        headers: notionHeaders()
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     }
