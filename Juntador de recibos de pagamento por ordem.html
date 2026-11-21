@@ -100,7 +100,7 @@
                 </button>
             </div>
 
-            <!-- NOVO: SELETOR DE PERÍODO PARA CHECAR MESES FALTANTES -->
+            <!-- SELETOR DE PERÍODO PARA CHECAR MESES FALTANTES -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col gap-3">
                 <div class="flex items-center justify-between gap-2">
                     <h2 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
@@ -159,7 +159,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <!-- Botão Download de Tudo -->
+                        <!-- Botão Download de Tudo (1 PDF por pessoa) -->
                         <button id="downloadAllBtn" class="hidden items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
                             <i data-lucide="download-cloud" class="w-4 h-4"></i>
                             <span>Baixar Tudo</span>
@@ -244,12 +244,10 @@
     </div>
 
     <script>
-        // Estado da Aplicação
-        let items = []; // { id, name, groupKey, groupLabel, size, fileObj, dateInfo, timestamp }
+        let items = [];
         let currentMode = 'files';
         let sortOrder = 'asc';
 
-        // Elementos DOM
         const dropZone = document.getElementById('dropZone');
         const pdfFileInput = document.getElementById('pdfFileInput');
         const tabFilesBtn = document.getElementById('tabFilesBtn');
@@ -286,7 +284,6 @@
 
         lucide.createIcons();
 
-        // Alternar modo Arquivos / Texto
         tabFilesBtn.addEventListener('click', () => setMode('files'));
         tabTextBtn.addEventListener('click', () => setMode('text'));
 
@@ -305,7 +302,6 @@
             }
         }
 
-        // Drag & Drop
         dropZone.addEventListener('click', () => pdfFileInput.click());
 
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -345,7 +341,6 @@
             showToast('Arquivos removidos.');
         });
 
-        // Processar nomes colados em texto
         processTextBtn.addEventListener('click', () => {
             const text = pasteTextArea.value.trim();
             if (!text) {
@@ -397,9 +392,6 @@
             showToast(`${newItems.length} PDF(s) adicionado(s)!`);
         }
 
-        /**
-         * Extrai data DDMMAAAA do nome do arquivo
-         */
         function extractDateFromFilename(filename) {
             if (!filename) return null;
 
@@ -459,17 +451,11 @@
             return null;
         }
 
-        /**
-         * Extrai um identificador de grupo/nome para separar os recibos em listas distintas.
-         * Ex: "4066_CRISTHIANENRIQUEÁLVAREZPACHECO_03062026_5974753_CINSS.pdf"
-         * -> separa antes da data, remove código inicial numérico, separa CamelCase se houver.
-         */
         function extractGroupFromFilename(filename, dateInfo) {
             if (!filename) return { key: 'sem-nome', label: 'Sem Nome Identificado' };
 
             let base = filename.replace(/\.pdf$/i, '');
 
-            // Corta o trecho a partir da data encontrada, se houver
             if (dateInfo && dateInfo.digits) {
                 const idx = base.indexOf(dateInfo.digits);
                 if (idx > 0) {
@@ -477,15 +463,12 @@
                 }
             }
 
-            // Divide por separadores comuns
             let parts = base.split(/[_\-]+/).map(p => p.trim()).filter(Boolean);
 
-            // Se o primeiro bloco for puramente numérico (ex: "4066"), remove
             if (parts.length > 1 && /^\d+$/.test(parts[0])) {
                 parts.shift();
             }
 
-            // Remove sufixos comuns genéricos se sobrarem
             const genericTokens = new Set(['recibo', 'recibos', 'pagamento', 'holerite', 'contracheque', 'cinss', 'pdf']);
             while (parts.length > 1 && genericTokens.has(parts[parts.length - 1].toLowerCase())) {
                 parts.pop();
@@ -496,7 +479,6 @@
                 rawName = base.replace(/[_\-]+/g, ' ').trim() || 'Sem Nome';
             }
 
-            // Se o nome estiver colado em CamelCase (ex: MariaSilva), adiciona espaço antes de maiúsculas
             rawName = rawName.replace(/([a-zà-ú])([A-ZÀ-Ú])/g, '$1 $2');
             rawName = rawName.replace(/\s+/g, ' ').trim();
 
@@ -505,7 +487,6 @@
                 .replace(/[\u0300-\u036f]/g, '')
                 .toLowerCase();
 
-            // Formata label legível (Title Case preservando acentos)
             const formattedLabel = rawName
                 .toLowerCase()
                 .split(' ')
@@ -519,7 +500,6 @@
             };
         }
 
-        // Ordenação
         sortAscBtn.addEventListener('click', () => {
             sortOrder = 'asc';
             sortAscBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600 font-semibold transition-all';
@@ -534,7 +514,6 @@
             render();
         });
 
-        // Controles de Período
         startMonthInput.addEventListener('change', render);
         endMonthInput.addEventListener('change', render);
         searchInput.addEventListener('input', render);
@@ -561,6 +540,13 @@
             if (!monthKey || !monthKey.includes('-')) return '';
             const [y, m] = monthKey.split('-');
             return `${m}/${y}`;
+        }
+
+        function getActivePeriodRange() {
+            const startKey = startMonthInput.value;
+            const endKey = endMonthInput.value;
+            if (!startKey || !endKey) return null;
+            return getMonthsInRange(startKey, endKey);
         }
 
         function getMonthsInRange(startKey, endKey) {
@@ -595,6 +581,37 @@
                 itemList.filter(i => i.dateInfo && i.dateInfo.monthKey).map(i => i.dateInfo.monthKey)
             );
             return periodRange.months.filter(m => !presentMonths.has(m.key));
+        }
+
+        function formatMissingMonthsList(missingMonths) {
+            const monthNumbers = missingMonths.map(m => m.label.split('/')[0]);
+            if (monthNumbers.length === 1) return monthNumbers[0];
+            if (monthNumbers.length === 2) return `${monthNumbers[0]} e ${monthNumbers[1]}`;
+            const head = monthNumbers.slice(0, -1).join(', ');
+            const tail = monthNumbers[monthNumbers.length - 1];
+            return `${head} e ${tail}`;
+        }
+
+        function sanitizeFilenamePart(str) {
+            return String(str || '')
+                .replace(/[\\/:*?"<>|]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function buildGroupPdfFilename(group) {
+            const cleanName = sanitizeFilenamePart(group.label.toLowerCase()) || 'sem nome';
+            let filename = `recibo ${cleanName}`;
+
+            const periodRange = getActivePeriodRange();
+            if (periodRange && !periodRange.error) {
+                const missingInGroup = getMissingMonthsForItems(group.items, periodRange);
+                if (missingInGroup.length > 0) {
+                    filename += ` falta ${formatMissingMonthsList(missingInGroup)}`;
+                }
+            }
+
+            return `${filename}.pdf`;
         }
 
         function sortItemsList(list) {
@@ -658,13 +675,11 @@
             downloadAllBtn.classList.toggle('hidden', !hasRealPdfs || filtered.length === 0);
             downloadAllBtn.classList.toggle('flex', hasRealPdfs && filtered.length > 0);
 
-            // Verificação geral do período
             const startKey = startMonthInput.value;
             const endKey = endMonthInput.value;
-            let periodRange = null;
+            const periodRange = getActivePeriodRange();
 
-            if (startKey && endKey) {
-                periodRange = getMonthsInRange(startKey, endKey);
+            if (periodRange) {
                 missingMonthsBanner.classList.remove('hidden');
 
                 if (periodRange.error) {
@@ -849,6 +864,31 @@
             showToast(`Baixando ${item.name}`);
         };
 
+        async function buildMergedPdfBlob(pdfItems) {
+            const mergedPdf = await PDFLib.PDFDocument.create();
+
+            for (const item of pdfItems) {
+                const arrayBuffer = await item.fileObj.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                copiedPages.forEach(page => mergedPdf.addPage(page));
+            }
+
+            const pdfBytes = await mergedPdf.save();
+            return new Blob([pdfBytes], { type: 'application/pdf' });
+        }
+
+        function triggerBlobDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
         window.downloadGroupMergedPdf = async function(encodedGroupKey) {
             const groupKey = decodeURIComponent(encodedGroupKey);
             const groups = getGroupedData();
@@ -861,26 +901,54 @@
                 return;
             }
 
-            const safeSlug = group.key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'grupo';
-            await mergeAndDownloadPdfs(
-                pdfItems,
-                `recibos_${safeSlug}_${sortOrder}.pdf`,
-                `PDF de "${group.label}" gerado com sucesso!`
-            );
+            const filename = buildGroupPdfFilename(group);
+            try {
+                showToast(`Gerando "${filename}"...`);
+                const blob = await buildMergedPdfBlob(pdfItems);
+                triggerBlobDownload(blob, filename);
+                showToast(`"${filename}" baixado com sucesso!`);
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao gerar PDF do grupo. Verifique se algum arquivo possui senha.');
+            }
         };
 
-        // Botão Baixar Tudo (unifica todos os PDFs ordenados)
+        // Botão Baixar Tudo: gera 1 PDF por nome/grupo
         downloadAllBtn.addEventListener('click', async () => {
-            const allOrderedPdfs = sortItemsList(getFilteredItems()).filter(i => i.fileObj !== null);
-            if (allOrderedPdfs.length === 0) {
+            const groupsWithPdfs = getGroupedData()
+                .map(group => ({
+                    group,
+                    pdfItems: group.items.filter(i => i.fileObj !== null)
+                }))
+                .filter(entry => entry.pdfItems.length > 0);
+
+            if (groupsWithPdfs.length === 0) {
                 showToast('Carregue arquivos PDF reais para baixar tudo.');
                 return;
             }
-            await mergeAndDownloadPdfs(
-                allOrderedPdfs,
-                `todos_recibos_ordenados_${sortOrder}_${new Date().toISOString().slice(0, 10)}.pdf`,
-                'Todos os recibos foram unificados e baixados!'
-            );
+
+            try {
+                mergePdfBtn.disabled = true;
+                downloadAllBtn.disabled = true;
+
+                let generatedCount = 0;
+                for (const { group, pdfItems } of groupsWithPdfs) {
+                    const filename = buildGroupPdfFilename(group);
+                    showToast(`Gerando (${generatedCount + 1}/${groupsWithPdfs.length}): ${filename}`);
+                    const blob = await buildMergedPdfBlob(pdfItems);
+                    triggerBlobDownload(blob, filename);
+                    generatedCount++;
+                    await new Promise(resolve => setTimeout(resolve, 350));
+                }
+
+                showToast(`${generatedCount} PDF(s) por nome baixado(s)!`);
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao gerar os PDFs por nome. Verifique se algum arquivo possui senha.');
+            } finally {
+                mergePdfBtn.disabled = false;
+                downloadAllBtn.disabled = false;
+            }
         });
 
         mergePdfBtn.addEventListener('click', async () => {
@@ -889,40 +957,15 @@
                 showToast('Carregue arquivos PDF reais para unificar.');
                 return;
             }
-            await mergeAndDownloadPdfs(
-                allOrderedPdfs,
-                `recibos_unificados_${sortOrder}_${new Date().toISOString().slice(0, 10)}.pdf`,
-                'PDFs unificados e baixados com sucesso!'
-            );
-        });
-
-        async function mergeAndDownloadPdfs(pdfItems, filename, successMessage) {
             try {
-                showToast('Gerando PDF... Aguarde.');
+                showToast('Gerando PDF unificado... Aguarde.');
                 mergePdfBtn.disabled = true;
                 downloadAllBtn.disabled = true;
 
-                const mergedPdf = await PDFLib.PDFDocument.create();
-
-                for (const item of pdfItems) {
-                    const arrayBuffer = await item.fileObj.arrayBuffer();
-                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-                    copiedPages.forEach(page => mergedPdf.addPage(page));
-                }
-
-                const pdfBytes = await mergedPdf.save();
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                showToast(successMessage);
+                const blob = await buildMergedPdfBlob(allOrderedPdfs);
+                const filename = `recibos_unificados_${sortOrder}_${new Date().toISOString().slice(0, 10)}.pdf`;
+                triggerBlobDownload(blob, filename);
+                showToast('PDFs unificados e baixados com sucesso!');
             } catch (err) {
                 console.error(err);
                 showToast('Erro ao unificar PDFs. Verifique se algum arquivo possui senha.');
@@ -930,9 +973,8 @@
                 mergePdfBtn.disabled = false;
                 downloadAllBtn.disabled = false;
             }
-        }
+        });
 
-        // Copiar lista organizada por grupo
         copyBtn.addEventListener('click', () => {
             const groups = getGroupedData();
             const lines = [];
@@ -947,7 +989,6 @@
             copyToClipboard(lines.join('\n').trim(), 'Lista separada por nome copiada!');
         });
 
-        // Exportar TXT
         exportTxtBtn.addEventListener('click', () => {
             const groups = getGroupedData();
             const lines = [];
@@ -960,16 +1001,10 @@
                 lines.push('');
             });
             const blob = new Blob([lines.join('\n').trim()], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `recibos_por_nome_${sortOrder}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
+            triggerBlobDownload(blob, `recibos_por_nome_${sortOrder}.txt`);
             showToast('Relatório TXT baixado!');
         });
 
-        // Exportar Relatório PDF com jsPDF
         exportReportPdfBtn.addEventListener('click', () => {
             const groups = getGroupedData();
             if (groups.length === 0) return;
@@ -1014,7 +1049,6 @@
             showToast('Relatório PDF exportado!');
         });
 
-        // Funções auxiliares
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
