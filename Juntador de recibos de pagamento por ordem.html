@@ -32,7 +32,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">Organizador de Recibos PDF</h1>
-                    <p class="text-xs text-indigo-200">Ordene e junte arquivos PDF por data no nome (ex: <span class="font-mono bg-indigo-900/50 px-1 py-0.5 rounded">03062026</span>)</p>
+                    <p class="text-xs text-indigo-200">Separe por nome, ordene por data (<span class="font-mono bg-indigo-900/50 px-1 py-0.5 rounded">DDMMAAAA</span>) e confira meses faltantes</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -46,7 +46,7 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- ESQUERDA: ENTRADA DE ARQUIVOS E TEXTO -->
+        <!-- ESQUERDA: ENTRADA DE ARQUIVOS, TEXTO E PERÍODO -->
         <section class="lg:col-span-5 flex flex-col gap-5">
             
             <!-- Tab Switcher -->
@@ -69,20 +69,20 @@
                 </h2>
 
                 <!-- Dropzone Area -->
-                <div id="dropZone" class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50 p-6 rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer text-center group min-h-[180px]">
+                <div id="dropZone" class="border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-indigo-50/40 hover:bg-indigo-50 p-6 rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer text-center group min-h-[165px]">
                     <input type="file" id="pdfFileInput" multiple accept=".pdf" class="hidden">
                     <div class="bg-white p-3 rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
                         <i data-lucide="file-up" class="w-6 h-6 text-indigo-600"></i>
                     </div>
                     <p class="text-sm font-semibold text-slate-700">Arraste seus PDFs aqui</p>
-                    <p class="text-xs text-slate-500 mt-1">ou clique para selecionar vários arquivos do computador</p>
-                    <span class="mt-3 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-100/80 px-2.5 py-1 rounded-md">Suporta Múltiplos PDFs</span>
+                    <p class="text-xs text-slate-500 mt-1">ou clique para selecionar vários arquivos de diferentes nomes</p>
+                    <span class="mt-3 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-100/80 px-2.5 py-1 rounded-md">Listas Separadas por Nome</span>
                 </div>
 
                 <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
                     <span id="fileCountBadge">0 PDFs carregados</span>
                     <button id="clearFilesBtn" class="text-red-500 hover:text-red-700 font-medium hidden flex items-center gap-1">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar arquivos
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar tudo
                     </button>
                 </div>
             </div>
@@ -93,46 +93,89 @@
                     <i data-lucide="text-cursor-input" class="w-5 h-5 text-indigo-600"></i>
                     Colar Nomes de Arquivos
                 </h2>
-                <textarea id="pasteTextArea" rows="7" placeholder="Paste line by line, e.g.:&#10;4066_CRISTHIANENRIQUEÁLVAREZPACHECO_03062026_5974753_CINSS.pdf&#10;1020_MARIAGOMES_15122025_9876543_CINSS.pdf" class="w-full p-3 text-xs font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50/50 resize-y"></textarea>
+                <textarea id="pasteTextArea" rows="6" placeholder="Cole um por linha, ex:&#10;4066_CRISTHIANENRIQUEÁLVAREZPACHECO_03062026_5974753_CINSS.pdf&#10;1020_MARIAGOMES_15122025_9876543_CINSS.pdf" class="w-full p-3 text-xs font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50/50 resize-y"></textarea>
                 <button id="processTextBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
                     <i data-lucide="play" class="w-4 h-4"></i>
                     Processar Texto
                 </button>
             </div>
 
+            <!-- NOVO: SELETOR DE PERÍODO PARA CHECAR MESES FALTANTES -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col gap-3">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="calendar-range" class="w-4 h-4 text-indigo-600"></i>
+                        Período Esperado (Meses Faltantes)
+                    </h2>
+                    <button id="autoPeriodBtn" type="button" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors">
+                        Auto-detectar
+                    </button>
+                </div>
+
+                <p class="text-xs text-slate-500">
+                    Escolha o mês inicial e final para verificar se há algum mês sem recibo.
+                </p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="startMonthInput" class="block text-[11px] font-semibold text-slate-600 mb-1">Início (Mês/Ano)</label>
+                        <input type="month" id="startMonthInput" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50">
+                    </div>
+                    <div>
+                        <label for="endMonthInput" class="block text-[11px] font-semibold text-slate-600 mb-1">Fim (Mês/Ano)</label>
+                        <input type="month" id="endMonthInput" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <button id="clearPeriodBtn" type="button" class="text-[11px] text-slate-500 hover:text-slate-700 underline">
+                        Limpar período
+                    </button>
+                    <span class="text-[11px] text-slate-400">Avalia mês/ano (MM/AAAA)</span>
+                </div>
+            </div>
+
             <!-- Dica do padrão de data -->
-            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-800">
-                <i data-lucide="lightbulb" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3 text-xs text-amber-800">
+                <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
                 <div>
-                    <strong>Padrão de Data Esperado:</strong> A aplicação identifica 8 dígitos consecutivos (<code class="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">DDMMAAAA</code>) no nome do arquivo, ex: <span class="underline decoration-amber-400 font-medium">03062026</span> = 03/06/2026.
+                    <strong>Padrão de Data e Nome:</strong> Identifica datas <code class="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">DDMMAAAA</code> (ex: <span class="font-medium">03062026</span>) e agrupa arquivos com o mesmo nome em listas separadas.
                 </div>
             </div>
 
         </section>
 
-        <!-- DIREITA: RESULTADOS E ORDENAÇÃO -->
+        <!-- DIREITA: RESULTADOS, LISTAS SEPARADAS E VERIFICAÇÃO DE MESES -->
         <section class="lg:col-span-7 flex flex-col gap-5">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col gap-4 min-h-[520px]">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col gap-4 min-h-[560px]">
                 
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                         <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <i data-lucide="arrow-up-down" class="w-5 h-5 text-indigo-600"></i>
-                            Lista Ordenada
+                            <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                            Listas Separadas por Nome
                         </h2>
-                        <p class="text-xs text-slate-500">Recibos classificados cronologicamente</p>
+                        <p class="text-xs text-slate-500">Datas ordenadas por grupo, downloads individuais e verificação de meses</p>
                     </div>
 
-                    <!-- Botões de Ordenação -->
-                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
-                        <button id="sortAscBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600 font-semibold transition-all">
-                            <i data-lucide="arrow-up-narrow-wide" class="w-4 h-4"></i>
-                            Crescente
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Botão Download de Tudo -->
+                        <button id="downloadAllBtn" class="hidden items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
+                            <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                            <span>Baixar Tudo</span>
                         </button>
-                        <button id="sortDescBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
-                            <i data-lucide="arrow-down-wide-narrow" class="w-4 h-4"></i>
-                            Decrescente
-                        </button>
+
+                        <!-- Botões de Ordenação -->
+                        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                            <button id="sortAscBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600 font-semibold transition-all">
+                                <i data-lucide="arrow-up-narrow-wide" class="w-4 h-4"></i>
+                                Crescente
+                            </button>
+                            <button id="sortDescBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                                <i data-lucide="arrow-down-wide-narrow" class="w-4 h-4"></i>
+                                Decrescente
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -140,27 +183,32 @@
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
                     <div class="relative w-full sm:w-64">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                        <input type="text" id="searchInput" placeholder="Buscar por nome ou data..." class="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <input type="text" id="searchInput" placeholder="Buscar por nome, grupo ou data..." class="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                     </div>
                     
                     <div class="flex items-center gap-3 text-xs text-slate-500 w-full sm:w-auto justify-between sm:justify-end px-1">
+                        <span>Grupos: <b id="statGroups">0</b></span>
+                        <span class="text-slate-300">|</span>
                         <span>Total: <b id="statTotal">0</b></span>
                         <span class="text-slate-300">|</span>
                         <span class="text-emerald-600">Com data: <b id="statValid">0</b></span>
                     </div>
                 </div>
 
+                <!-- Painel de Resumo de Meses Faltantes (quando período selecionado) -->
+                <div id="missingMonthsBanner" class="hidden rounded-xl border p-3.5 text-xs"></div>
+
                 <!-- Estado Vazio -->
                 <div id="emptyState" class="flex-1 flex flex-col items-center justify-center py-16 text-center text-slate-400">
                     <div class="bg-indigo-50 p-4 rounded-full mb-3 text-indigo-500">
-                        <i data-lucide="file-question" class="w-8 h-8"></i>
+                        <i data-lucide="folder-search" class="w-8 h-8"></i>
                     </div>
                     <p class="text-sm font-semibold text-slate-700">Nenhum recibo adicionado</p>
-                    <p class="text-xs text-slate-400 max-w-xs mt-1">Arraste seus PDFs para o painel à esquerda para ordená-los por data.</p>
+                    <p class="text-xs text-slate-400 max-w-xs mt-1">Envie PDFs com diferentes nomes à esquerda para vê-los separados em listas ordenadas por data.</p>
                 </div>
 
-                <!-- Lista de Resultados -->
-                <div id="resultsList" class="flex-1 flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1 hidden"></div>
+                <!-- Container de Listas Separadas por Nome -->
+                <div id="resultsList" class="flex-1 flex flex-col gap-4 max-h-[540px] overflow-y-auto pr-1 hidden"></div>
 
                 <!-- Barra de Ações e Exportação -->
                 <div id="actionToolbar" class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 hidden">
@@ -179,10 +227,9 @@
                         </button>
                     </div>
 
-                    <!-- Botão Especial de Unificar PDFs -->
-                    <button id="mergePdfBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">
+                    <button id="mergePdfBtn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition-all">
                         <i data-lucide="combine" class="w-4 h-4"></i>
-                        <span>Juntar em 1 Único PDF Ordenado</span>
+                        <span>Juntar Todos em 1 PDF</span>
                     </button>
                 </div>
 
@@ -197,12 +244,12 @@
     </div>
 
     <script>
-        // Data State
-        let items = []; // Array of { id, name, size, fileObj, dateInfo, timestamp }
-        let currentMode = 'files'; // 'files' or 'text'
-        let sortOrder = 'asc'; // 'asc' or 'desc'
+        // Estado da Aplicação
+        let items = []; // { id, name, groupKey, groupLabel, size, fileObj, dateInfo, timestamp }
+        let currentMode = 'files';
+        let sortOrder = 'asc';
 
-        // DOM Elements
+        // Elementos DOM
         const dropZone = document.getElementById('dropZone');
         const pdfFileInput = document.getElementById('pdfFileInput');
         const tabFilesBtn = document.getElementById('tabFilesBtn');
@@ -214,13 +261,21 @@
         const clearFilesBtn = document.getElementById('clearFilesBtn');
         const fileCountBadge = document.getElementById('fileCountBadge');
 
+        const startMonthInput = document.getElementById('startMonthInput');
+        const endMonthInput = document.getElementById('endMonthInput');
+        const autoPeriodBtn = document.getElementById('autoPeriodBtn');
+        const clearPeriodBtn = document.getElementById('clearPeriodBtn');
+        const missingMonthsBanner = document.getElementById('missingMonthsBanner');
+
         const sortAscBtn = document.getElementById('sortAscBtn');
         const sortDescBtn = document.getElementById('sortDescBtn');
         const searchInput = document.getElementById('searchInput');
         const emptyState = document.getElementById('emptyState');
         const resultsList = document.getElementById('resultsList');
         const actionToolbar = document.getElementById('actionToolbar');
+        const downloadAllBtn = document.getElementById('downloadAllBtn');
 
+        const statGroups = document.getElementById('statGroups');
         const statTotal = document.getElementById('statTotal');
         const statValid = document.getElementById('statValid');
 
@@ -231,7 +286,7 @@
 
         lucide.createIcons();
 
-        // Mode Switching
+        // Alternar modo Arquivos / Texto
         tabFilesBtn.addEventListener('click', () => setMode('files'));
         tabTextBtn.addEventListener('click', () => setMode('text'));
 
@@ -250,7 +305,7 @@
             }
         }
 
-        // Drag & Drop Listeners
+        // Drag & Drop
         dropZone.addEventListener('click', () => pdfFileInput.click());
 
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -290,7 +345,7 @@
             showToast('Arquivos removidos.');
         });
 
-        // Text input processor
+        // Processar nomes colados em texto
         processTextBtn.addEventListener('click', () => {
             const text = pasteTextArea.value.trim();
             if (!text) {
@@ -298,49 +353,56 @@
                 return;
             }
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            
-            items = lines.map((line, idx) => ({
-                id: 'txt-' + idx + '-' + Date.now(),
-                name: line,
-                size: null,
-                fileObj: null,
-                dateInfo: extractDateFromFilename(line),
-                timestamp: extractDateFromFilename(line) ? extractDateFromFilename(line).timestamp : Infinity
-            }));
 
-            render();
-            showToast(`${items.length} nomes processados!`);
-        });
-
-        function addPdfFiles(files) {
-            const newItems = files.map((file, idx) => {
-                const dateInfo = extractDateFromFilename(file.name);
+            items = lines.map((line, idx) => {
+                const dateInfo = extractDateFromFilename(line);
+                const group = extractGroupFromFilename(line, dateInfo);
                 return {
-                    id: 'file-' + idx + '-' + Date.now() + Math.random(),
-                    name: file.name,
-                    size: formatFileSize(file.size),
-                    fileObj: file,
-                    dateInfo: dateInfo,
+                    id: 'txt-' + idx + '-' + Date.now() + '-' + Math.random(),
+                    name: line,
+                    groupKey: group.key,
+                    groupLabel: group.label,
+                    size: null,
+                    fileObj: null,
+                    dateInfo,
                     timestamp: dateInfo ? dateInfo.timestamp : Infinity
                 };
             });
 
-            // Prevent exact duplicates
-            const existingNames = new Set(items.map(i => i.name));
-            const filteredNew = newItems.filter(i => !existingNames.has(i.name));
-
-            items = [...items, ...filteredNew];
             render();
-            showToast(`${filteredNew.length} PDF(s) adicionado(s)!`);
+            showToast(`${items.length} nome(s) processado(s) em listas separadas!`);
+        });
+
+        function addPdfFiles(files) {
+            const existingNames = new Set(items.map(i => i.name));
+            const filteredFiles = files.filter(f => !existingNames.has(f.name));
+
+            const newItems = filteredFiles.map((file, idx) => {
+                const dateInfo = extractDateFromFilename(file.name);
+                const group = extractGroupFromFilename(file.name, dateInfo);
+                return {
+                    id: 'file-' + idx + '-' + Date.now() + '-' + Math.random(),
+                    name: file.name,
+                    groupKey: group.key,
+                    groupLabel: group.label,
+                    size: formatFileSize(file.size),
+                    fileObj: file,
+                    dateInfo,
+                    timestamp: dateInfo ? dateInfo.timestamp : Infinity
+                };
+            });
+
+            items = [...items, ...newItems];
+            render();
+            showToast(`${newItems.length} PDF(s) adicionado(s)!`);
         }
 
         /**
-         * Parses DDMMAAAA from string (e.g. 4066_CRISTHIANENRIQUEÁLVAREZPACHECO_03062026_5974753_CINSS.pdf)
+         * Extrai data DDMMAAAA do nome do arquivo
          */
         function extractDateFromFilename(filename) {
             if (!filename) return null;
 
-            // Search for 8 digits surrounded by delimiters or boundaries
             const regex = /(?:_|-|\s|^)(\d{2})(\d{2})(\d{4})(?:_|-|\s|\.|$)/g;
             let match;
 
@@ -354,16 +416,20 @@
                     if (dateObj.getFullYear() === year && dateObj.getMonth() === month - 1 && dateObj.getDate() === day) {
                         return {
                             rawMatch: match[0],
+                            day,
+                            month,
+                            year,
+                            monthKey: `${year}-${String(month).padStart(2, '0')}`,
+                            monthLabel: `${String(month).padStart(2, '0')}/${year}`,
                             digits: `${match[1]}${match[2]}${match[3]}`,
                             formatted: `${match[1]}/${match[2]}/${match[3]}`,
                             timestamp: dateObj.getTime(),
-                            dateObj: dateObj
+                            dateObj
                         };
                     }
                 }
             }
 
-            // Fallback for isolated 8 numbers
             const fallback = /(\d{2})(\d{2})(\d{4})/;
             const fbMatch = filename.match(fallback);
             if (fbMatch) {
@@ -376,10 +442,15 @@
                     if (dateObj.getFullYear() === year && dateObj.getMonth() === month - 1 && dateObj.getDate() === day) {
                         return {
                             rawMatch: fbMatch[0],
+                            day,
+                            month,
+                            year,
+                            monthKey: `${year}-${String(month).padStart(2, '0')}`,
+                            monthLabel: `${String(month).padStart(2, '0')}/${year}`,
                             digits: `${fbMatch[1]}${fbMatch[2]}${fbMatch[3]}`,
                             formatted: `${fbMatch[1]}/${fbMatch[2]}/${fbMatch[3]}`,
                             timestamp: dateObj.getTime(),
-                            dateObj: dateObj
+                            dateObj
                         };
                     }
                 }
@@ -388,7 +459,67 @@
             return null;
         }
 
-        // Sort Toggles
+        /**
+         * Extrai um identificador de grupo/nome para separar os recibos em listas distintas.
+         * Ex: "4066_CRISTHIANENRIQUEÁLVAREZPACHECO_03062026_5974753_CINSS.pdf"
+         * -> separa antes da data, remove código inicial numérico, separa CamelCase se houver.
+         */
+        function extractGroupFromFilename(filename, dateInfo) {
+            if (!filename) return { key: 'sem-nome', label: 'Sem Nome Identificado' };
+
+            let base = filename.replace(/\.pdf$/i, '');
+
+            // Corta o trecho a partir da data encontrada, se houver
+            if (dateInfo && dateInfo.digits) {
+                const idx = base.indexOf(dateInfo.digits);
+                if (idx > 0) {
+                    base = base.slice(0, idx);
+                }
+            }
+
+            // Divide por separadores comuns
+            let parts = base.split(/[_\-]+/).map(p => p.trim()).filter(Boolean);
+
+            // Se o primeiro bloco for puramente numérico (ex: "4066"), remove
+            if (parts.length > 1 && /^\d+$/.test(parts[0])) {
+                parts.shift();
+            }
+
+            // Remove sufixos comuns genéricos se sobrarem
+            const genericTokens = new Set(['recibo', 'recibos', 'pagamento', 'holerite', 'contracheque', 'cinss', 'pdf']);
+            while (parts.length > 1 && genericTokens.has(parts[parts.length - 1].toLowerCase())) {
+                parts.pop();
+            }
+
+            let rawName = parts.join(' ').trim();
+            if (!rawName) {
+                rawName = base.replace(/[_\-]+/g, ' ').trim() || 'Sem Nome';
+            }
+
+            // Se o nome estiver colado em CamelCase (ex: MariaSilva), adiciona espaço antes de maiúsculas
+            rawName = rawName.replace(/([a-zà-ú])([A-ZÀ-Ú])/g, '$1 $2');
+            rawName = rawName.replace(/\s+/g, ' ').trim();
+
+            const normalizedKey = rawName
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+
+            // Formata label legível (Title Case preservando acentos)
+            const formattedLabel = rawName
+                .toLowerCase()
+                .split(' ')
+                .filter(Boolean)
+                .map(word => word.length <= 2 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+
+            return {
+                key: normalizedKey || 'sem-nome',
+                label: formattedLabel || 'Sem Nome'
+            };
+        }
+
+        // Ordenação
         sortAscBtn.addEventListener('click', () => {
             sortOrder = 'asc';
             sortAscBtn.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600 font-semibold transition-all';
@@ -403,51 +534,171 @@
             render();
         });
 
+        // Controles de Período
+        startMonthInput.addEventListener('change', render);
+        endMonthInput.addEventListener('change', render);
         searchInput.addEventListener('input', render);
 
-        function getSortedAndFilteredItems() {
-            let list = [...items];
+        autoPeriodBtn.addEventListener('click', () => {
+            const validDates = items.filter(i => i.dateInfo).map(i => i.dateInfo.monthKey).sort();
+            if (validDates.length === 0) {
+                showToast('Adicione recibos com data válida para auto-detectar o período.');
+                return;
+            }
+            startMonthInput.value = validDates[0];
+            endMonthInput.value = validDates[validDates.length - 1];
+            render();
+            showToast(`Período definido: ${formatMonthKey(validDates[0])} até ${formatMonthKey(validDates[validDates.length - 1])}`);
+        });
 
-            // Sort
-            list.sort((a, b) => {
-                if (!a.dateInfo && b.dateInfo) return 1;
-                if (a.dateInfo && !b.dateInfo) return -1;
-                if (!a.dateInfo && !b.dateInfo) return 0;
+        clearPeriodBtn.addEventListener('click', () => {
+            startMonthInput.value = '';
+            endMonthInput.value = '';
+            render();
+        });
 
-                return sortOrder === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp;
-            });
+        function formatMonthKey(monthKey) {
+            if (!monthKey || !monthKey.includes('-')) return '';
+            const [y, m] = monthKey.split('-');
+            return `${m}/${y}`;
+        }
 
-            // Filter
-            const query = searchInput.value.toLowerCase().trim();
-            if (query) {
-                list = list.filter(item => {
-                    const nameOk = item.name.toLowerCase().includes(query);
-                    const dateOk = item.dateInfo && item.dateInfo.formatted.includes(query);
-                    return nameOk || dateOk;
-                });
+        function getMonthsInRange(startKey, endKey) {
+            if (!startKey || !endKey) return [];
+            const [sy, sm] = startKey.split('-').map(Number);
+            const [ey, em] = endKey.split('-').map(Number);
+
+            const startDate = new Date(sy, sm - 1, 1);
+            const endDate = new Date(ey, em - 1, 1);
+
+            if (startDate > endDate) {
+                return { error: 'O mês inicial é maior que o mês final.', months: [] };
             }
 
-            return list;
+            const months = [];
+            const cursor = new Date(startDate.getTime());
+            while (cursor <= endDate) {
+                const y = cursor.getFullYear();
+                const m = String(cursor.getMonth() + 1).padStart(2, '0');
+                months.push({
+                    key: `${y}-${m}`,
+                    label: `${m}/${y}`
+                });
+                cursor.setMonth(cursor.getMonth() + 1);
+            }
+            return { error: null, months };
+        }
+
+        function getMissingMonthsForItems(itemList, periodRange) {
+            if (!periodRange || periodRange.error || periodRange.months.length === 0) return [];
+            const presentMonths = new Set(
+                itemList.filter(i => i.dateInfo && i.dateInfo.monthKey).map(i => i.dateInfo.monthKey)
+            );
+            return periodRange.months.filter(m => !presentMonths.has(m.key));
+        }
+
+        function sortItemsList(list) {
+            return [...list].sort((a, b) => {
+                if (!a.dateInfo && b.dateInfo) return 1;
+                if (a.dateInfo && !b.dateInfo) return -1;
+                if (!a.dateInfo && !b.dateInfo) return a.name.localeCompare(b.name);
+                return sortOrder === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp;
+            });
+        }
+
+        function getFilteredItems() {
+            const query = searchInput.value.toLowerCase().trim();
+            if (!query) return [...items];
+
+            return items.filter(item => {
+                const nameOk = item.name.toLowerCase().includes(query);
+                const groupOk = item.groupLabel.toLowerCase().includes(query);
+                const dateOk = item.dateInfo && item.dateInfo.formatted.includes(query);
+                return nameOk || groupOk || dateOk;
+            });
+        }
+
+        function getGroupedData() {
+            const filtered = getFilteredItems();
+            const map = new Map();
+
+            for (const item of filtered) {
+                if (!map.has(item.groupKey)) {
+                    map.set(item.groupKey, {
+                        key: item.groupKey,
+                        label: item.groupLabel,
+                        items: []
+                    });
+                }
+                map.get(item.groupKey).items.push(item);
+            }
+
+            const groups = Array.from(map.values()).map(group => ({
+                ...group,
+                items: sortItemsList(group.items)
+            }));
+
+            groups.sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+            return groups;
         }
 
         function render() {
-            const list = getSortedAndFilteredItems();
+            const filtered = getFilteredItems();
+            const groups = getGroupedData();
 
-            // Stats
-            statTotal.textContent = items.length;
-            statValid.textContent = items.filter(i => i.dateInfo).length;
+            statGroups.textContent = groups.length;
+            statTotal.textContent = filtered.length;
+            statValid.textContent = filtered.filter(i => i.dateInfo).length;
 
             fileCountBadge.textContent = `${items.length} PDF(s) carregado(s)`;
             clearFilesBtn.classList.toggle('hidden', items.length === 0);
 
-            // Toggle Merge Button state
             const hasRealPdfs = items.some(i => i.fileObj !== null);
             mergePdfBtn.style.display = hasRealPdfs ? 'flex' : 'none';
+            downloadAllBtn.classList.toggle('hidden', !hasRealPdfs || filtered.length === 0);
+            downloadAllBtn.classList.toggle('flex', hasRealPdfs && filtered.length > 0);
+
+            // Verificação geral do período
+            const startKey = startMonthInput.value;
+            const endKey = endMonthInput.value;
+            let periodRange = null;
+
+            if (startKey && endKey) {
+                periodRange = getMonthsInRange(startKey, endKey);
+                missingMonthsBanner.classList.remove('hidden');
+
+                if (periodRange.error) {
+                    missingMonthsBanner.className = 'rounded-xl border border-amber-200 bg-amber-50 text-amber-800 p-3.5 text-xs flex items-center gap-2';
+                    missingMonthsBanner.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i><span>${periodRange.error}</span>`;
+                } else {
+                    const missingGlobal = getMissingMonthsForItems(filtered, periodRange);
+                    if (missingGlobal.length === 0) {
+                        missingMonthsBanner.className = 'rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 p-3.5 text-xs flex items-center gap-2';
+                        missingMonthsBanner.innerHTML = `
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                            <span>Período <b>${formatMonthKey(startKey)}</b> a <b>${formatMonthKey(endKey)}</b>: nenhum mês faltando na seleção atual!</span>
+                        `;
+                    } else {
+                        const badges = missingGlobal.map(m => `<span class="bg-red-100 text-red-800 border border-red-200 font-mono font-bold px-2 py-0.5 rounded">${m.label}</span>`).join(' ');
+                        missingMonthsBanner.className = 'rounded-xl border border-red-200 bg-red-50/90 text-red-800 p-3.5 text-xs flex flex-col gap-1.5';
+                        missingMonthsBanner.innerHTML = `
+                            <div class="flex items-center gap-1.5 font-semibold">
+                                <i data-lucide="calendar-x" class="w-4 h-4 text-red-600 flex-shrink-0"></i>
+                                <span>Meses faltando no período (${formatMonthKey(startKey)} a ${formatMonthKey(endKey)}):</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 pl-5">${badges}</div>
+                        `;
+                    }
+                }
+            } else {
+                missingMonthsBanner.classList.add('hidden');
+            }
 
             if (items.length === 0) {
                 emptyState.classList.remove('hidden');
                 resultsList.classList.add('hidden');
                 actionToolbar.classList.add('hidden');
+                lucide.createIcons();
                 return;
             }
 
@@ -457,44 +708,123 @@
 
             resultsList.innerHTML = '';
 
-            list.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = 'group flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 rounded-xl transition-all gap-2';
+            if (groups.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="text-center py-10 text-xs text-slate-400">
+                        Nenhum recibo encontrado para o filtro "${escapeHtml(searchInput.value)}".
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
 
-                let nameDisplay = item.name;
-                if (item.dateInfo && item.dateInfo.rawMatch) {
-                    const raw = item.dateInfo.rawMatch;
-                    nameDisplay = item.name.replace(raw, `<span class="bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded border border-indigo-200">${raw}</span>`);
+            groups.forEach((group, gIdx) => {
+                const groupCard = document.createElement('div');
+                groupCard.className = 'border border-slate-200 rounded-2xl bg-white shadow-2xs overflow-hidden';
+
+                const groupHasPdfs = group.items.some(i => i.fileObj !== null);
+                const missingInGroup = (periodRange && !periodRange.error)
+                    ? getMissingMonthsForItems(group.items, periodRange)
+                    : [];
+
+                let missingGroupHtml = '';
+                if (periodRange && !periodRange.error) {
+                    if (missingInGroup.length > 0) {
+                        const mBadges = missingInGroup.map(m => `<span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono text-[10px] font-bold border border-red-200">${m.label}</span>`).join(' ');
+                        missingGroupHtml = `
+                            <div class="px-4 py-2 bg-red-50/70 border-b border-red-100 flex flex-wrap items-center gap-1.5 text-[11px] text-red-700">
+                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-red-500 flex-shrink-0"></i>
+                                <span class="font-medium">Faltando neste grupo:</span>
+                                ${mBadges}
+                            </div>
+                        `;
+                    } else {
+                        missingGroupHtml = `
+                            <div class="px-4 py-1.5 bg-emerald-50/60 border-b border-emerald-100 flex items-center gap-1.5 text-[11px] text-emerald-700">
+                                <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0"></i>
+                                <span>Todos os meses do período presentes neste grupo</span>
+                            </div>
+                        `;
+                    }
                 }
 
-                const badge = item.dateInfo ? `
-                    <span class="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-md text-xs font-semibold">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${item.dateInfo.formatted}
-                    </span>
-                ` : `
-                    <span class="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-md text-xs font-medium">
-                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Sem data
-                    </span>
-                `;
+                const rowsHtml = group.items.map((item, idx) => {
+                    let nameDisplay = escapeHtml(item.name);
+                    if (item.dateInfo && item.dateInfo.rawMatch) {
+                        const raw = item.dateInfo.rawMatch;
+                        const pos = item.name.indexOf(raw);
+                        if (pos !== -1) {
+                            const before = escapeHtml(item.name.slice(0, pos));
+                            const mid = `<span class="bg-indigo-100 text-indigo-800 font-bold px-1.5 py-0.5 rounded border border-indigo-200">${escapeHtml(raw)}</span>`;
+                            const after = escapeHtml(item.name.slice(pos + raw.length));
+                            nameDisplay = `${before}${mid}${after}`;
+                        }
+                    }
 
-                card.innerHTML = `
-                    <div class="flex items-center gap-2.5 overflow-hidden">
-                        <span class="text-xs font-mono font-bold text-slate-400 w-5 text-right flex-shrink-0">${index + 1}.</span>
-                        <i data-lucide="file" class="w-4 h-4 text-red-500 flex-shrink-0"></i>
-                        <div class="font-mono text-xs text-slate-700 truncate" title="${item.name}">
-                            ${nameDisplay}
+                    const dateBadge = item.dateInfo ? `
+                        <span class="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-md text-[11px] font-semibold">
+                            <i data-lucide="calendar" class="w-3 h-3"></i> ${item.dateInfo.formatted}
+                        </span>
+                    ` : `
+                        <span class="flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 rounded-md text-[11px] font-medium">
+                            <i data-lucide="alert-circle" class="w-3 h-3"></i> Sem data
+                        </span>
+                    `;
+
+                    const singleDownloadBtn = item.fileObj ? `
+                        <button onclick="downloadSingleFile('${item.id}')" class="text-slate-400 hover:text-indigo-600 p-1 rounded transition-colors" title="Baixar este PDF">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : '';
+
+                    return `
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-2.5 bg-slate-50/70 hover:bg-indigo-50/50 border border-slate-200/70 rounded-xl transition-all gap-2">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <span class="text-[11px] font-mono font-bold text-slate-400 w-5 text-right flex-shrink-0">${idx + 1}.</span>
+                                <i data-lucide="file" class="w-4 h-4 text-red-500 flex-shrink-0"></i>
+                                <div class="font-mono text-xs text-slate-700 truncate" title="${escapeHtml(item.name)}">
+                                    ${nameDisplay}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 justify-between sm:justify-end flex-shrink-0">
+                                ${item.size ? `<span class="text-[10px] text-slate-400 font-mono">${item.size}</span>` : ''}
+                                ${dateBadge}
+                                ${singleDownloadBtn}
+                                <button onclick="removeItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1 rounded transition-colors" title="Remover item">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                groupCard.innerHTML = `
+                    <div class="px-4 py-3 bg-slate-100/80 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                ${gIdx + 1}
+                            </span>
+                            <div class="truncate">
+                                <h3 class="text-sm font-bold text-slate-800 truncate" title="${escapeHtml(group.label)}">${escapeHtml(group.label)}</h3>
+                                <p class="text-[11px] text-slate-500">${group.items.length} recibo(s) • Ordem ${sortOrder === 'asc' ? 'crescente' : 'decrescente'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            ${groupHasPdfs ? `
+                                <button onclick="downloadGroupMergedPdf('${encodeURIComponent(group.key)}')" class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                    <span>Baixar PDF do Grupo</span>
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 justify-between sm:justify-end flex-shrink-0">
-                        ${item.size ? `<span class="text-[10px] text-slate-400 font-mono">${item.size}</span>` : ''}
-                        ${badge}
-                        <button onclick="removeItem('${item.id}')" class="text-slate-300 hover:text-red-500 p-1 rounded transition-colors" title="Remover item">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
+                    ${missingGroupHtml}
+                    <div class="p-3 flex flex-col gap-2">
+                        ${rowsHtml}
                     </div>
                 `;
 
-                resultsList.appendChild(card);
+                resultsList.appendChild(groupCard);
             });
 
             lucide.createIcons();
@@ -505,22 +835,76 @@
             render();
         };
 
-        // PDF MERGE FEATURE (pdf-lib)
-        mergePdfBtn.addEventListener('click', async () => {
-            const list = getSortedAndFilteredItems().filter(i => i.fileObj !== null);
-            if (list.length === 0) {
-                showToast('Carregue arquivos PDF reais para unificar.');
+        window.downloadSingleFile = function(id) {
+            const item = items.find(i => i.id === id);
+            if (!item || !item.fileObj) return;
+            const url = URL.createObjectURL(item.fileObj);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = item.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`Baixando ${item.name}`);
+        };
+
+        window.downloadGroupMergedPdf = async function(encodedGroupKey) {
+            const groupKey = decodeURIComponent(encodedGroupKey);
+            const groups = getGroupedData();
+            const group = groups.find(g => g.key === groupKey);
+            if (!group) return;
+
+            const pdfItems = group.items.filter(i => i.fileObj !== null);
+            if (pdfItems.length === 0) {
+                showToast('Não há arquivos PDF reais neste grupo para baixar.');
                 return;
             }
 
+            const safeSlug = group.key.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'grupo';
+            await mergeAndDownloadPdfs(
+                pdfItems,
+                `recibos_${safeSlug}_${sortOrder}.pdf`,
+                `PDF de "${group.label}" gerado com sucesso!`
+            );
+        };
+
+        // Botão Baixar Tudo (unifica todos os PDFs ordenados)
+        downloadAllBtn.addEventListener('click', async () => {
+            const allOrderedPdfs = sortItemsList(getFilteredItems()).filter(i => i.fileObj !== null);
+            if (allOrderedPdfs.length === 0) {
+                showToast('Carregue arquivos PDF reais para baixar tudo.');
+                return;
+            }
+            await mergeAndDownloadPdfs(
+                allOrderedPdfs,
+                `todos_recibos_ordenados_${sortOrder}_${new Date().toISOString().slice(0, 10)}.pdf`,
+                'Todos os recibos foram unificados e baixados!'
+            );
+        });
+
+        mergePdfBtn.addEventListener('click', async () => {
+            const allOrderedPdfs = sortItemsList(getFilteredItems()).filter(i => i.fileObj !== null);
+            if (allOrderedPdfs.length === 0) {
+                showToast('Carregue arquivos PDF reais para unificar.');
+                return;
+            }
+            await mergeAndDownloadPdfs(
+                allOrderedPdfs,
+                `recibos_unificados_${sortOrder}_${new Date().toISOString().slice(0, 10)}.pdf`,
+                'PDFs unificados e baixados com sucesso!'
+            );
+        });
+
+        async function mergeAndDownloadPdfs(pdfItems, filename, successMessage) {
             try {
-                showToast('Unificando PDFs... Aguarde.');
+                showToast('Gerando PDF... Aguarde.');
                 mergePdfBtn.disabled = true;
-                mergePdfBtn.classList.add('opacity-50');
+                downloadAllBtn.disabled = true;
 
                 const mergedPdf = await PDFLib.PDFDocument.create();
 
-                for (const item of list) {
+                for (const item of pdfItems) {
                     const arrayBuffer = await item.fileObj.arrayBuffer();
                     const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
                     const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
@@ -532,94 +916,119 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `recibos_unificados_${sortOrder}_${new Date().toISOString().slice(0,10)}.pdf`;
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                showToast('PDFs unificados e baixados com sucesso!');
+                showToast(successMessage);
             } catch (err) {
                 console.error(err);
-                showToast('Erro ao unificar PDFs. Certifique-se de que não estejam protegidos por senha.');
+                showToast('Erro ao unificar PDFs. Verifique se algum arquivo possui senha.');
             } finally {
                 mergePdfBtn.disabled = false;
-                mergePdfBtn.classList.remove('opacity-50');
+                downloadAllBtn.disabled = false;
             }
-        });
+        }
 
-        // Copy list to clipboard
+        // Copiar lista organizada por grupo
         copyBtn.addEventListener('click', () => {
-            const list = getSortedAndFilteredItems();
-            const text = list.map(i => i.name).join('\n');
-            copyToClipboard(text, 'Lista copiada para a área de transferência!');
+            const groups = getGroupedData();
+            const lines = [];
+            groups.forEach(g => {
+                lines.push(`=== ${g.label} ===`);
+                g.items.forEach(i => {
+                    const dt = i.dateInfo ? ` [${i.dateInfo.formatted}]` : ' [Sem data]';
+                    lines.push(`${i.name}${dt}`);
+                });
+                lines.push('');
+            });
+            copyToClipboard(lines.join('\n').trim(), 'Lista separada por nome copiada!');
         });
 
-        // Export TXT
+        // Exportar TXT
         exportTxtBtn.addEventListener('click', () => {
-            const list = getSortedAndFilteredItems();
-            const text = list.map(i => i.name).join('\n');
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const groups = getGroupedData();
+            const lines = [];
+            groups.forEach(g => {
+                lines.push(`=== ${g.label} ===`);
+                g.items.forEach(i => {
+                    const dt = i.dateInfo ? ` [${i.dateInfo.formatted}]` : ' [Sem data]';
+                    lines.push(`${i.name}${dt}`);
+                });
+                lines.push('');
+            });
+            const blob = new Blob([lines.join('\n').trim()], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `recibos_ordenados_${sortOrder}.txt`;
+            a.download = `recibos_por_nome_${sortOrder}.txt`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('Relatório TXT baixado!');
         });
 
-        // Export PDF Report using jsPDF
+        // Exportar Relatório PDF com jsPDF
         exportReportPdfBtn.addEventListener('click', () => {
-            const list = getSortedAndFilteredItems();
-            if (list.length === 0) return;
+            const groups = getGroupedData();
+            if (groups.length === 0) return;
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.text('Relatório de Recibos Ordenados por Data', 14, 20);
+            doc.setFontSize(15);
+            doc.text('Relatório de Recibos por Nome e Data', 14, 20);
 
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.text(`Ordem: ${sortOrder === 'asc' ? 'Crescente (Mais antigos -> Mais recentes)' : 'Decrescente (Mais recentes -> Mais antigos)'}`, 14, 28);
-            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 34);
+            doc.setFontSize(9);
+            doc.text(`Ordem: ${sortOrder === 'asc' ? 'Crescente' : 'Decrescente'} | Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 27);
 
-            doc.setLineWidth(0.5);
-            doc.line(14, 38, 196, 38);
-
-            let y = 46;
-            list.forEach((item, idx) => {
-                if (y > 280) {
+            let y = 36;
+            groups.forEach(group => {
+                if (y > 270) {
                     doc.addPage();
                     y = 20;
                 }
-
-                const dateStr = item.dateInfo ? item.dateInfo.formatted : 'Sem data';
                 doc.setFont('helvetica', 'bold');
-                doc.text(`${idx + 1}. [${dateStr}]`, 14, y);
+                doc.setFontSize(11);
+                doc.text(`${group.label} (${group.items.length})`, 14, y);
+                y += 6;
 
-                doc.setFont('courier', 'normal');
-                doc.setFontSize(8);
-                doc.text(item.name.substring(0, 75), 14, y + 5);
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                y += 12;
+                group.items.forEach((item, idx) => {
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    const dateStr = item.dateInfo ? item.dateInfo.formatted : 'Sem data';
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9);
+                    doc.text(`${idx + 1}. [${dateStr}] ${item.name.substring(0, 72)}`, 18, y);
+                    y += 5;
+                });
+                y += 4;
             });
 
             doc.save(`relatorio_recibos_${sortOrder}.pdf`);
             showToast('Relatório PDF exportado!');
         });
 
-        // Helpers
+        // Funções auxiliares
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
         function copyToClipboard(text, successMsg) {
